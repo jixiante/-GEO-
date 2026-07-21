@@ -9,7 +9,8 @@
                 @if(!empty($siteLogo))
                     <img src="{{ $siteLogo }}" alt="{{ $siteName }}" class="h-9 w-auto max-w-48 object-contain">
                 @else
-                    <span>{{ $siteName }}</span>
+                    <span class="tt-brand-seal" aria-hidden="true">{{ mb_substr($siteName, 0, 1) }}</span>
+                    <span class="tt-brand-wordmark">{{ $siteName }}</span>
                 @endif
             </a>
 

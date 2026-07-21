@@ -7,7 +7,7 @@
  */
 $adminBasePath = trim((string) env('ADMIN_BASE_PATH', 'geo_admin'), '/');
 $adminBasePath = $adminBasePath !== '' ? $adminBasePath : 'geo_admin';
-$defaultUpdateMetadataUrl = 'https://raw.githubusercontent.com/yaojingang/GEOFlow/main/version.json';
+$defaultUpdateMetadataUrl = 'https://raw.githubusercontent.com/jian-ux/-GEO-/main/version.json';
 $updateMetadataUrl = trim((string) env('GEOFLOW_UPDATE_METADATA_URL', $defaultUpdateMetadataUrl));
 $updateMetadataUrl = $updateMetadataUrl !== '' ? $updateMetadataUrl : $defaultUpdateMetadataUrl;
 $versionManifestPath = __DIR__.'/../version.json';
@@ -15,14 +15,14 @@ $versionManifest = is_file($versionManifestPath)
     ? json_decode((string) file_get_contents($versionManifestPath), true)
     : [];
 $appVersion = is_array($versionManifest) ? trim((string) ($versionManifest['version'] ?? '')) : '';
-$appVersion = $appVersion !== '' ? $appVersion : '2.1.1';
+$appVersion = $appVersion !== '' ? $appVersion : '1.0.0';
 
 return [
 
     // 站点展示名称（页眉、标题等）
-    'site_name' => env('SITE_NAME', 'GEOFlow'),
+    'site_name' => env('SITE_NAME', '点签GEO'),
     // 站点完整/副标题文案
-    'site_full_name' => env('SITE_FULL_NAME', 'GEOFlow'),
+    'site_full_name' => env('SITE_FULL_NAME', '点签GEO · 智能内容中台'),
     // 站点根 URL，用于生成绝对链接（末尾无斜杠）
     'site_url' => rtrim((string) env('SITE_URL', 'http://localhost'), '/'),
     // SEO 描述
@@ -61,7 +61,7 @@ return [
     'update_rollback_enabled' => filter_var(env('GEOFLOW_UPDATE_ROLLBACK_ENABLED', false), FILTER_VALIDATE_BOOLEAN),
     'update_backup_keep' => max(1, (int) env('GEOFLOW_UPDATE_BACKUP_KEEP', 10)),
     'update_backup_path' => trim((string) env('GEOFLOW_UPDATE_BACKUP_PATH', 'geoflow-updates'), '/'),
-    'update_allowed_repository' => trim((string) env('GEOFLOW_UPDATE_ALLOWED_REPOSITORY', 'https://github.com/yaojingang/GEOFlow'), '/'),
+    'update_allowed_repository' => trim((string) env('GEOFLOW_UPDATE_ALLOWED_REPOSITORY', 'https://github.com/jian-ux/-GEO-'), '/'),
     'update_archive_max_bytes' => max(1, (int) env('GEOFLOW_UPDATE_ARCHIVE_MAX_BYTES', 50 * 1024 * 1024)),
     'update_archive_max_files' => max(1, (int) env('GEOFLOW_UPDATE_ARCHIVE_MAX_FILES', 2000)),
     'update_archive_max_file_bytes' => max(1, (int) env('GEOFLOW_UPDATE_ARCHIVE_MAX_FILE_BYTES', 50 * 1024 * 1024)),

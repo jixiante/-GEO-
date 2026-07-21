@@ -6,28 +6,28 @@ use Tests\TestCase;
 
 class SecurityReleaseMetadataTest extends TestCase
 {
-    public function test_v211_manifest_uses_immutable_release_urls_and_security_upgrade_guidance(): void
+    public function test_dianqian_geo_manifest_uses_immutable_release_urls_and_security_upgrade_guidance(): void
     {
         $manifest = json_decode((string) file_get_contents(base_path('version.json')), true, flags: JSON_THROW_ON_ERROR);
         $payload = $manifest['payload'];
 
-        $this->assertSame('2.1.1', $manifest['version']);
-        $this->assertSame('2026-07-17', $manifest['release_date']);
-        $this->assertSame('patch', $manifest['release_type']);
+        $this->assertSame('1.0.0', $manifest['version']);
+        $this->assertSame('2026-07-21', $manifest['release_date']);
+        $this->assertSame('initial', $manifest['release_type']);
         $this->assertSame(
-            'https://github.com/yaojingang/GEOFlow/archive/refs/tags/v2.1.1.zip',
+            'https://github.com/jian-ux/-GEO-/archive/refs/tags/v1.0.0.zip',
             $manifest['archive_url'],
         );
         $this->assertSame(
-            'https://github.com/yaojingang/GEOFlow/releases/tag/v2.1.1',
+            'https://github.com/jian-ux/-GEO-/releases/tag/v1.0.0',
             $payload['release_url'],
         );
         $this->assertSame(
-            'https://github.com/yaojingang/GEOFlow/blob/v2.1.1/docs/CHANGELOG.md',
+            'https://github.com/jian-ux/-GEO-/blob/v1.0.0/docs/CHANGELOG.md',
             $payload['changelog_url_zh'],
         );
         $this->assertSame(
-            'https://github.com/yaojingang/GEOFlow/blob/v2.1.1/docs/CHANGELOG_en.md',
+            'https://github.com/jian-ux/-GEO-/blob/v1.0.0/docs/CHANGELOG_en.md',
             $payload['changelog_url_en'],
         );
 
@@ -58,13 +58,13 @@ class SecurityReleaseMetadataTest extends TestCase
         $this->assertStringNotContainsString('v2.1.1 has been released', strtolower($en));
     }
 
-    public function test_config_fallback_tracks_v211_without_environment_version_lock(): void
+    public function test_config_fallback_tracks_dianqian_geo_v100_without_environment_version_lock(): void
     {
         $config = (string) file_get_contents(config_path('geoflow.php'));
         $envExample = (string) file_get_contents(base_path('.env.example'));
         $productionExample = (string) file_get_contents(base_path('.env.prod.example'));
 
-        $this->assertStringContainsString("\$appVersion !== '' ? \$appVersion : '2.1.1'", $config);
+        $this->assertStringContainsString("\$appVersion !== '' ? \$appVersion : '1.0.0'", $config);
         $this->assertStringNotContainsString('GEOFLOW_APP_VERSION=', $envExample);
         $this->assertStringNotContainsString('GEOFLOW_APP_VERSION=', $productionExample);
     }

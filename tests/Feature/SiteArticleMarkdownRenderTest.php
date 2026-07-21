@@ -435,6 +435,17 @@ MD);
             ->assertDontSee('data-hot-carousel]).forEach', false);
     }
 
+    public function test_frontend_theme_renders_dianqian_brand_mark_and_content_feed(): void
+    {
+        config(['geoflow.site_name' => '点签GEO']);
+
+        $this->get(route('site.home'))
+            ->assertOk()
+            ->assertSee('tt-brand-seal', false)
+            ->assertSee('点签GEO 内容流')
+            ->assertDontSee('GEOFlow Feed');
+    }
+
     public function test_homepage_renders_configured_carousel_and_sidebar_feed_panel(): void
     {
         SiteSetting::query()->updateOrCreate(
@@ -463,7 +474,7 @@ MD);
             ->assertSee('data-home-poster-carousel', false)
             ->assertSee('https://example.com/banner-one.jpg', false)
             ->assertSee('Banner One')
-            ->assertSee('GEOFlow Feed')
+            ->assertSee('GEOFlow Demo 内容流')
             ->assertSee('GEOFlow Demo')
             ->assertSee('Demo homepage description');
     }

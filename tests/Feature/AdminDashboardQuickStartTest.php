@@ -108,9 +108,8 @@ class AdminDashboardQuickStartTest extends TestCase
             ->assertSee(route('admin.distribution.index'), false)
             ->assertSee(route('admin.distribution.create'), false)
             ->assertSee(route('admin.distribution.jobs'), false)
-            ->assertSee('https://github.com/yaojingang/yao-geo-skills/tree/main/skills/yao-geoflow-template', false)
-            ->assertSee('https://github.com/yaojingang/yao-geo-skills/tree/main/skills/yao-geoflow-design', false)
-            ->assertSee('https://github.com/yaojingang/yao-geo-skills/tree/main/skills/yao-geoflow-cli', false);
+            ->assertDontSee('yao-geoflow', false)
+            ->assertDontSee('github.com/yaojingang', false);
 
         $html = $response->getContent();
         $this->assertGreaterThanOrEqual(1, substr_count($html, route('admin.knowledge-bases.index')));
@@ -230,6 +229,8 @@ class AdminDashboardQuickStartTest extends TestCase
 
     public function test_project_intro_auto_opens_once_and_footer_link_remains_available(): void
     {
+        config(['geoflow.update_check_enabled' => false]);
+
         $admin = Admin::query()->create([
             'username' => 'dashboard_project_intro_admin',
             'password' => 'secret-123',
@@ -261,7 +262,7 @@ class AdminDashboardQuickStartTest extends TestCase
         $this->assertStringContainsString(__('admin.footer.project_intro_link'), $secondHtml);
     }
 
-    public function test_admin_footer_links_to_locale_specific_help_docs(): void
+    public function test_admin_footer_uses_product_brand_without_upstream_promotional_links(): void
     {
         $admin = Admin::query()->create([
             'username' => 'dashboard_help_docs_admin',
@@ -272,23 +273,17 @@ class AdminDashboardQuickStartTest extends TestCase
             'status' => 'active',
         ]);
 
-        $zhHtml = $this->actingAs($admin, 'admin')
+        config(['app.name' => '点签GEO']);
+
+        $html = $this->actingAs($admin, 'admin')
             ->get(route('admin.dashboard'))
             ->assertOk()
             ->getContent();
 
-        $this->assertStringContainsString(__('admin.footer.help_docs_link'), $zhHtml);
-        $this->assertStringContainsString('https://github.com/yaojingang/GEOFlow/wiki', $zhHtml);
-        $this->assertStringNotContainsString('https://github.com/yaojingang/GEOFlow/wiki/Home-English', $zhHtml);
-
-        session(['locale' => 'en']);
-
-        $enHtml = $this->actingAs($admin->fresh(), 'admin')
-            ->get(route('admin.dashboard'))
-            ->assertOk()
-            ->getContent();
-
-        $this->assertStringContainsString('Help docs', $enHtml);
-        $this->assertStringContainsString('https://github.com/yaojingang/GEOFlow/wiki/Home-English', $enHtml);
+        $this->assertStringContainsString('点签GEO', $html);
+        $this->assertStringContainsString(__('admin.footer.project_intro_link'), $html);
+        $this->assertStringNotContainsString('姚金刚', $html);
+        $this->assertStringNotContainsString('github.com/yaojingang', $html);
+        $this->assertStringNotContainsString('x.com/yaojingang', $html);
     }
 }

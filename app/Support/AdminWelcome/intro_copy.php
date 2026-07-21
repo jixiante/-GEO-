@@ -14,12 +14,12 @@ return [
             'changelog_link' => '更新日志',
         ],
         'letter' => [
-            'title' => '写给 GEOFlow 使用者的一封信',
-            'subtitle' => 'GEOFlow 是一套面向 AI 搜索与多站点分发的内容工程后台。它不承诺排名，而是用真实资料、结构化内容和持续验证，提高被理解、引用和推荐的概率。',
+            'title' => '写给点签GEO使用者的一封信',
+            'subtitle' => '点签GEO是一套面向 AI 搜索与多站点分发的智能内容中台。它不承诺排名，而是用真实资料、结构化内容和持续验证，提高被理解、引用和推荐的概率。',
             'blocks' => [
                 [
                     'type' => 'paragraph',
-                    'content' => '你好，欢迎使用 GEOFlow。这个系统的出发点不是把内容生产变成一次性的批量生成，而是把资料、事实、提示词、审核、发布、分发和数据复盘连接成一个可持续的 GEO 工作流。',
+                    'content' => '你好，欢迎使用点签GEO。这个系统的出发点不是把内容生产变成一次性的批量生成，而是把资料、事实、提示词、审核、发布、分发和数据复盘连接成一个可持续的 GEO 工作流。',
                 ],
                 [
                     'type' => 'paragraph',
@@ -27,7 +27,7 @@ return [
                 ],
                 [
                     'type' => 'heading',
-                    'content' => 'GEOFlow 是什么',
+                    'content' => '点签GEO是什么',
                 ],
                 [
                     'type' => 'list',
@@ -95,12 +95,12 @@ return [
             'changelog_link' => 'Changelog',
         ],
         'letter' => [
-            'title' => 'A Letter to GEOFlow Users',
-            'subtitle' => 'GEOFlow is a content engineering admin for AI search and multi-site distribution. It does not promise rankings; it improves the probability of being understood, cited, and recommended through facts, structure, and continuous validation.',
+            'title' => 'A Letter to Dianqian Users',
+            'subtitle' => 'Dianqian is an intelligent content platform for AI search and multi-site distribution. It does not promise rankings; it improves the probability of being understood, cited, and recommended through facts, structure, and continuous validation.',
             'blocks' => [
                 [
                     'type' => 'paragraph',
-                    'content' => 'Welcome to GEOFlow. The goal is not one-off bulk generation. The goal is to connect materials, facts, prompts, review, publishing, distribution, and analytics into a repeatable GEO workflow.',
+                    'content' => 'Welcome to Dianqian. The goal is not one-off bulk generation. The goal is to connect materials, facts, prompts, review, publishing, distribution, and analytics into a repeatable GEO workflow.',
                 ],
                 [
                     'type' => 'paragraph',
@@ -108,7 +108,7 @@ return [
                 ],
                 [
                     'type' => 'heading',
-                    'content' => 'What GEOFlow is',
+                    'content' => 'What Dianqian is',
                 ],
                 [
                     'type' => 'list',

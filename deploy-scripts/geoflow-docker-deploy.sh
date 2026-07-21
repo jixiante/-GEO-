@@ -6,7 +6,7 @@ set -Eeuo pipefail
 # docker-compose.prod.yml stack, seeds the default admin, and runs a healthcheck.
 
 SCRIPT_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
-REPO_URL="${GEOFLOW_REPO_URL:-https://github.com/yaojingang/GEOFlow.git}"
+REPO_URL="${GEOFLOW_REPO_URL:-https://github.com/jian-ux/-GEO-.git}"
 BRANCH="${GEOFLOW_BRANCH:-main}"
 APP_DIR="${GEOFLOW_APP_DIR:-/opt/geoflow}"
 NONINTERACTIVE="${GEOFLOW_NONINTERACTIVE:-0}"
@@ -341,8 +341,8 @@ print_summary() {
   printf 'Site:  %s\n' "$app_url"
   printf 'Admin: %s/%s/login\n' "${app_url%/}" "$admin_path"
   printf 'Default admin username: admin\n'
-  printf 'Default admin password: password\n'
-  printf 'Security note: change the default admin password immediately after first login.\n'
+  printf 'Initial admin password: read the one-time password from the geoflow-init log, unless GEOFLOW_ADMIN_PASSWORD was set explicitly.\n'
+  printf 'Security note: change the initial admin password immediately after first login.\n'
 }
 
 self_delete_if_requested() {

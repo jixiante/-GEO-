@@ -1,6 +1,6 @@
-# GEOFlow 部署脚本 / Deployment Scripts
+# 点签GEO部署脚本 / Deployment Scripts
 
-这个目录用于存放 GEOFlow 的参考部署脚本，方便技术人员在常见云服务器、VPS、Docker 主机或面板服务器上快速完成环境自检和生产部署。
+这个目录用于存放点签GEO的参考部署脚本，方便技术人员在常见云服务器、VPS、Docker 主机或面板服务器上快速完成环境自检和生产部署。
 
 脚本默认走仓库现有的 `docker-compose.prod.yml` 生产链路，不绕开项目标准部署方式。
 
@@ -38,7 +38,7 @@
 仅在全新空数据库的服务器执行：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/yaojingang/GEOFlow/main/deploy-scripts/geoflow-docker-deploy.sh -o geoflow-docker-deploy.sh
+curl -fsSL https://raw.githubusercontent.com/jian-ux/-GEO-/main/deploy-scripts/geoflow-docker-deploy.sh -o geoflow-docker-deploy.sh
 bash geoflow-docker-deploy.sh
 ```
 
@@ -56,9 +56,9 @@ bash geoflow-docker-deploy.sh
 - 前台：`APP_URL`
 - 后台：`APP_URL/geo_admin/login`
 - 默认管理员：`admin`
-- 默认密码：`password`
+- 初始密码：生产环境未设置 `GEOFLOW_ADMIN_PASSWORD` 时生成一次性随机密码，请从 `geoflow-init` 初始化日志读取
 
-首次登录后请立即修改默认密码。
+首次登录后请立即修改初始密码。
 
 ## 非交互部署
 
@@ -78,7 +78,7 @@ bash geoflow-docker-deploy.sh
 
 | 变量 | 默认值 | 说明 |
 | --- | --- | --- |
-| `GEOFLOW_REPO_URL` | `https://github.com/yaojingang/GEOFlow.git` | 源码仓库地址 |
+| `GEOFLOW_REPO_URL` | `https://github.com/jian-ux/-GEO-.git` | 源码仓库地址 |
 | `GEOFLOW_BRANCH` | `main` | 部署分支 |
 | `GEOFLOW_APP_DIR` | `/opt/geoflow` | 服务器部署目录 |
 | `GEOFLOW_INSTALL_DOCKER` | `auto` | `1` 自动安装 Docker；`0` 缺少 Docker 时直接失败 |
@@ -171,7 +171,7 @@ Recommended for production:
 On a fresh server with an empty database, run:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/yaojingang/GEOFlow/main/deploy-scripts/geoflow-docker-deploy.sh -o geoflow-docker-deploy.sh
+curl -fsSL https://raw.githubusercontent.com/jian-ux/-GEO-/main/deploy-scripts/geoflow-docker-deploy.sh -o geoflow-docker-deploy.sh
 bash geoflow-docker-deploy.sh
 ```
 
@@ -189,9 +189,9 @@ After deployment:
 - Site: `APP_URL`
 - Admin: `APP_URL/geo_admin/login`
 - Default username: `admin`
-- Default password: `password`
+- Initial password: when `GEOFLOW_ADMIN_PASSWORD` is unset in production, read the generated one-time password from the `geoflow-init` log
 
-Change the default admin password immediately after first login.
+Change the initial admin password immediately after first login.
 
 ## Non-Interactive Deployment
 
@@ -211,7 +211,7 @@ Optional variables:
 
 | Variable | Default | Description |
 | --- | --- | --- |
-| `GEOFLOW_REPO_URL` | `https://github.com/yaojingang/GEOFlow.git` | Source repository URL |
+| `GEOFLOW_REPO_URL` | `https://github.com/jian-ux/-GEO-.git` | Source repository URL |
 | `GEOFLOW_BRANCH` | `main` | Branch to deploy |
 | `GEOFLOW_APP_DIR` | `/opt/geoflow` | Server installation directory |
 | `GEOFLOW_INSTALL_DOCKER` | `auto` | `1` to install Docker automatically, `0` to fail if Docker is missing |

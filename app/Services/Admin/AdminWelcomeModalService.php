@@ -6,7 +6,7 @@ use App\Models\Admin;
 use App\Support\AdminWeb;
 
 /**
- * 后台「欢迎使用 GEOFlow」弹窗：负责版本态判断、自动打开一次、以及关闭落库所需的数据。
+ * 后台项目说明弹窗：负责版本态判断、自动打开一次、以及关闭落库所需的数据。
  */
 class AdminWelcomeModalService
 {
@@ -15,7 +15,7 @@ class AdminWelcomeModalService
     ) {}
 
     /**
-     * 为 Blade 输出构造 JSON 载荷（多语言文案 + 运行态：是否自动打开、关闭地址、CSRF、外链）。
+     * 为 Blade 输出构造 JSON 载荷（多语言文案 + 运行态：是否自动打开、关闭地址、CSRF）。
      *
      * @return array{copy: array<string, mixed>, state: array<string, mixed>}
      */
@@ -36,14 +36,6 @@ class AdminWelcomeModalService
                 'shouldAutoOpen' => $shouldAutoOpen,
                 'dismissUrl' => AdminWeb::routePath('admin.welcome.dismiss'),
                 'csrfToken' => csrf_token(),
-                'links' => [
-                    'x' => 'https://x.com/yaojingang',
-                    'github' => 'https://github.com/yaojingang/GEOFlow',
-                    'changelog' => [
-                        'zh-CN' => 'https://github.com/yaojingang/GEOFlow/blob/main/docs/CHANGELOG.md',
-                        'en' => 'https://github.com/yaojingang/GEOFlow/blob/main/docs/CHANGELOG_en.md',
-                    ],
-                ],
             ],
         ];
     }

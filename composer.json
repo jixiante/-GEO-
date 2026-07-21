@@ -1,9 +1,9 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/laravel",
+    "name": "jian-ux/dianqian-geo",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "description": "Dianqian GEO intelligent content production and distribution platform.",
+    "keywords": ["geo", "content", "rag", "laravel"],
     "license": "Apache-2.0",
     "require": {
         "php": "^8.3",

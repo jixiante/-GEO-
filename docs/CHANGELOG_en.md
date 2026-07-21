@@ -1,6 +1,17 @@
-# GEOFlow Changelog
+# Dianqian GEO Changelog
 
-This document tracks user-facing updates in the public repository. For future GitHub pushes, update this file together with the Chinese version in `CHANGELOG.md`.
+This document tracks Dianqian GEO updates. For future GitHub pushes, update this file together with the Chinese version in `CHANGELOG.md`.
+
+## 2026-07-21
+
+### v1.0.0
+
+- Unified the product and administration branding as Dianqian GEO.
+- Completed local Docker Compose deployment and model integration.
+- Rewrote the product README and added leadership handoff and security checklists.
+- Switched version metadata, deployment sources, and update allowlists to the Dianqian GEO repository.
+- Preserved the Apache-2.0 license and upstream notice while adding derivative-work attribution.
+- Inherited the GEOFlow v2.1.1 security migration and hardening baseline.
 
 ## 2026-07-17
 

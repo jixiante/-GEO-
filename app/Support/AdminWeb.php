@@ -23,7 +23,9 @@ final class AdminWeb
 
     public static function siteName(): string
     {
-        return 'GEOFlow';
+        $name = trim((string) config('app.name', '点签GEO'));
+
+        return $name !== '' ? $name : '点签GEO';
     }
 
     public static function basePath(): string

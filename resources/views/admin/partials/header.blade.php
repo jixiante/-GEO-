@@ -5,17 +5,14 @@
     $adminRoleLabel = $isSuperAdmin ? __('admin.header.super_admin') : __('admin.header.admin');
     $updateNotification = is_array($adminUpdateNotificationPayload ?? null) ? $adminUpdateNotificationPayload : [];
     $updateState = is_array($updateNotification['state'] ?? null) ? $updateNotification['state'] : [];
-    $updateLinks = is_array($updateNotification['links'] ?? null) ? $updateNotification['links'] : [];
     $hasVersionUpdate = !empty($updateState['is_update_available']);
     $isUpdateCenterEnabled = (bool) config('geoflow.update_center_enabled', true);
+    $isUpdateCheckEnabled = (bool) config('geoflow.update_check_enabled', false);
     $localeForChangelog = app()->getLocale() === 'en' ? 'en' : 'zh-CN';
     $updatePayload = is_array($updateState['payload'] ?? null) ? $updateState['payload'] : [];
     $updateSummary = (string) ($localeForChangelog === 'en'
         ? ($updatePayload['summary_en'] ?? '')
         : ($updatePayload['summary_zh'] ?? ''));
-    $changelogLinks = is_array($updateLinks['changelog'] ?? null) ? $updateLinks['changelog'] : [];
-    $notificationChangelogUrl = (string) ($changelogLinks[$localeForChangelog] ?? $changelogLinks['zh-CN'] ?? 'https://github.com/yaojingang/GEOFlow/blob/main/docs/CHANGELOG.md');
-    $notificationGithubUrl = (string) ($updateLinks['github'] ?? 'https://github.com/yaojingang/GEOFlow');
     $notificationUpdateCenterUrl = $isUpdateCenterEnabled && $isSuperAdmin ? \App\Support\AdminWeb::routePath('admin.system-updates.index') : '';
     $notificationStatus = (string) ($updateState['status'] ?? 'disabled');
     $menu = [
@@ -116,7 +113,11 @@
 <nav class="bg-white shadow-sm border-b">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex h-16 items-center gap-3 lg:gap-4 min-w-0">
-            <a href="{{ route('admin.dashboard') }}" class="shrink-0 text-lg sm:text-xl font-semibold text-gray-900">{{ $adminBrandName }}</a>
+            <a href="{{ route('admin.dashboard') }}" class="flex shrink-0 items-center gap-2.5 text-gray-900" aria-label="{{ $adminBrandName }}">
+                <span class="admin-brand-seal flex h-8 w-8 items-center justify-center text-base font-bold text-white" aria-hidden="true">点</span>
+                <span class="text-lg font-bold sm:text-xl">{{ $adminBrandName }}</span>
+                <span class="hidden border-l border-gray-200 pl-2.5 text-xs font-medium text-gray-400 xl:inline">智能内容中台</span>
+            </a>
             <nav class="hidden md:flex flex-1 min-w-0 items-center">
                 <div class="flex w-full min-w-0 items-center gap-3 lg:gap-5 overflow-x-auto overscroll-x-contain py-2 -my-2 [scrollbar-width:thin]">
                     @foreach ($menu as $key => $item)
@@ -128,6 +129,7 @@
                 </div>
             </nav>
             <div class="flex shrink-0 items-center gap-2 sm:gap-3 ml-auto">
+                @if($isUpdateCheckEnabled)
                 <div class="relative">
                     <button onclick="toggleAdminNotifications()" class="relative rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors duration-200" type="button" aria-label="{{ __('admin.header.notifications.label') }}" title="{{ __('admin.header.notifications.label') }}">
                         <i data-lucide="bell" class="w-5 h-5"></i>
@@ -182,16 +184,11 @@
                                         {{ __('admin.header.notifications.open_update_center') }}
                                     </a>
                                 @endif
-                                <a href="{{ $notificationChangelogUrl }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center rounded-lg bg-blue-600 px-3 py-2 text-xs font-medium text-white hover:bg-blue-700">
-                                    {{ __('admin.header.notifications.view_changelog') }}
-                                </a>
-                                <a href="{{ $notificationGithubUrl }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50">
-                                    {{ __('admin.header.notifications.open_github') }}
-                                </a>
                             </div>
                         </div>
                     </div>
                 </div>
+                @endif
                 <div class="hidden md:flex items-center rounded-lg border border-gray-200 bg-white px-2 py-1 shadow-sm">
                     <i data-lucide="languages" class="w-4 h-4 text-gray-400 mr-1.5"></i>
                     <select
@@ -208,8 +205,8 @@
                 </div>
                 <div class="relative">
                     <button onclick="toggleUserMenu()" class="flex items-center space-x-1 text-sm text-gray-600 hover:text-gray-900 transition-colors duration-200" type="button">
-                        <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                            <i data-lucide="user" class="w-4 h-4 text-blue-600"></i>
+                        <div class="flex h-8 w-8 items-center justify-center rounded-full bg-red-50">
+                            <i data-lucide="user" class="h-4 w-4 text-red-700"></i>
                         </div>
                         <i data-lucide="chevron-down" class="w-4 h-4"></i>
                     </button>

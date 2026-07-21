@@ -10,6 +10,22 @@ class AdminLoginPageTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_login_page_uses_dianqian_brand_identity(): void
+    {
+        config([
+            'app.name' => '点签GEO',
+            'geoflow.site_full_name' => '点签GEO · 智能内容中台',
+            'geoflow.initial_admin_hint_enabled' => false,
+        ]);
+
+        $this->get(route('admin.login'))
+            ->assertOk()
+            ->assertSee('<title>管理员登录 — 点签GEO</title>', false)
+            ->assertSee('点签GEO · 智能内容中台')
+            ->assertSee('login-badge', false)
+            ->assertDontSee('GEOFlow');
+    }
+
     public function test_login_page_shows_initial_admin_hint_when_default_credentials_are_still_valid(): void
     {
         config([

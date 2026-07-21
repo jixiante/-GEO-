@@ -8,8 +8,8 @@
             --admin-welcome-ink: #141413;
             --admin-welcome-body: #3d3d3a;
             --admin-welcome-muted: #5e5d59;
-            --admin-welcome-brand: #1B365D;
-            --admin-welcome-border: #e8e5da;
+            --admin-welcome-brand: #a6322a;
+            --admin-welcome-border: #e1e3e6;
             max-width: 860px;
             background: #ffffff;
             color: var(--admin-welcome-body);
@@ -31,7 +31,7 @@
 
         #admin-welcome-subtitle {
             margin-top: 12px;
-            border-left: 3px solid #1B365D;
+            border-left: 3px solid #a6322a;
             padding-left: 14px;
             color: var(--admin-welcome-muted);
             font-size: var(--admin-welcome-body-size);
@@ -55,7 +55,7 @@
 
         #admin-welcome-content .admin-welcome-section-title {
             margin: 18px 0 8px;
-            border-left: 3px solid #1B365D;
+            border-left: 3px solid #a6322a;
             padding-left: 10px;
             font-family: ui-serif, "Songti SC", "Noto Serif CJK SC", "Source Han Serif SC", Georgia, serif;
             font-size: var(--admin-welcome-section-size);
@@ -96,14 +96,14 @@
     <div id="admin-welcome-modal" class="hidden fixed inset-0 z-[70]">
         <div class="absolute inset-0 bg-slate-950/40 backdrop-blur-sm"></div>
         <div class="relative flex min-h-full items-center justify-center p-4 sm:p-6 lg:p-8">
-            <div data-kami-document class="admin-welcome-document w-full overflow-hidden rounded-2xl border border-[#e8e5da] bg-white shadow-[0_24px_80px_rgba(20,20,19,0.14)] ring-1 ring-[#e8e5da]">
-                <div class="border-b border-[#e8e5da] bg-white px-5 py-3.5 sm:px-7">
+            <div data-kami-document class="admin-welcome-document w-full overflow-hidden rounded-lg border border-[#e1e3e6] bg-white shadow-[0_24px_80px_rgba(20,20,19,0.14)] ring-1 ring-[#e1e3e6]">
+                <div class="border-b border-[#e1e3e6] bg-white px-5 py-3.5 sm:px-7">
                     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div>
-                            <div id="admin-welcome-badge" class="admin-welcome-meta-text inline-flex rounded-full bg-[#EEF2F7] px-2.5 py-1 font-semibold text-[#1B365D]"></div>
+                            <div id="admin-welcome-badge" class="admin-welcome-meta-text inline-flex rounded-full bg-[#fbf4f3] px-2.5 py-1 font-semibold text-[#922c24]"></div>
                         </div>
                         <div class="flex items-center gap-2 self-start sm:self-auto">
-                            <button type="button" data-welcome-switch class="admin-welcome-meta-text rounded-full border border-[#d1cfc5] bg-white px-3 py-1.5 font-medium text-[#3d3d3a] hover:border-[#1B365D] hover:text-[#1B365D]"></button>
+                            <button type="button" data-welcome-switch class="admin-welcome-meta-text rounded-full border border-[#d8dade] bg-white px-3 py-1.5 font-medium text-[#3d3d3a] hover:border-[#a6322a] hover:text-[#922c24]"></button>
                             <button type="button" data-welcome-close class="admin-welcome-meta-text rounded-full border border-[#d1cfc5] bg-white px-3 py-1.5 font-medium text-[#3d3d3a] hover:bg-[#f7f6f1]"></button>
                         </div>
                     </div>
@@ -116,14 +116,6 @@
                         <div id="admin-welcome-content" class="admin-welcome-document-body space-y-4"></div>
                     </article>
 
-                    <div class="admin-welcome-reader mx-auto mt-7 border-t border-[#e8e5da] pt-4">
-                        <p id="admin-welcome-links-label" class="admin-welcome-meta-text text-[#5e5d59]"></p>
-                        <div class="mt-3 flex flex-wrap gap-2">
-                            <a id="admin-welcome-link-x" class="admin-welcome-meta-text inline-flex items-center rounded-full bg-[#EEF2F7] px-3 py-1.5 font-medium text-[#1B365D] ring-1 ring-[#d1cfc5] hover:bg-[#E4ECF5]" target="_blank" rel="noopener noreferrer"></a>
-                            <a id="admin-welcome-link-github" class="admin-welcome-meta-text inline-flex items-center rounded-full bg-[#EEF2F7] px-3 py-1.5 font-medium text-[#1B365D] ring-1 ring-[#d1cfc5] hover:bg-[#E4ECF5]" target="_blank" rel="noopener noreferrer"></a>
-                            <a id="admin-welcome-link-changelog" class="admin-welcome-meta-text inline-flex items-center rounded-full bg-[#EEF2F7] px-3 py-1.5 font-medium text-[#1B365D] ring-1 ring-[#d1cfc5] hover:bg-[#E4ECF5]" target="_blank" rel="noopener noreferrer"></a>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -150,10 +142,6 @@
             const titleNode = document.getElementById('admin-welcome-title');
             const subtitleNode = document.getElementById('admin-welcome-subtitle');
             const contentNode = document.getElementById('admin-welcome-content');
-            const linksLabelNode = document.getElementById('admin-welcome-links-label');
-            const linkXNode = document.getElementById('admin-welcome-link-x');
-            const linkGithubNode = document.getElementById('admin-welcome-link-github');
-            const linkChangelogNode = document.getElementById('admin-welcome-link-changelog');
             const switchButton = modal.querySelector('[data-welcome-switch]');
             const closeButtons = modal.querySelectorAll('[data-welcome-close]');
 
@@ -185,13 +173,6 @@
                 titleNode.textContent = letter.title || '';
                 subtitleNode.textContent = letter.subtitle || '';
                 contentNode.innerHTML = blocks.map((block) => blockHtml(block)).join('');
-                linksLabelNode.textContent = meta.links_label || '';
-                linkXNode.textContent = meta.author_link || '';
-                linkXNode.href = state.links?.x || '#';
-                linkGithubNode.textContent = meta.github_link || '';
-                linkGithubNode.href = state.links?.github || '#';
-                linkChangelogNode.textContent = meta.changelog_link || '';
-                linkChangelogNode.href = state.links?.changelog?.[locale] || state.links?.changelog?.['zh-CN'] || '#';
                 switchButton.textContent = meta.switch_label || (locale === 'zh-CN' ? 'English' : '中文');
                 closeButtons.forEach((button) => {
                     button.textContent = meta.close || 'Close';

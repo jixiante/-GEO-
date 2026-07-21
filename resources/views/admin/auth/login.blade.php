@@ -8,22 +8,21 @@
     <script src="{{ asset('js/lucide.min.js') }}"></script>
     <style>
         body {
-            background: radial-gradient(circle at top left, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0) 32%),
-                radial-gradient(circle at bottom right, rgba(229, 231, 235, 0.72), rgba(229, 231, 235, 0) 30%),
-                linear-gradient(180deg, #f5f5f7 0%, #e5e7eb 100%);
+            background: #f1f2f3;
             min-height: 100vh;
         }
         .login-form {
-            background: rgba(255, 255, 255, 0.82);
-            backdrop-filter: blur(24px) saturate(180%);
-            border: 1px solid rgba(209, 213, 219, 0.9);
-            box-shadow: 0 24px 60px rgba(15, 23, 42, 0.08);
+            background: #fff;
+            border: 1px solid #dfe1e4;
+            box-shadow: 0 24px 60px rgba(32, 33, 36, 0.08);
         }
         .login-badge {
-            background: linear-gradient(180deg, #6b7280 0%, #374151 100%);
+            background: #a6322a;
+            border-radius: 6px;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .22);
         }
         .initial-admin-hint {
-            background: linear-gradient(180deg, rgba(239, 246, 255, 0.96) 0%, rgba(255, 255, 255, 0.9) 100%);
+            background: #fbf4f3;
         }
     </style>
 </head>
@@ -38,13 +37,14 @@
     </select>
 </div>
 <div class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md px-4">
-    <div class="rounded-2xl p-8 login-form">
+    <div class="rounded-lg p-8 login-form">
         <div class="text-center mb-8">
-            <div class="login-badge w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <i data-lucide="shield-check" class="w-8 h-8 text-white"></i>
+            <div class="login-badge mx-auto mb-4 flex h-16 w-16 items-center justify-center text-2xl font-bold text-white" aria-hidden="true">
+                点
             </div>
-            <h1 class="text-2xl font-bold text-gray-900 mb-2">{{ __('admin.login.title') }}</h1>
-            <p class="text-gray-600">{{ __('admin.login.subtitle', ['site_name' => $adminSiteName]) }}</p>
+            <h1 class="mb-2 text-2xl font-bold text-gray-900">{{ $adminSiteName }}</h1>
+            <p class="text-gray-600">{{ config('geoflow.site_full_name', '点签GEO · 智能内容中台') }}</p>
+            <p class="mt-1 text-xs font-medium text-gray-400">{{ __('admin.login.title') }}</p>
         </div>
         @if (session('message'))
             <div class="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
@@ -57,9 +57,9 @@
             </div>
         @endif
         @if (!empty($initialAdminHint['enabled']))
-            <div id="initial-admin-hint" class="initial-admin-hint mb-6 hidden rounded-xl border border-blue-200 p-4 text-sm text-gray-700 shadow-sm" data-storage-key="{{ $initialAdminHint['storage_key'] ?? 'geoflow.initial-admin-hint' }}">
+            <div id="initial-admin-hint" class="initial-admin-hint mb-6 hidden rounded-lg border border-red-200 p-4 text-sm text-gray-700 shadow-sm" data-storage-key="{{ $initialAdminHint['storage_key'] ?? 'geoflow.initial-admin-hint' }}">
                 <div class="flex items-start gap-3">
-                    <div class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white">
+                    <div class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-red-700 text-white">
                         <i data-lucide="key-round" class="h-5 w-5"></i>
                     </div>
                     <div class="min-w-0 flex-1">
@@ -72,7 +72,7 @@
                                 <i data-lucide="x" class="h-4 w-4"></i>
                             </button>
                         </div>
-                        <div class="mt-3 grid gap-2 rounded-lg border border-blue-100 bg-white/80 p-3">
+                        <div class="mt-3 grid gap-2 rounded-lg border border-red-100 bg-white p-3">
                             <div class="flex items-center justify-between gap-3">
                                 <span class="text-gray-500">{{ __('admin.login.first_login_username') }}</span>
                                 <code class="rounded bg-gray-100 px-2 py-1 font-mono text-xs text-gray-900">{{ $initialAdminHint['username'] ?? '' }}</code>
@@ -98,24 +98,24 @@
             <div>
                 <label for="username" class="block text-sm font-medium text-gray-700 mb-2">{{ __('admin.login.username') }}</label>
                 <input type="text" id="username" name="username" required value="{{ old('username') }}"
-                       class="block w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                       class="block w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-200 focus:border-red-700"
                        placeholder="{{ __('admin.login.username_placeholder') }}" autocomplete="username">
             </div>
             <div>
                 <label for="password" class="block text-sm font-medium text-gray-700 mb-2">{{ __('admin.login.password') }}</label>
                 <input type="password" id="password" name="password" required
-                       class="block w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                       class="block w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-200 focus:border-red-700"
                        placeholder="{{ __('admin.login.password_placeholder') }}" autocomplete="current-password">
             </div>
             <input type="hidden" name="remember" value="0">
             <label class="flex items-center justify-between rounded-lg border border-gray-200 bg-white/70 px-3 py-3 text-sm text-gray-600">
                 <span class="flex items-center gap-2">
-                    <input type="checkbox" name="remember" value="1" checked class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                    <input type="checkbox" name="remember" value="1" checked class="h-4 w-4 rounded border-gray-300 text-red-700 focus:ring-red-200">
                     <span>{{ __('admin.login.remember_30_days') }}</span>
                 </span>
                 <span class="text-xs text-gray-400">{{ __('admin.login.remember_30_days_hint') }}</span>
             </label>
-            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg">
+            <button type="submit" class="w-full rounded-lg bg-red-700 px-4 py-3 font-medium text-white hover:bg-red-800">
                 {{ __('admin.login.submit') }}
             </button>
         </form>

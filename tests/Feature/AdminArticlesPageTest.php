@@ -955,8 +955,10 @@ class AdminArticlesPageTest extends TestCase
         $this->assertStringNotContainsString('https:\/\/configured.example'.$escapedPath, $html);
     }
 
-    public function test_admin_brand_stays_geoflow_when_public_site_name_changes(): void
+    public function test_admin_brand_stays_dianqian_when_public_site_name_changes(): void
     {
+        config(['app.name' => '点签GEO']);
+
         $admin = Admin::query()->create([
             'username' => 'admin_brand_admin',
             'password' => 'secret-123',
@@ -974,7 +976,7 @@ class AdminArticlesPageTest extends TestCase
         $this->actingAs($admin, 'admin')
             ->get(route('admin.dashboard'))
             ->assertOk()
-            ->assertSee('GEOFlow')
+            ->assertSee('点签GEO')
             ->assertDontSee('Public Frontend Name');
     }
 }

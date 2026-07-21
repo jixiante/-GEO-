@@ -1,4 +1,7 @@
 ARG PHP_CLI_IMAGE=php:8.4-cli-bookworm
+ARG COMPOSER_IMAGE=composer:2
+
+FROM ${COMPOSER_IMAGE} AS composer
 
 FROM ${PHP_CLI_IMAGE}
 
@@ -39,7 +42,7 @@ RUN apt-get update \
     && docker-php-ext-enable redis \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+COPY --from=composer /usr/bin/composer /usr/bin/composer
 
 ENV COMPOSER_ALLOW_SUPERUSER=1 \
     COMPOSER_MEMORY_LIMIT=-1 \
@@ -51,7 +54,25 @@ RUN if [ -n "${COMPOSER_PACKAGIST_MIRROR}" ]; then \
     fi
 
 COPY composer.json composer.lock ./
-RUN composer install --no-interaction --prefer-dist --no-dev --no-scripts
+RUN --mount=type=cache,target=/tmp/composer-cache \
+    sh -eu -c 'cache_file=/tmp/composer-cache/files/laravel/framework/f14b62ea551f1d073f1676b0b1c3640742cf4d51.zip; \
+      if ! unzip -tqq "$cache_file" >/dev/null 2>&1; then \
+        mkdir -p "$(dirname "$cache_file")"; \
+        rm -f "$cache_file"; \
+        curl --http1.1 --fail --location --retry 8 --retry-all-errors --retry-delay 2 \
+          --output "$cache_file" \
+          https://codeload.github.com/laravel/framework/legacy.zip/727a8ea2949c23ca8b5316b86a00984b6017b7a0; \
+        unzip -tqq "$cache_file"; \
+      fi'
+RUN --mount=type=cache,target=/tmp/composer-cache \
+    COMPOSER_CACHE_DIR=/tmp/composer-cache \
+    COMPOSER_MAX_PARALLEL_HTTP=1 \
+    sh -eu -c 'attempt=1; while ! composer install --no-interaction --prefer-dist --no-dev --no-scripts; do \
+      if [ "$attempt" -ge 8 ]; then exit 1; fi; \
+      attempt=$((attempt + 1)); \
+      echo "[build] composer download interrupted; retry ${attempt}/8"; \
+      sleep 2; \
+    done'
 
 COPY . .
 

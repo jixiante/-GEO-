@@ -43,6 +43,7 @@ services:
       dockerfile: docker/Dockerfile
       args:
         PHP_CLI_IMAGE: ${PHP_CLI_IMAGE:-php:8.4-cli-bookworm}
+        COMPOSER_IMAGE: ${COMPOSER_IMAGE:-composer:2}
         COMPOSER_PACKAGIST_MIRROR: ${COMPOSER_PACKAGIST_MIRROR:-}
     container_name: geoflow-init
     working_dir: /var/www/html
@@ -54,6 +55,7 @@ services:
     command: ["php", "artisan", "about"]
     volumes:
       - ./:/var/www/html
+      - geoflow-vendor:/var/www/html/vendor
     depends_on:
       postgres:
         condition: service_healthy
@@ -68,14 +70,18 @@ services:
       dockerfile: docker/Dockerfile
       args:
         PHP_CLI_IMAGE: ${PHP_CLI_IMAGE:-php:8.4-cli-bookworm}
+        COMPOSER_IMAGE: ${COMPOSER_IMAGE:-composer:2}
         COMPOSER_PACKAGIST_MIRROR: ${COMPOSER_PACKAGIST_MIRROR:-}
     container_name: geoflow-app
     working_dir: /var/www/html
+    env_file:
+      - ./.env
     command: ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8080"]
     ports:
       - "${APP_PORT:-18080}:8080"
     volumes:
       - ./:/var/www/html
+      - geoflow-vendor:/var/www/html/vendor
     depends_on:
       assets:
         condition: service_completed_successfully
@@ -90,12 +96,16 @@ services:
       dockerfile: docker/Dockerfile
       args:
         PHP_CLI_IMAGE: ${PHP_CLI_IMAGE:-php:8.4-cli-bookworm}
+        COMPOSER_IMAGE: ${COMPOSER_IMAGE:-composer:2}
         COMPOSER_PACKAGIST_MIRROR: ${COMPOSER_PACKAGIST_MIRROR:-}
     container_name: geoflow-queue
     working_dir: /var/www/html
+    env_file:
+      - ./.env
     command: ["php", "artisan", "queue:work", "redis", "--queue=geoflow,distribution,theme-replication,default", "--sleep=1", "--tries=1", "--timeout=300"]
     volumes:
       - ./:/var/www/html
+      - geoflow-vendor:/var/www/html/vendor
     depends_on:
       init:
         condition: service_completed_successfully
@@ -108,12 +118,16 @@ services:
       dockerfile: docker/Dockerfile
       args:
         PHP_CLI_IMAGE: ${PHP_CLI_IMAGE:-php:8.4-cli-bookworm}
+        COMPOSER_IMAGE: ${COMPOSER_IMAGE:-composer:2}
         COMPOSER_PACKAGIST_MIRROR: ${COMPOSER_PACKAGIST_MIRROR:-}
     container_name: geoflow-scheduler
     working_dir: /var/www/html
+    env_file:
+      - ./.env
     command: ["php", "artisan", "schedule:work"]
     volumes:
       - ./:/var/www/html
+      - geoflow-vendor:/var/www/html/vendor
     depends_on:
       init:
         condition: service_completed_successfully
@@ -126,14 +140,18 @@ services:
       dockerfile: docker/Dockerfile
       args:
         PHP_CLI_IMAGE: ${PHP_CLI_IMAGE:-php:8.4-cli-bookworm}
+        COMPOSER_IMAGE: ${COMPOSER_IMAGE:-composer:2}
         COMPOSER_PACKAGIST_MIRROR: ${COMPOSER_PACKAGIST_MIRROR:-}
     container_name: geoflow-reverb
     working_dir: /var/www/html
+    env_file:
+      - ./.env
     command: ["php", "artisan", "reverb:start", "--host=0.0.0.0", "--port=8080"]
     ports:
       - "${REVERB_EXPOSE_PORT:-18081}:8080"
     volumes:
       - ./:/var/www/html
+      - geoflow-vendor:/var/www/html/vendor
     depends_on:
       init:
         condition: service_completed_successfully
@@ -141,3 +159,4 @@ services:
 
 volumes:
   geoflow-node-modules:
+  geoflow-vendor:

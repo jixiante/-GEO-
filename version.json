@@ -1,17 +1,17 @@
 {
-  "version": "2.1.1",
-  "release_date": "2026-07-17",
-  "release_type": "patch",
-  "archive_url": "https://github.com/yaojingang/GEOFlow/archive/refs/tags/v2.1.1.zip",
+  "version": "1.0.0",
+  "release_date": "2026-07-21",
+  "release_type": "initial",
+  "archive_url": "https://github.com/jian-ux/-GEO-/archive/refs/tags/v1.0.0.zip",
   "payload": {
-    "title_zh": "GEOFlow v2.1.1",
-    "title_en": "GEOFlow v2.1.1",
-    "summary_zh": "GEOFlow 2.1.1 修复结构化数据注入、受管图片文件边界、出站请求 SSRF 与管理权限问题，并关闭可执行主题在线编辑，加入隔离预览、package-only 交付和只读安全审计。",
-    "summary_en": "GEOFlow 2.1.1 fixes structured-data injection, managed image file-boundary, outbound SSRF, and admin authorization issues; it also disables executable live theme editing and adds isolated previews, package-only delivery, and a read-only security audit.",
-    "upgrade_tip_zh": "升级时先保持图片删除门禁关闭并停机排空旧进程，设置一次性确认后执行 php artisan migrate；启动新代码，运行 php artisan geoflow:managed-images:readiness 与 php artisan geoflow:security-audit，确认就绪后再启用图片删除门禁并重启 queue worker。",
-    "upgrade_tip_en": "Keep the managed image deletion gate disabled, drain old processes, set the one-time confirmation, and run php artisan migrate. Start the new code, run php artisan geoflow:managed-images:readiness and php artisan geoflow:security-audit, then enable deletion only after readiness is confirmed and restart queue workers.",
-    "release_url": "https://github.com/yaojingang/GEOFlow/releases/tag/v2.1.1",
-    "changelog_url_zh": "https://github.com/yaojingang/GEOFlow/blob/v2.1.1/docs/CHANGELOG.md",
-    "changelog_url_en": "https://github.com/yaojingang/GEOFlow/blob/v2.1.1/docs/CHANGELOG_en.md"
+    "title_zh": "点签GEO v1.0.0",
+    "title_en": "Dianqian GEO v1.0.0",
+    "summary_zh": "点签GEO 1.0.0 完成产品品牌重构、本地 Docker 部署、国产模型接入、知识库 RAG、内容审核、多渠道分发和领导交付文档整理，并继承上游安全加固基线。",
+    "summary_en": "Dianqian GEO 1.0.0 delivers product rebranding, local Docker deployment, model integration, knowledge-base RAG, content review, multi-channel distribution, and leadership handoff documentation on top of the upstream security baseline.",
+    "upgrade_tip_zh": "部署或升级前先备份数据库和上传目录。现有部署升级必须停机并排空旧进程与队列，设置一次性安全确认后执行 php artisan migrate，再运行 geoflow:managed-images:readiness 与 geoflow:security-audit，确认通过后再启用图片删除门禁并重启 queue worker。",
+    "upgrade_tip_en": "Back up the database and uploads before deployment or upgrade. Existing installations must drain old processes and queues, set the one-time security confirmation, run php artisan migrate, then run geoflow:managed-images:readiness and geoflow:security-audit before restarting queue workers.",
+    "release_url": "https://github.com/jian-ux/-GEO-/tree/v1.0.0",
+    "changelog_url_zh": "https://github.com/jian-ux/-GEO-/blob/v1.0.0/docs/CHANGELOG.md",
+    "changelog_url_en": "https://github.com/jian-ux/-GEO-/blob/v1.0.0/docs/CHANGELOG_en.md"
   }
 }

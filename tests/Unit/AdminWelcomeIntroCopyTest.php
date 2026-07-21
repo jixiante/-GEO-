@@ -11,8 +11,8 @@ class AdminWelcomeIntroCopyTest extends TestCase
         /** @var array<string, array<string, mixed>> $copy */
         $copy = require app_path('Support/AdminWelcome/intro_copy.php');
 
-        $this->assertSame('写给 GEOFlow 使用者的一封信', $copy['zh-CN']['letter']['title']);
-        $this->assertSame('A Letter to GEOFlow Users', $copy['en']['letter']['title']);
+        $this->assertSame('写给点签GEO使用者的一封信', $copy['zh-CN']['letter']['title']);
+        $this->assertSame('A Letter to Dianqian Users', $copy['en']['letter']['title']);
         $this->assertStringContainsString('提高被理解、引用和推荐的概率', $copy['zh-CN']['letter']['subtitle']);
         $this->assertStringContainsString('不承诺排名', $copy['zh-CN']['letter']['subtitle']);
         $this->assertStringContainsString('GEO 优化的是答案引擎采纳事实、观点和页面的概率', $this->flattenCopy($copy['zh-CN']['letter']['blocks']));
@@ -40,7 +40,8 @@ class AdminWelcomeIntroCopyTest extends TestCase
         $this->assertStringContainsString('--admin-welcome-title-size: 24px;', $html);
         $this->assertStringContainsString('--admin-welcome-body-size: 14px;', $html);
         $this->assertStringContainsString('--admin-welcome-body-leading: 1.52;', $html);
-        $this->assertStringContainsString('border-left: 3px solid #1B365D;', $html);
+        $this->assertStringContainsString('border-left: 3px solid #a6322a;', $html);
+        $this->assertStringNotContainsString('admin-welcome-link-github', $html);
         $this->assertStringContainsString('admin-welcome-document-body', $html);
         $this->assertStringNotContainsString('text-4xl', $html);
         $this->assertStringNotContainsString('sm:text-5xl', $html);
