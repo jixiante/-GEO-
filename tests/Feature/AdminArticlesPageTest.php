@@ -199,13 +199,16 @@ class AdminArticlesPageTest extends TestCase
             ->assertSee('vendor/cropperjs/cropper.min.js', false)
             ->assertSee(AdminWeb::routePath('admin.articles.editor.images.upload', ['articleId' => (int) $article->id]), false)
             ->assertSee(AdminWeb::routePath('admin.articles.editor.wechat-html'), false)
+            ->assertSee(AdminWeb::routePath('admin.articles.editor.toutiao-html'), false)
             ->assertSee('id="content-editor"', false)
             ->assertSee('id="article-editor-copy-markdown"', false)
             ->assertSee('id="article-editor-copy-wechat-html"', false)
+            ->assertSee('id="article-editor-copy-toutiao-html"', false)
             ->assertSee('id="article-editor-quick-image-input"', false)
             ->assertSee('id="article-editor-context-menu"', false)
             ->assertSee(__('admin.article_editor.copy.button'), false)
             ->assertSee(__('admin.article_editor.wechat.button'), false)
+            ->assertSee(__('admin.article_editor.toutiao.button'), false)
             ->assertSee(__('admin.articles.quality_scorecard.title'))
             ->assertSee(__('admin.articles.quality_scorecard.dynamic_title'))
             ->assertSee(__('admin.articles.quality_scorecard.structure_title'))
@@ -333,6 +336,34 @@ class AdminArticlesPageTest extends TestCase
         $this->assertStringContainsString('<h2', $html);
         $this->assertStringContainsString('<strong', $html);
         $this->assertStringContainsString('<table', $html);
+        $this->assertStringNotContainsString('<script', $html);
+    }
+
+    public function test_admin_can_export_article_editor_toutiao_html(): void
+    {
+        $admin = Admin::query()->create([
+            'username' => 'articles_toutiao_export_admin',
+            'password' => 'secret-123',
+            'email' => 'articles-toutiao-export@example.com',
+            'display_name' => 'Articles Toutiao Export Admin',
+            'role' => 'admin',
+            'status' => 'active',
+        ]);
+
+        $response = $this->actingAs($admin, 'admin')
+            ->postJson(route('admin.articles.editor.toutiao-html'), [
+                'content' => "## Section\n\nBody **important**\n\n<script>alert(1)</script>\n\n| A | B |\n| --- | --- |\n| 1 | 2 |",
+            ]);
+
+        $response->assertOk()
+            ->assertJsonPath('message', __('admin.article_editor.toutiao.success'));
+
+        $html = (string) $response->json('html');
+        $this->assertStringContainsString('<h2>Section</h2>', $html);
+        $this->assertStringContainsString('<strong>important</strong>', $html);
+        $this->assertStringContainsString('<table>', $html);
+        $this->assertStringNotContainsString('class=', $html);
+        $this->assertStringNotContainsString('style=', $html);
         $this->assertStringNotContainsString('<script', $html);
     }
 

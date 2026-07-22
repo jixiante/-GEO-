@@ -4420,6 +4420,12 @@ return [
             'success' => '已复制公众号 HTML，可直接粘贴到富文本编辑器。',
             'failed' => '公众号 HTML 复制失败，请稍后重试。',
         ],
+        'toutiao' => [
+            'button' => '复制头条格式',
+            'copying' => '生成中...',
+            'success' => '已复制头条富文本，可直接粘贴到头条文章编辑器。',
+            'failed' => '头条富文本复制失败，请稍后重试。',
+        ],
         'quick_actions' => [
             'title' => '快速插入',
             'context_title' => '常用排版',

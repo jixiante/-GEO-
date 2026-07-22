@@ -3416,6 +3416,12 @@ return array_replace_recursive($base, [
             'success' => 'WeChat-ready HTML copied. You can paste it into a rich-text editor.',
             'failed' => 'Failed to copy WeChat-ready HTML. Please try again later.',
         ],
+        'toutiao' => [
+            'button' => 'Copy Toutiao Format',
+            'copying' => 'Generating...',
+            'success' => 'Toutiao-ready rich text copied. You can paste it into the Toutiao article editor.',
+            'failed' => 'Failed to copy Toutiao-ready rich text. Please try again later.',
+        ],
         'quick_actions' => [
             'title' => 'Quick Insert',
             'context_title' => 'Common Formatting',

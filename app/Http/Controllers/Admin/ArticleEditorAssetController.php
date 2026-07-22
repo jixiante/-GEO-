@@ -8,6 +8,7 @@ use App\Models\ArticleImage;
 use App\Models\Image;
 use App\Models\ImageLibrary;
 use App\Services\GeoFlow\ManagedImageFileService;
+use App\Support\Admin\ToutiaoArticleHtmlExporter;
 use App\Support\Admin\WeChatArticleHtmlExporter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -38,6 +39,28 @@ class ArticleEditorAssetController extends Controller
 
         return response()->json([
             'message' => __('admin.article_editor.wechat.success'),
+            'html' => $html,
+            'plain' => $exporter->toPlainText($html),
+        ]);
+    }
+
+    public function exportToutiaoHtml(Request $request, ToutiaoArticleHtmlExporter $exporter): JsonResponse
+    {
+        $payload = $request->validate([
+            'content' => ['required', 'string', 'max:1000000'],
+        ], [
+            'content.required' => __('admin.article_editor.copy.empty'),
+        ]);
+
+        $html = $exporter->toHtml((string) $payload['content']);
+        if ($html === '') {
+            return response()->json([
+                'message' => __('admin.article_editor.copy.empty'),
+            ], 422);
+        }
+
+        return response()->json([
+            'message' => __('admin.article_editor.toutiao.success'),
             'html' => $html,
             'plain' => $exporter->toPlainText($html),
         ]);

@@ -9,6 +9,7 @@
         ? \App\Support\AdminWeb::routePath('admin.articles.editor.images.upload', ['articleId' => (int) $articleId])
         : '';
     $articleWechatHtmlUrl = \App\Support\AdminWeb::routePath('admin.articles.editor.wechat-html');
+    $articleToutiaoHtmlUrl = \App\Support\AdminWeb::routePath('admin.articles.editor.toutiao-html');
     $vditorLocaleMap = [
         'zh_CN' => 'zh_CN',
         'en' => 'en_US',
@@ -227,6 +228,14 @@
                                         <i data-lucide="copy-check" class="mr-1.5 h-4 w-4"></i>
                                         {{ __('admin.article_editor.wechat.button') }}
                                     </button>
+                                    <button
+                                        type="button"
+                                        id="article-editor-copy-toutiao-html"
+                                        class="inline-flex items-center rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 shadow-sm hover:border-red-300 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+                                    >
+                                        <i data-lucide="newspaper" class="mr-1.5 h-4 w-4"></i>
+                                        {{ __('admin.article_editor.toutiao.button') }}
+                                    </button>
                                 </div>
                             </div>
                             <p class="mt-2 text-sm text-gray-600">{{ __('admin.article_editor.editor_desc') }}</p>
@@ -253,6 +262,7 @@
                                 data-upload-url="{{ $articleImageUploadUrl }}"
                                 data-upload-enabled="{{ $isEdit ? '1' : '0' }}"
                                 data-wechat-html-url="{{ $articleWechatHtmlUrl }}"
+                                data-toutiao-html-url="{{ $articleToutiaoHtmlUrl }}"
                             ></div>
                             <input id="article-editor-quick-image-input" type="file" accept="image/*" class="hidden">
                             <div id="article-editor-context-menu" class="article-editor-context-menu" hidden>
@@ -667,6 +677,7 @@
             const uploadUrl = editorNode?.dataset.uploadUrl || '';
             const uploadEnabled = editorNode?.dataset.uploadEnabled === '1' && uploadUrl !== '';
             const wechatHtmlUrl = editorNode?.dataset.wechatHtmlUrl || '';
+            const toutiaoHtmlUrl = editorNode?.dataset.toutiaoHtmlUrl || '';
             const cropperScriptUrl = @json(asset('vendor/cropperjs/cropper.min.js'));
             const modal = document.getElementById('article-image-modal');
             const cropTarget = document.getElementById('article-image-crop-target');
@@ -675,6 +686,7 @@
             const statusNode = document.getElementById('article-image-status');
             const copyMarkdownButton = document.getElementById('article-editor-copy-markdown');
             const copyWechatHtmlButton = document.getElementById('article-editor-copy-wechat-html');
+            const copyToutiaoHtmlButton = document.getElementById('article-editor-copy-toutiao-html');
             const uploadOriginalButton = document.getElementById('article-image-upload-original');
             const uploadCroppedButton = document.getElementById('article-image-upload-cropped');
             const quickImageInput = document.getElementById('article-editor-quick-image-input');
@@ -702,6 +714,9 @@
                 wechatCopying: @json(__('admin.article_editor.wechat.copying')),
                 wechatSuccess: @json(__('admin.article_editor.wechat.success')),
                 wechatFailed: @json(__('admin.article_editor.wechat.failed')),
+                toutiaoCopying: @json(__('admin.article_editor.toutiao.copying')),
+                toutiaoSuccess: @json(__('admin.article_editor.toutiao.success')),
+                toutiaoFailed: @json(__('admin.article_editor.toutiao.failed')),
             };
             const snippets = {
                 heading: @json(__('admin.article_editor.snippets.heading')),
@@ -860,7 +875,7 @@
                 }
             }
 
-            async function copyRichHtml(html, plainText) {
+            async function copyRichHtml(html, plainText, failedMessage) {
                 if (
                     navigator.clipboard
                     && typeof navigator.clipboard.write === 'function'
@@ -877,11 +892,11 @@
                 }
 
                 if (!copyHtmlWithFallback(html)) {
-                    throw new Error(messages.wechatFailed);
+                    throw new Error(failedMessage || messages.copyFailed);
                 }
             }
 
-            async function copyWeChatHtml() {
+            async function copyExportedHtml(options) {
                 const markdown = getCurrentMarkdown();
                 textarea.value = markdown;
 
@@ -889,23 +904,23 @@
                     showEditorTip(messages.copyEmpty);
                     return;
                 }
-                if (!wechatHtmlUrl) {
-                    showEditorTip(messages.wechatFailed);
+                if (!options.url) {
+                    showEditorTip(options.failed);
                     return;
                 }
 
-                const originalHtml = copyWechatHtmlButton?.innerHTML || '';
-                if (copyWechatHtmlButton) {
-                    copyWechatHtmlButton.disabled = true;
-                    copyWechatHtmlButton.setAttribute('aria-busy', 'true');
-                    copyWechatHtmlButton.innerHTML = '<i data-lucide="loader-2" class="mr-1.5 h-4 w-4 animate-spin"></i>' + messages.wechatCopying;
+                const originalHtml = options.button?.innerHTML || '';
+                if (options.button) {
+                    options.button.disabled = true;
+                    options.button.setAttribute('aria-busy', 'true');
+                    options.button.innerHTML = '<i data-lucide="loader-2" class="mr-1.5 h-4 w-4 animate-spin"></i>' + options.copying;
                     if (window.lucide) {
                         window.lucide.createIcons();
                     }
                 }
 
                 try {
-                    const response = await fetch(wechatHtmlUrl, {
+                    const response = await fetch(options.url, {
                         method: 'POST',
                         headers: {
                             'Accept': 'application/json',
@@ -919,23 +934,43 @@
                         return {};
                     });
                     if (!response.ok || !payload.html) {
-                        throw new Error(payload.message || messages.wechatFailed);
+                        throw new Error(payload.message || options.failed);
                     }
 
-                    await copyRichHtml(String(payload.html), String(payload.plain || markdown));
-                    showEditorTip(payload.message || messages.wechatSuccess);
+                    await copyRichHtml(String(payload.html), String(payload.plain || markdown), options.failed);
+                    showEditorTip(payload.message || options.success);
                 } catch (error) {
-                    showEditorTip(error.message || messages.wechatFailed);
+                    showEditorTip(error.message || options.failed);
                 } finally {
-                    if (copyWechatHtmlButton) {
-                        copyWechatHtmlButton.disabled = false;
-                        copyWechatHtmlButton.removeAttribute('aria-busy');
-                        copyWechatHtmlButton.innerHTML = originalHtml;
+                    if (options.button) {
+                        options.button.disabled = false;
+                        options.button.removeAttribute('aria-busy');
+                        options.button.innerHTML = originalHtml;
                         if (window.lucide) {
                             window.lucide.createIcons();
                         }
                     }
                 }
+            }
+
+            function copyWeChatHtml() {
+                return copyExportedHtml({
+                    url: wechatHtmlUrl,
+                    button: copyWechatHtmlButton,
+                    copying: messages.wechatCopying,
+                    success: messages.wechatSuccess,
+                    failed: messages.wechatFailed,
+                });
+            }
+
+            function copyToutiaoHtml() {
+                return copyExportedHtml({
+                    url: toutiaoHtmlUrl,
+                    button: copyToutiaoHtmlButton,
+                    copying: messages.toutiaoCopying,
+                    success: messages.toutiaoSuccess,
+                    failed: messages.toutiaoFailed,
+                });
             }
 
             function hideContextMenu() {
@@ -1240,6 +1275,7 @@
 
             copyMarkdownButton?.addEventListener('click', copyArticleMarkdown);
             copyWechatHtmlButton?.addEventListener('click', copyWeChatHtml);
+            copyToutiaoHtmlButton?.addEventListener('click', copyToutiaoHtml);
 
             document.addEventListener('click', function (event) {
                 if (!contextMenu || contextMenu.hidden) {
