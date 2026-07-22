@@ -481,6 +481,66 @@ class AdminDistributionPageTest extends TestCase
             ->assertSee('name="generic_remote_id_path"', false);
     }
 
+    public function test_admin_can_create_toutiao_distribution_channel(): void
+    {
+        $admin = $this->admin();
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.distribution.create'))
+            ->assertOk()
+            ->assertSee(__('admin.distribution.channel_type.toutiao_bridge'))
+            ->assertSee(__('admin.distribution.toutiao.section_title'))
+            ->assertSee('name="channel_type" value="toutiao_bridge"', false);
+
+        $this->actingAs($admin, 'admin')
+            ->post(route('admin.distribution.store'), [
+                'name' => '公司今日头条',
+                'domain' => 'www.toutiao.com',
+                'endpoint_url' => 'https://toutiao-bridge.example.com',
+                'channel_type' => 'toutiao_bridge',
+                'generic_auth_type' => 'bearer',
+                'generic_secret' => 'toutiao-token',
+                'generic_success_statuses' => '200,201,202',
+                'generic_health_method' => 'GET',
+                'generic_health_path' => '/health',
+                'generic_publish_method' => 'POST',
+                'generic_publish_path' => '/articles',
+                'generic_update_method' => 'POST',
+                'generic_update_path' => '/articles/{remote_id}',
+                'generic_delete_method' => 'DELETE',
+                'generic_delete_path' => '/articles/{remote_id}',
+                'generic_settings_method' => 'POST',
+                'generic_settings_path' => '',
+                'generic_remote_id_path' => 'id',
+                'generic_remote_url_path' => 'url',
+                'generic_payload_wrapper' => 'none',
+                'status' => 'active',
+            ])
+            ->assertRedirect()
+            ->assertSessionMissing('distribution_secret');
+
+        $channel = DistributionChannel::query()->where('name', '公司今日头条')->firstOrFail();
+        $this->assertSame('toutiao_bridge', $channel->channelType());
+        $this->assertTrue($channel->isToutiaoBridge());
+        $this->assertTrue($channel->usesGenericHttpTransport());
+
+        $secret = DistributionChannelSecret::query()
+            ->where('distribution_channel_id', (int) $channel->id)
+            ->where('status', 'active')
+            ->firstOrFail();
+        $this->assertStringStartsWith('tt_', (string) $secret->key_id);
+        $this->assertSame(['toutiao.publish'], $secret->scopes);
+        $this->assertSame('toutiao-token', app(ApiKeyCrypto::class)->decrypt((string) $secret->secret_ciphertext));
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.distribution.show', ['channelId' => (int) $channel->id]))
+            ->assertOk()
+            ->assertSee(__('admin.distribution.channel_type.toutiao_bridge'))
+            ->assertSee(__('admin.distribution.toutiao.guide_title'))
+            ->assertSee('"platform": "toutiao"')
+            ->assertDontSee(__('admin.distribution.button.download_package'));
+    }
+
     public function test_admin_can_create_generic_api_distribution_channel(): void
     {
         $this->actingAs($this->admin(), 'admin')

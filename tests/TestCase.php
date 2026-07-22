@@ -14,7 +14,7 @@ abstract class TestCase extends BaseTestCase
 {
     public function createApplication()
     {
-        $this->forceTestingDatabaseEnvironment();
+        $this->forceTestingEnvironment();
 
         $app = parent::createApplication();
 
@@ -26,13 +26,15 @@ abstract class TestCase extends BaseTestCase
         return $app;
     }
 
-    private function forceTestingDatabaseEnvironment(): void
+    private function forceTestingEnvironment(): void
     {
         $variables = [
             'APP_ENV' => 'testing',
+            'CACHE_STORE' => 'array',
             'DB_CONNECTION' => 'sqlite',
             'DB_DATABASE' => ':memory:',
             'DB_URL' => '',
+            'QUEUE_CONNECTION' => 'sync',
         ];
 
         foreach ($variables as $key => $value) {

@@ -2,6 +2,7 @@
 
 @php
     $channelType = old('channel_type', 'geoflow_agent');
+    $usesGenericHttpTransport = in_array($channelType, ['generic_http_api', 'toutiao_bridge'], true);
     $frontMode = old('front_mode', 'static');
     $themes = $availableThemes ?? [];
     $selectedTheme = old('template_key', '');
@@ -50,7 +51,7 @@
                     <fieldset class="rounded-lg border border-gray-200 bg-gray-50 p-4">
                         <legend class="text-sm font-medium text-gray-900">{{ __('admin.distribution.field.channel_type') }}</legend>
                         <p class="mt-1 text-sm text-gray-600">{{ __('admin.distribution.help.channel_type') }}</p>
-                        <div class="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-3">
+                        <div class="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
                             <label class="flex cursor-pointer gap-3 rounded-md border border-gray-200 bg-white p-4 hover:border-blue-300">
                                 <input type="radio" name="channel_type" value="geoflow_agent" class="mt-1 text-blue-600 focus:ring-blue-500" @checked($channelType === 'geoflow_agent')>
                                 <span>
@@ -70,6 +71,13 @@
                                 <span>
                                     <span class="block text-sm font-semibold text-gray-900">{{ __('admin.distribution.channel_type.generic_http_api') }}</span>
                                     <span class="mt-1 block text-sm text-gray-600">{{ __('admin.distribution.channel_type.generic_http_api_desc') }}</span>
+                                </span>
+                            </label>
+                            <label class="flex cursor-pointer gap-3 rounded-md border border-gray-200 bg-white p-4 hover:border-blue-300">
+                                <input type="radio" name="channel_type" value="toutiao_bridge" class="mt-1 text-blue-600 focus:ring-blue-500" @checked($channelType === 'toutiao_bridge')>
+                                <span>
+                                    <span class="block text-sm font-semibold text-gray-900">{{ __('admin.distribution.channel_type.toutiao_bridge') }}</span>
+                                    <span class="mt-1 block text-sm text-gray-600">{{ __('admin.distribution.channel_type.toutiao_bridge_desc') }}</span>
                                 </span>
                             </label>
                         </div>
@@ -143,10 +151,16 @@
                         </div>
                     </div>
 
-                    <div data-channel-type-panel="generic_http_api" @class(['rounded-lg border border-indigo-100 bg-indigo-50 p-5', 'hidden' => $channelType !== 'generic_http_api'])>
+                    <div data-channel-type-panel="generic_http_api,toutiao_bridge" @class(['rounded-lg border border-indigo-100 bg-indigo-50 p-5', 'hidden' => ! $usesGenericHttpTransport])>
                         <div class="mb-5">
-                            <h2 class="text-lg font-medium text-gray-900">{{ __('admin.distribution.generic.section_title') }}</h2>
-                            <p class="mt-1 text-sm leading-6 text-gray-600">{{ __('admin.distribution.generic.section_desc') }}</p>
+                            <div data-channel-type-copy="generic_http_api" @class(['hidden' => $channelType !== 'generic_http_api'])>
+                                <h2 class="text-lg font-medium text-gray-900">{{ __('admin.distribution.generic.section_title') }}</h2>
+                                <p class="mt-1 text-sm leading-6 text-gray-600">{{ __('admin.distribution.generic.section_desc') }}</p>
+                            </div>
+                            <div data-channel-type-copy="toutiao_bridge" @class(['hidden' => $channelType !== 'toutiao_bridge'])>
+                                <h2 class="text-lg font-medium text-gray-900">{{ __('admin.distribution.toutiao.section_title') }}</h2>
+                                <p class="mt-1 text-sm leading-6 text-gray-600">{{ __('admin.distribution.toutiao.section_desc') }}</p>
+                            </div>
                         </div>
 
                         <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
@@ -330,7 +344,11 @@
         document.addEventListener('change', function (event) {
             if (event.target.matches('[name="channel_type"]')) {
                 document.querySelectorAll('[data-channel-type-panel]').forEach(function (panel) {
-                    panel.classList.toggle('hidden', panel.dataset.channelTypePanel !== event.target.value);
+                    var supportedTypes = panel.dataset.channelTypePanel.split(',');
+                    panel.classList.toggle('hidden', !supportedTypes.includes(event.target.value));
+                });
+                document.querySelectorAll('[data-channel-type-copy]').forEach(function (copy) {
+                    copy.classList.toggle('hidden', copy.dataset.channelTypeCopy !== event.target.value);
                 });
             }
             if (event.target.matches('#generic_auth_type')) {

@@ -3694,7 +3694,7 @@ return [
         'field' => [
             'name' => 'Channel Name',
             'domain' => 'Target Domain',
-            'endpoint_url' => 'Target Site / Agent Base URL',
+            'endpoint_url' => 'Target Site / API Base URL',
             'channel_type' => 'Channel Type',
             'front_mode' => 'Frontend URL Mode',
             'template_key' => 'Template Key',
@@ -3742,6 +3742,8 @@ return [
             'wordpress_rest_desc' => 'Publish, update, and delete posts through the WordPress REST API and Application Passwords.',
             'generic_http_api' => 'Generic HTTP API',
             'generic_http_api_desc' => 'Send the standard GEOFlow JSON payload to third-party APIs such as custom CMSs, automation platforms, and low-code services.',
+            'toutiao_bridge' => 'Toutiao',
+            'toutiao_bridge_desc' => 'Submit Toutiao articles through an approved official API or compliant integration service and track remote status.',
         ],
         'wordpress' => [
             'section_title' => 'WordPress Connection',
@@ -3818,6 +3820,13 @@ return [
             'guide_settings_title' => 'Site Settings',
             'response_mapping_title' => 'Response Mapping',
             'sample_payload_title' => 'Sample Payload',
+        ],
+        'toutiao' => [
+            'section_title' => 'Toutiao Connection',
+            'section_desc' => 'Enter the base URL and token for an approved Toutiao API or compliant integration service. Dianqian GEO submits its standard article payload and records the remote article ID, URL, and failures.',
+            'edit_section_desc' => 'Maintain the Toutiao integration contract. Leave the token blank to keep the saved secret; keep paths and response fields aligned with the approved API or integration service.',
+            'guide_title' => 'Toutiao Automatic Publishing',
+            'guide_desc' => 'This channel provides one-click submission, queued retries, and remote status tracking inside Dianqian GEO. Production use requires official publishing permission for the Toutiao account or a compliant integration service. Successful submission may still enter platform review.',
         ],
         'front_mode' => [
             'static' => 'Static file mode',
@@ -3913,9 +3922,9 @@ return [
             'description' => 'Optional: note the site purpose, owner, or install details.',
         ],
         'help' => [
-            'channel_type' => 'Choose the target type for content sync. GEOFlow Agent uses a target-site package; WordPress REST connects to WordPress; Generic HTTP API connects to custom or third-party APIs.',
+            'channel_type' => 'Choose the publishing target. GEOFlow Agent uses a target-site package; WordPress REST connects to WordPress; Toutiao uses an approved API or integration service; Generic HTTP API connects other systems.',
             'channel_type_locked' => 'The channel type stays fixed after creation to avoid mixing remote IDs and protocol semantics for already synced articles.',
-            'endpoint_url' => 'For GEOFlow Agent, enter the base URL where the target package is installed. For WordPress, enter the WordPress site URL or /wp-json. For Generic API, enter the third-party API base URL. GEOFlow uses https:// when no scheme is provided.',
+            'endpoint_url' => 'For GEOFlow Agent, enter the target package URL. For WordPress, enter the site or /wp-json URL. For Toutiao, enter the approved API or integration service base URL. For Generic API, enter the third-party API URL. HTTPS is assumed when omitted.',
             'front_mode' => 'New channels use static file mode by default. Static mode generates real HTML after upload and unzip; rewrite mode requires server rewrite rules.',
             'reveal_secret' => 'Only super admins can temporarily reveal the plaintext secret with their current password. It is hidden again after refresh.',
             'download_package' => 'The site package includes this channel secret, so super admins must verify their current password before downloading it.',

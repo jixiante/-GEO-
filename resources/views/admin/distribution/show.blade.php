@@ -49,10 +49,16 @@
         ],
         'assets' => ['images' => []],
     ];
+    if ($channel->isToutiaoBridge()) {
+        $genericSamplePayload['distribution_target'] = [
+            'platform' => 'toutiao',
+            'content_type' => 'article',
+        ];
+    }
     $healthCheckUrl = rtrim((string) $channel->endpoint_url, '/').'/geoflow-agent/v1/health';
     if ($channel->isWordPressRest()) {
         $healthCheckUrl = $channel->wordpressRestBaseUrl().'/wp/v2/users/me?context=edit';
-    } elseif ($channel->isGenericHttpApi()) {
+    } elseif ($channel->usesGenericHttpTransport()) {
         $genericHealthPath = strtr((string) $genericConfig['generic_health_path'], ['{channel_id}' => (string) $channel->id]);
         $healthCheckUrl = rtrim((string) $channel->endpoint_url, '/').(str_starts_with($genericHealthPath, '/') ? $genericHealthPath : '/'.$genericHealthPath);
     }
@@ -168,7 +174,7 @@
                             <dt class="text-gray-500">{{ __('admin.distribution.wordpress.post_status') }}</dt>
                             <dd class="mt-1 font-medium text-gray-900">{{ __('admin.distribution.wordpress.post_status_'.$channelConfig['wordpress_post_status']) }}</dd>
                         </div>
-                    @elseif ($channel->isGenericHttpApi())
+                    @elseif ($channel->usesGenericHttpTransport())
                         <div>
                             <dt class="text-gray-500">{{ __('admin.distribution.generic.auth_type') }}</dt>
                             <dd class="mt-1 font-medium text-gray-900">{{ __('admin.distribution.generic.auth_'.$genericConfig['generic_auth_type']) }}</dd>
@@ -423,12 +429,12 @@
                     </li>
                 </ol>
             </div>
-        @elseif ($channel->isGenericHttpApi())
+        @elseif ($channel->usesGenericHttpTransport())
             <div class="rounded-lg bg-white p-6 shadow">
                 <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div class="max-w-3xl">
-                        <h2 class="text-lg font-medium text-gray-900">{{ __('admin.distribution.generic.guide_title') }}</h2>
-                        <p class="mt-2 text-sm leading-6 text-gray-600">{{ __('admin.distribution.generic.guide_desc') }}</p>
+                        <h2 class="text-lg font-medium text-gray-900">{{ __($channel->isToutiaoBridge() ? 'admin.distribution.toutiao.guide_title' : 'admin.distribution.generic.guide_title') }}</h2>
+                        <p class="mt-2 text-sm leading-6 text-gray-600">{{ __($channel->isToutiaoBridge() ? 'admin.distribution.toutiao.guide_desc' : 'admin.distribution.generic.guide_desc') }}</p>
                     </div>
                     <div class="rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700">
                         <span class="font-medium">{{ __('admin.distribution.generic.payload_contract') }}：</span>

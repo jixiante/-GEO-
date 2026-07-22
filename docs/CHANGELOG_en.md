@@ -2,6 +2,15 @@
 
 This document tracks Dianqian GEO updates. For future GitHub pushes, update this file together with the Chinese version in `CHANGELOG.md`.
 
+## 2026-07-22
+
+### Unreleased
+
+- Added a native Toutiao distribution channel that reuses the existing safe HTTP transport, encrypted secrets, queue, retries, and remote result model.
+- Added a Toutiao target marker to article payloads and persisted remote article IDs, URLs, and transport metadata.
+- Added Toutiao channel creation, editing, connection testing, onboarding guidance, and explicit publishing-permission and platform-review boundaries.
+- Added publisher and administration tests plus the integration-service contract documentation.
+
 ## 2026-07-21
 
 ### v1.0.0

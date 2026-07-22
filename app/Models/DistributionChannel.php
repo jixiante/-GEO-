@@ -13,6 +13,21 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class DistributionChannel extends Model
 {
+    public const CHANNEL_TYPE_GEOFLOW_AGENT = 'geoflow_agent';
+
+    public const CHANNEL_TYPE_WORDPRESS_REST = 'wordpress_rest';
+
+    public const CHANNEL_TYPE_GENERIC_HTTP_API = 'generic_http_api';
+
+    public const CHANNEL_TYPE_TOUTIAO_BRIDGE = 'toutiao_bridge';
+
+    public const CHANNEL_TYPES = [
+        self::CHANNEL_TYPE_GEOFLOW_AGENT,
+        self::CHANNEL_TYPE_WORDPRESS_REST,
+        self::CHANNEL_TYPE_GENERIC_HTTP_API,
+        self::CHANNEL_TYPE_TOUTIAO_BRIDGE,
+    ];
+
     public const MAX_CUSTOM_TEXT_AD_MODULES_PER_PLACEMENT = 5;
 
     public const FRONTEND_EXPERIENCE_CUSTOM = 'custom';
@@ -411,24 +426,34 @@ class DistributionChannel extends Model
 
     public function channelType(): string
     {
-        $type = (string) ($this->channel_type ?? 'geoflow_agent');
+        $type = (string) ($this->channel_type ?? self::CHANNEL_TYPE_GEOFLOW_AGENT);
 
-        return in_array($type, ['geoflow_agent', 'wordpress_rest', 'generic_http_api'], true) ? $type : 'geoflow_agent';
+        return in_array($type, self::CHANNEL_TYPES, true) ? $type : self::CHANNEL_TYPE_GEOFLOW_AGENT;
     }
 
     public function isGeoFlowAgent(): bool
     {
-        return $this->channelType() === 'geoflow_agent';
+        return $this->channelType() === self::CHANNEL_TYPE_GEOFLOW_AGENT;
     }
 
     public function isWordPressRest(): bool
     {
-        return $this->channelType() === 'wordpress_rest';
+        return $this->channelType() === self::CHANNEL_TYPE_WORDPRESS_REST;
     }
 
     public function isGenericHttpApi(): bool
     {
-        return $this->channelType() === 'generic_http_api';
+        return $this->channelType() === self::CHANNEL_TYPE_GENERIC_HTTP_API;
+    }
+
+    public function isToutiaoBridge(): bool
+    {
+        return $this->channelType() === self::CHANNEL_TYPE_TOUTIAO_BRIDGE;
+    }
+
+    public function usesGenericHttpTransport(): bool
+    {
+        return $this->isGenericHttpApi() || $this->isToutiaoBridge();
     }
 
     /**

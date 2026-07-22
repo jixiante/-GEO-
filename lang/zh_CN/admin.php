@@ -3694,7 +3694,7 @@ return [
         'field' => [
             'name' => '渠道名称',
             'domain' => '目标域名',
-            'endpoint_url' => '目标站点 / Agent 基础地址',
+            'endpoint_url' => '目标站点 / API 基础地址',
             'channel_type' => '渠道类型',
             'front_mode' => '前台访问模式',
             'template_key' => '模板标识',
@@ -3742,6 +3742,8 @@ return [
             'wordpress_rest_desc' => '通过 WordPress REST API 和 Application Password 发布、更新和删除文章。',
             'generic_http_api' => '通用 HTTP API',
             'generic_http_api_desc' => '按标准 JSON 载荷调用第三方系统接口，适合自研 CMS、自动化平台和低代码服务。',
+            'toutiao_bridge' => '今日头条',
+            'toutiao_bridge_desc' => '通过已获授权的官方接口或合规接入服务自动提交头条图文，并回写发布状态。',
         ],
         'wordpress' => [
             'section_title' => 'WordPress 接入配置',
@@ -3818,6 +3820,13 @@ return [
             'guide_settings_title' => '站点设置',
             'response_mapping_title' => '响应映射',
             'sample_payload_title' => '示例 Payload',
+        ],
+        'toutiao' => [
+            'section_title' => '今日头条接入配置',
+            'section_desc' => '填写已获授权的头条接口或合规接入服务地址与 Token。点签GEO会在文章发布时自动提交标准文章载荷，并记录远端文章 ID、链接和失败日志。',
+            'edit_section_desc' => '维护今日头条接入协议。Token 留空时保留当前已保存密钥；路径和响应字段应与获批接口或接入服务保持一致。',
+            'guide_title' => '今日头条自动发布接入',
+            'guide_desc' => '该渠道提供点签GEO内的一键提交、队列重试和远端状态记录。正式启用前必须取得头条账号对应的官方发布权限，或部署遵守平台规则的接入服务；提交成功仍可能进入平台审核。',
         ],
         'front_mode' => [
             'static' => '静态文件模式',
@@ -3913,9 +3922,9 @@ return [
             'description' => '可选：记录目标站用途、维护人或安装说明',
         ],
         'help' => [
-            'channel_type' => '选择内容要同步到哪类目标站。GEOFlow Agent 需要目标站点包；WordPress REST 连接已有 WordPress；通用 HTTP API 连接自研或第三方接口。',
+            'channel_type' => '选择内容要同步到哪类目标。点签GEO Agent 需要目标站点包；WordPress REST 连接已有 WordPress；今日头条连接获批接口或接入服务；通用 HTTP API 连接其他第三方系统。',
             'channel_type_locked' => '渠道创建后类型保持固定，避免已同步文章的远端 ID 和协议含义发生混淆。',
-            'endpoint_url' => 'GEOFlow Agent 渠道填写已部署目标站点包的入口基础地址；WordPress 渠道填写 WordPress 站点地址或 /wp-json 地址；通用 API 渠道填写第三方接口基础地址。不填协议时默认使用 https://。',
+            'endpoint_url' => '点签GEO Agent 渠道填写目标站点包入口；WordPress 填写站点或 /wp-json 地址；今日头条填写获批接口或接入服务基础地址；通用 API 填写第三方接口基础地址。不填协议时默认使用 https://。',
             'front_mode' => '新渠道默认使用静态文件模式。静态模式上传解压后即可生成真实 HTML；伪静态模式需要按提示配置服务器 rewrite 规则。',
             'reveal_secret' => '仅超级管理员可通过当前登录密码临时显示一次密钥明文；刷新后仍会隐藏。',
             'download_package' => '站点包会写入当前渠道密钥，下载前必须验证超级管理员当前登录密码。',

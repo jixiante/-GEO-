@@ -19,7 +19,7 @@ class SecurityReleaseMetadataTest extends TestCase
             $manifest['archive_url'],
         );
         $this->assertSame(
-            'https://github.com/jian-ux/-GEO-/releases/tag/v1.0.0',
+            'https://github.com/jian-ux/-GEO-/tree/v1.0.0',
             $payload['release_url'],
         );
         $this->assertSame(

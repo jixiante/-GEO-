@@ -4177,7 +4177,7 @@ return array_replace_recursive($base, [
         'field' => [
             'name' => 'Nome do Canal',
             'domain' => 'Domínio Alvo',
-            'endpoint_url' => 'URL Base do Site Alvo / Agent',
+            'endpoint_url' => 'URL Base do Site Alvo / API',
             'channel_type' => 'Tipo de Canal',
             'front_mode' => 'Modo de URL do Frontend',
             'template_key' => 'Chave do Template',
@@ -4225,6 +4225,8 @@ return array_replace_recursive($base, [
             'wordpress_rest_desc' => 'Publique, atualize e exclua posts pela API REST do WordPress e Application Passwords.',
             'generic_http_api' => 'API HTTP Genérica',
             'generic_http_api_desc' => 'Envie o JSON padrão do GEOFlow para APIs de terceiros, CMS próprio, automações e serviços low-code.',
+            'toutiao_bridge' => 'Toutiao',
+            'toutiao_bridge_desc' => 'Envie artigos ao Toutiao por uma API oficial aprovada ou serviço de integração compatível e acompanhe o status remoto.',
         ],
         'wordpress' => [
             'section_title' => 'Conexão WordPress',
@@ -4301,6 +4303,13 @@ return array_replace_recursive($base, [
             'guide_settings_title' => 'Configurações do Site',
             'response_mapping_title' => 'Mapeamento da Resposta',
             'sample_payload_title' => 'Payload de Exemplo',
+        ],
+        'toutiao' => [
+            'section_title' => 'Conexão com Toutiao',
+            'section_desc' => 'Informe a URL base e o token de uma API Toutiao aprovada ou serviço de integração compatível. O Dianqian GEO envia o payload padrão e registra ID, URL e falhas remotas.',
+            'edit_section_desc' => 'Mantenha o contrato da integração Toutiao. Deixe o token em branco para manter o segredo salvo e alinhe caminhos e campos de resposta com a API aprovada.',
+            'guide_title' => 'Publicação Automática no Toutiao',
+            'guide_desc' => 'Este canal oferece envio com um clique, retentativas em fila e rastreamento remoto. O uso em produção exige permissão oficial de publicação ou um serviço de integração compatível; o conteúdo enviado ainda pode passar por revisão.',
         ],
         'front_mode' => [
             'static' => 'Modo de arquivos estáticos',
@@ -4396,9 +4405,9 @@ return array_replace_recursive($base, [
             'description' => 'Opcional: registre finalidade do site, responsável ou detalhes de instalação.',
         ],
         'help' => [
-            'channel_type' => 'Escolha o tipo de alvo para sincronização de conteúdo. GEOFlow Agent usa pacote de site-alvo; WordPress REST conecta WordPress; API HTTP Genérica conecta APIs próprias ou de terceiros.',
+            'channel_type' => 'Escolha o destino de publicação. GEOFlow Agent usa pacote de site-alvo; WordPress REST conecta WordPress; Toutiao usa API aprovada ou serviço de integração; API HTTP Genérica conecta outros sistemas.',
             'channel_type_locked' => 'O tipo do canal permanece fixo após a criação para evitar misturar IDs remotos e protocolos de artigos já sincronizados.',
-            'endpoint_url' => 'Para GEOFlow Agent, informe a URL base do pacote. Para WordPress, informe o site ou /wp-json. Para API Genérica, informe a URL base da API. Sem protocolo, o GEOFlow usa https://.',
+            'endpoint_url' => 'Para GEOFlow Agent, informe a URL do pacote. Para WordPress, informe o site ou /wp-json. Para Toutiao, informe a API aprovada ou serviço de integração. Para API Genérica, informe a URL da API. HTTPS é usado por padrão.',
             'front_mode' => 'Novos canais usam modo de arquivos estáticos por padrão. O modo estático gera HTML real após upload e descompactação; o modo rewrite exige regras de servidor.',
             'reveal_secret' => 'Somente super admins podem revelar temporariamente o segredo em texto claro com a senha atual. Ele volta a ficar oculto após atualizar a página.',
             'download_package' => 'O pacote do site inclui este segredo de canal; por isso super admins precisam verificar a senha atual antes de baixá-lo.',

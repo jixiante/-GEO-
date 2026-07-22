@@ -121,7 +121,7 @@ class DistributionController extends Controller
                 ->with('message', __('admin.distribution.message.created'));
         }
 
-        if ($channel->isGenericHttpApi()) {
+        if ($channel->usesGenericHttpTransport()) {
             if ($channel->resolvedGenericHttpConfig()['generic_auth_type'] !== 'none') {
                 $this->createGenericHttpSecret($channel, (string) $payload['generic_secret']);
             }
@@ -177,7 +177,7 @@ class DistributionController extends Controller
 
         $payload = $this->validateChannel($request);
         $payload['channel_type'] = $channel->channelType();
-        if (($payload['channel_type'] ?? 'geoflow_agent') === 'generic_http_api') {
+        if (in_array(($payload['channel_type'] ?? 'geoflow_agent'), ['generic_http_api', 'toutiao_bridge'], true)) {
             $genericAuthType = (string) ($payload['generic_auth_type'] ?? 'bearer');
             $hasActiveSecret = DistributionChannelSecret::query()
                 ->where('distribution_channel_id', (int) $channel->id)
@@ -210,7 +210,7 @@ class DistributionController extends Controller
                 ->update(['status' => 'revoked']);
             $this->createWordPressSecret($channel, (string) $payload['wordpress_application_password']);
         }
-        if ($channel->isGenericHttpApi()) {
+        if ($channel->usesGenericHttpTransport()) {
             $genericAuthType = $channel->resolvedGenericHttpConfig()['generic_auth_type'];
             if ($genericAuthType === 'none') {
                 DistributionChannelSecret::query()
@@ -228,7 +228,7 @@ class DistributionController extends Controller
 
         $message = __('admin.distribution.message.updated');
         $channel->load('activeSecret');
-        if ($channel->activeSecret || ($channel->isGenericHttpApi() && $channel->resolvedGenericHttpConfig()['generic_auth_type'] === 'none')) {
+        if ($channel->activeSecret || ($channel->usesGenericHttpTransport() && $channel->resolvedGenericHttpConfig()['generic_auth_type'] === 'none')) {
             if ($channel->isGeoFlowAgent() && $this->frontendExperienceInspector->requiresSyncConfirmation($channel)) {
                 return redirect()
                     ->route('admin.distribution.show', ['channelId' => (int) $channel->id])
@@ -947,7 +947,7 @@ class DistributionController extends Controller
             'name' => ['required', 'string', 'max:120'],
             'domain' => ['required', 'string', 'max:255'],
             'endpoint_url' => ['required', 'string', 'max:500'],
-            'channel_type' => ['nullable', 'string', 'in:geoflow_agent,wordpress_rest,generic_http_api'],
+            'channel_type' => ['nullable', 'string', 'in:'.implode(',', DistributionChannel::CHANNEL_TYPES)],
             'front_mode' => ['nullable', 'string', 'in:static,rewrite'],
             'template_key' => ['nullable', 'string', 'max:120'],
             'status' => ['required', 'string', 'in:active,paused'],
@@ -1037,7 +1037,7 @@ class DistributionController extends Controller
                 ]);
             }
         }
-        if ($payload['channel_type'] === 'generic_http_api') {
+        if (in_array($payload['channel_type'], ['generic_http_api', 'toutiao_bridge'], true)) {
             $authType = (string) ($payload['generic_auth_type'] ?? 'bearer');
             if ($authType === 'basic' && ! filled($payload['generic_basic_username'] ?? null)) {
                 throw ValidationException::withMessages([
@@ -1380,7 +1380,7 @@ class DistributionController extends Controller
             $payload['frontend_experience_mode'] ?? $channel?->frontendExperienceMode()
         );
 
-        if ($channelType === 'generic_http_api') {
+        if (in_array($channelType, ['generic_http_api', 'toutiao_bridge'], true)) {
             $defaults = $channel?->resolvedGenericHttpConfig() ?? (new DistributionChannel)->resolvedGenericHttpConfig();
 
             return $this->withExistingFrontendCapabilitiesCache([
@@ -1509,12 +1509,14 @@ class DistributionController extends Controller
 
     private function createGenericHttpSecret(DistributionChannel $channel, string $secret): void
     {
+        $isToutiao = $channel->isToutiaoBridge();
+
         DistributionChannelSecret::query()->create([
             'distribution_channel_id' => (int) $channel->id,
-            'key_id' => 'gapi_'.Str::lower(Str::random(18)),
+            'key_id' => ($isToutiao ? 'tt_' : 'gapi_').Str::lower(Str::random(18)),
             'secret_ciphertext' => $this->apiKeyCrypto->encrypt($secret),
             'status' => 'active',
-            'scopes' => ['generic.http'],
+            'scopes' => [$isToutiao ? 'toutiao.publish' : 'generic.http'],
         ]);
     }
 
