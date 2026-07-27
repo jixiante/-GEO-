@@ -23,9 +23,9 @@ final class AdminWeb
 
     public static function siteName(): string
     {
-        $name = trim((string) config('app.name', '点签GEO'));
+        $name = trim((string) config('app.name', '点签'));
 
-        return $name !== '' ? $name : '点签GEO';
+        return $name !== '' ? $name : '点签';
     }
 
     public static function basePath(): string

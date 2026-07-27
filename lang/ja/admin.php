@@ -3,8 +3,39 @@
 $base = require __DIR__.'/../en/admin.php';
 
 return array_replace_recursive($base, [
+    'distribution' => [
+        'button' => [
+            'confirm_remote_url' => 'リモートURLを確認',
+        ],
+        'message' => [
+            'remote_url_confirmed' => 'リモート記事URLを確認しました。AI露出監視で公開元として扱われます。',
+        ],
+        'remote_url_confirmation' => [
+            'title' => 'リモート記事URLの確認',
+            'desc' => '公開記事URLを記録し、この配信を同期済みにします。',
+            'url_label' => '公開記事URL',
+            'url_help' => 'URLは :domain に属し、記事詳細ページを直接指す必要があります。',
+            'confirm_label' => 'このURLが公開され、現在の記事に対応していることを確認しました。',
+            'submit' => '確認して監視に追加',
+            'audit_message' => '管理者がリモート記事の公開URLを確認しました',
+            'validation' => [
+                'required' => '公開記事URLを入力してください。',
+                'max' => '公開記事URLは500文字以内で入力してください。',
+                'url' => '認証情報を含まない有効なhttpまたはhttps URLを入力してください。',
+                'host' => 'URLのドメインは現在の配信チャネルと一致する必要があります。',
+                'article_path' => 'サイトのトップではなく記事詳細URLを入力してください。',
+                'toutiao_path' => 'Toutiao URLは /article/数字の記事ID/ 形式である必要があります。',
+                'delete_action' => '削除タスクにはリモート記事URLを設定できません。',
+                'status' => '失敗タスクまたはURLのない同期済みタスクのみ確認できます。',
+                'existing_url' => '別のリモートURLが既に保存されているため上書きできません。',
+                'not_confirmable' => 'この配信タスクにはリモートURLを設定できません。',
+                'confirmed' => '手動確認の声明に同意してください。',
+            ],
+        ],
+    ],
     'nav' => [
         'dashboard' => 'ダッシュボード',
+        'ai_exposure' => 'AI回答露出',
         'tasks' => 'タスク',
         'articles' => '記事',
         'materials' => '素材',
@@ -16,6 +47,9 @@ return array_replace_recursive($base, [
         'system_settings' => 'システム設定',
         'admin_management' => 'ユーザー管理',
         'activity_logs' => '操作ログ',
+    ],
+    'ai_exposure' => [
+        'frequency' => ['5min' => '5分ごと'],
     ],
     'ai_models' => [
         'quick_help' => 'クリックすると一般的なプロバイダー設定を自動入力します。Gemini は Google ネイティブ v1beta API を使用し、その他のプロバイダーは OpenAI 互換ルールを使用します。',

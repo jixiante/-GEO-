@@ -1,0 +1,13 @@
+{
+  "id": "platform-sohu-20260725",
+  "name": "搜狐号风格 · 门户资讯",
+  "version": "1.0.0",
+  "description": "参考搜狐当前公开门户的黑色顶栏、黄色品牌强调、搜索区、密集频道矩阵和榜单侧栏，适配 GEOFlow 内容站。",
+  "templates": ["layout", "home", "category", "article"],
+  "reference_urls": ["https://www.sohu.com/"],
+  "notes": [
+    "仅复现公开页面的布局语言，不复制商标 Logo、站点源码、专有图片或外部内容。",
+    "保留 GEOFlow 路由、搜索、分类、SEO、JSON-LD、正文 HTML、相关文章和广告位契约。",
+    "主题新增后保持未启用状态，由管理员预览后手动选择。"
+  ]
+}

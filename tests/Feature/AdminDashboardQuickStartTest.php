@@ -273,14 +273,14 @@ class AdminDashboardQuickStartTest extends TestCase
             'status' => 'active',
         ]);
 
-        config(['app.name' => '点签GEO']);
+        config(['app.name' => '点签']);
 
         $html = $this->actingAs($admin, 'admin')
             ->get(route('admin.dashboard'))
             ->assertOk()
             ->getContent();
 
-        $this->assertStringContainsString('点签GEO', $html);
+        $this->assertStringContainsString('点签', $html);
         $this->assertStringContainsString(__('admin.footer.project_intro_link'), $html);
         $this->assertStringNotContainsString('姚金刚', $html);
         $this->assertStringNotContainsString('github.com/yaojingang', $html);

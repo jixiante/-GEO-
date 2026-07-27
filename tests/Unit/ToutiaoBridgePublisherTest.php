@@ -33,7 +33,7 @@ class ToutiaoBridgePublisherTest extends TestCase
         $result = app(ToutiaoBridgePublisher::class)->publish($distribution, [
             'event' => 'article.publish',
             'article' => [
-                'title' => '点签GEO头条测试',
+                'title' => '点签头条测试',
                 'slug' => 'dianqian-toutiao-test',
                 'content' => '测试正文',
             ],
@@ -51,7 +51,7 @@ class ToutiaoBridgePublisherTest extends TestCase
                 && $request->hasHeader('Authorization', 'Bearer toutiao-token')
                 && $request['distribution_target']['platform'] === 'toutiao'
                 && $request['distribution_target']['content_type'] === 'article'
-                && $request['article']['title'] === '点签GEO头条测试';
+                && $request['article']['title'] === '点签头条测试';
         });
     }
 
@@ -115,9 +115,9 @@ class ToutiaoBridgePublisherTest extends TestCase
         ]);
 
         $category = Category::query()->create(['name' => '科技资讯', 'slug' => 'tech']);
-        $author = Author::query()->create(['name' => '点签GEO']);
+        $author = Author::query()->create(['name' => '点签']);
         $article = Article::query()->create([
-            'title' => '点签GEO头条测试',
+            'title' => '点签头条测试',
             'slug' => 'dianqian-toutiao-test',
             'content' => '测试正文',
             'category_id' => (int) $category->id,

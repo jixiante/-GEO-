@@ -4,13 +4,13 @@
         ? $articles->getCollection()->take(6)
         : collect($articles ?? [])->take(6);
     $sidebarArticles = $sidebarHotArticles->isNotEmpty() ? $sidebarHotArticles : $latestArticles;
-    $feedTitle = trim((string) (($siteSubtitle ?? '') !== '' ? $siteSubtitle : ($siteTitle ?? '点签GEO')));
+    $feedTitle = trim((string) (($siteSubtitle ?? '') !== '' ? $siteSubtitle : ($siteTitle ?? '点签')));
     $feedDescription = trim((string) ($siteDescription ?? ''));
 @endphp
 <aside class="tt-sidebar">
     @if(!empty($showFeedPanel))
         <section class="tt-panel tt-feed-panel">
-            <div class="tt-page-kicker">{{ $siteTitle ?? '点签GEO' }} 内容流</div>
+            <div class="tt-page-kicker">{{ $siteTitle ?? '点签' }} 内容流</div>
             <h2 class="tt-feed-panel-title">{{ $feedTitle }}</h2>
             @if($feedDescription !== '')
                 <p class="tt-feed-panel-desc">{{ $feedDescription }}</p>

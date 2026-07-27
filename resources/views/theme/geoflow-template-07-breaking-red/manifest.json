@@ -1,8 +1,8 @@
 {
     "id": "geoflow-template-07-breaking-red",
-    "name": "GEOFlow 07 Breaking Red",
+    "name": "点签 07 红色快讯",
     "version": "1.0.0",
-    "description": "A breaking-news variant with red-black urgency, bold headings, and fast feed rhythm. Preserves GEOFlow frontend data contracts and derives from the NetEase News Inspired base theme.",
+    "description": "红黑快讯风格，采用醒目标题和快速信息流节奏，保留点签前台数据能力。",
     "templates": [
         "layout",
         "home",

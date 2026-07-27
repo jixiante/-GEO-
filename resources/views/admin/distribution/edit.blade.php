@@ -18,6 +18,7 @@
     $channelType = $channel->channelType();
     $channelConfig = $channel->resolvedChannelConfig();
     $genericConfig = $channel->resolvedGenericHttpConfig();
+    $browserConfig = $channel->resolvedBrowserRunnerConfig();
     $frontendExperienceMode = old('frontend_experience_mode', $frontendExperienceMode ?? $channel->frontendExperienceMode());
     $frontendExperienceModes = $frontendExperienceModes ?? \App\Models\DistributionChannel::frontendExperienceModes();
     $frontendExperienceReport = $frontendExperienceReport ?? [];
@@ -282,6 +283,44 @@
                                 </div>
                             </div>
                         </div>
+                    @elseif ($channel->isBrowserRunner())
+                        <div class="rounded-lg border border-emerald-100 bg-emerald-50 p-5">
+                            <div class="mb-5">
+                                <h2 class="text-lg font-medium text-gray-900">{{ __('admin.distribution.browser.section_title') }}</h2>
+                                <p class="mt-1 text-sm leading-6 text-gray-600">{{ __('admin.distribution.browser.edit_section_desc') }}</p>
+                            </div>
+                            <div class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+                                <div>
+                                    <label for="browser_platform" class="block text-sm font-medium text-gray-700">{{ __('admin.distribution.browser.platform') }}</label>
+                                    <select id="browser_platform" name="browser_platform" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                        @foreach (\App\Models\DistributionChannel::BROWSER_PLATFORMS as $platform)
+                                            <option value="{{ $platform }}" @selected(old('browser_platform', $browserConfig['browser_platform']) === $platform)>{{ __('admin.distribution.browser.platform_'.$platform) }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="browser_account_id" class="block text-sm font-medium text-gray-700">{{ __('admin.distribution.browser.account_id') }}</label>
+                                    <input id="browser_account_id" name="browser_account_id" type="text" value="{{ old('browser_account_id', $browserConfig['browser_account_id']) }}" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                </div>
+                                <div>
+                                    <label for="browser_publish_mode" class="block text-sm font-medium text-gray-700">{{ __('admin.distribution.browser.publish_mode') }}</label>
+                                    <select id="browser_publish_mode" name="browser_publish_mode" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                        <option value="publish" @selected(old('browser_publish_mode', $browserConfig['browser_publish_mode']) === 'publish')>{{ __('admin.distribution.browser.mode_publish') }}</option>
+                                        <option value="draft" @selected(old('browser_publish_mode', $browserConfig['browser_publish_mode']) === 'draft')>{{ __('admin.distribution.browser.mode_draft') }}</option>
+                                        <option value="simulate" @selected(old('browser_publish_mode', $browserConfig['browser_publish_mode']) === 'simulate')>{{ __('admin.distribution.browser.mode_simulate') }}</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="browser_timeout_seconds" class="block text-sm font-medium text-gray-700">{{ __('admin.distribution.browser.timeout_seconds') }}</label>
+                                    <input id="browser_timeout_seconds" name="browser_timeout_seconds" type="number" min="30" max="240" value="{{ old('browser_timeout_seconds', $browserConfig['browser_timeout_seconds']) }}" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                </div>
+                            </div>
+                            <div class="mt-6">
+                                <label for="browser_runner_token" class="block text-sm font-medium text-gray-700">{{ __('admin.distribution.browser.runner_token') }}</label>
+                                <input id="browser_runner_token" name="browser_runner_token" type="password" value="{{ old('browser_runner_token') }}" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" autocomplete="new-password" placeholder="{{ __('admin.distribution.browser.runner_token_placeholder') }}">
+                                <p class="mt-1 text-xs leading-5 text-gray-500">{{ __('admin.distribution.browser.runner_token_update_help') }}</p>
+                            </div>
+                        </div>
                     @elseif ($channel->isGeoFlowAgent())
                         <fieldset class="rounded-lg border border-gray-200 bg-gray-50 p-4">
                             <legend class="text-sm font-medium text-gray-900">{{ __('admin.distribution.field.front_mode') }}</legend>
@@ -337,7 +376,7 @@
                             </div>
                             <div>
                                 <label for="copyright_info" class="block text-sm font-medium text-gray-700">{{ __('admin.site_settings.field_copyright') }}</label>
-                                <input id="copyright_info" name="copyright_info" type="text" value="{{ old('copyright_info', $remoteSettings['copyright_info']) }}" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="© 2026 Site Name">
+                                <input id="copyright_info" name="copyright_info" type="text" value="{{ old('copyright_info', $remoteSettings['copyright_info']) }}" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="© 2026 点签，版权所有。">
                             </div>
                         </div>
 
@@ -429,7 +468,7 @@
                                 <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                                     <div>
                                         <h3 class="text-sm font-semibold text-gray-900">前台体验</h3>
-                                        <p class="mt-1 text-sm leading-6 text-gray-600">管理这个 GeoFlow Agent 目标站点的首页模块、样式、轮播与默认站同步关系。</p>
+                                        <p class="mt-1 text-sm leading-6 text-gray-600">管理这个点签 Agent 目标站点的首页模块、样式、轮播与默认站同步关系。</p>
                                     </div>
                                     <div class="flex flex-wrap gap-2 text-xs">
                                         <span class="rounded-full bg-blue-50 px-2.5 py-1 font-medium text-blue-700">能力版本 {{ $targetPackageCapabilities['capability_version'] ?? '1.1' }}</span>
@@ -451,7 +490,7 @@
                                         <div class="mt-1 text-sm font-semibold text-gray-900">{{ (int) ($frontendSyncSummary['home_carousel_slides_count'] ?? 0) }} 张</div>
                                     </div>
                                     <div class="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
-                                        <div class="text-xs font-medium text-gray-500">样式 token</div>
+                                        <div class="text-xs font-medium text-gray-500">样式变量</div>
                                         <div class="mt-1 text-sm font-semibold text-gray-900">{{ count($frontendSyncSummary['homepage_style_keys'] ?? []) }} 个</div>
                                     </div>
                                     <div class="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
@@ -490,7 +529,7 @@
                                                     <dd class="mt-0.5 font-semibold">{{ $remoteTargetCapabilities['active_theme'] ?: '默认主题' }}</dd>
                                                 </div>
                                                 <div>
-                                                    <dt class="text-xs font-medium opacity-70">远端 front_mode</dt>
+                                                    <dt class="text-xs font-medium opacity-70">远端前台模式</dt>
                                                     <dd class="mt-0.5 font-semibold">{{ $remoteTargetCapabilities['front_mode'] ?: '未声明' }}</dd>
                                                 </div>
                                             </dl>
@@ -505,7 +544,7 @@
                                                 <dd class="mt-0.5 font-semibold text-gray-900">{{ ($frontendSyncSummary['active_theme'] ?? '') !== '' ? $frontendSyncSummary['active_theme'] : '默认主题' }}</dd>
                                             </div>
                                             <div>
-                                                <dt class="text-xs font-medium text-gray-500">front_mode</dt>
+                                                <dt class="text-xs font-medium text-gray-500">前台模式</dt>
                                                 <dd class="mt-0.5 font-semibold text-gray-900">{{ $frontendSyncSummary['front_mode'] ?? $frontMode }}</dd>
                                             </div>
                                             <div>
@@ -559,7 +598,7 @@
                                 </fieldset>
 
                                 <div class="mt-4 rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-sm leading-6 text-blue-900">
-                                    支持模块：{{ implode('、', $supportedFrontendModules) }}。WordPress REST、今日头条和 Generic API 只透传字段，不保证渲染 GEOFlow 模块。
+                                    支持模块：{{ implode('、', $supportedFrontendModules) }}。WordPress REST、今日头条和通用 API 只透传字段，不保证渲染点签模块。
                                 </div>
 
                                 <div class="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-2">
@@ -582,7 +621,7 @@
 
                     @if (! $channel->isGeoFlowAgent())
                         <div class="rounded-lg border border-amber-200 bg-amber-50 px-5 py-4 text-sm leading-6 text-amber-900">
-                            WordPress REST、今日头条和 Generic API 只作为外部分发渠道处理，可接收字段透传，不保证渲染 GEOFlow 首页模块、轮播或主题映射。
+                            WordPress REST、今日头条和通用 API 只作为外部分发渠道处理，可接收字段透传，不保证渲染点签首页模块、轮播或主题映射。
                         </div>
                     @endif
 

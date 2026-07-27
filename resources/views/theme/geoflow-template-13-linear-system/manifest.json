@@ -1,8 +1,8 @@
 {
     "id": "geoflow-template-13-linear-system",
-    "name": "GEOFlow 13 Linear System",
+    "name": "点签 13 线性系统",
     "version": "1.0.0",
-    "description": "A quiet product-system variant with slate surfaces, precise borders, and operational clarity. Preserves GEOFlow frontend data contracts and derives from the NetEase News Inspired base theme.",
+    "description": "安静的产品系统风格，采用中性色界面和精确边框，保留点签前台数据能力。",
     "templates": [
         "layout",
         "home",

@@ -1,8 +1,8 @@
 {
     "id": "geoflow-template-10-wired-feature",
-    "name": "GEOFlow 10 Wired Feature",
+    "name": "点签 10 深度特写",
     "version": "1.0.0",
-    "description": "A feature-story variant with large type, black-white contrast, and focused article presentation. Preserves GEOFlow frontend data contracts and derives from the NetEase News Inspired base theme.",
+    "description": "深度特写风格，采用大字号、黑白对比和聚焦文章的版式，保留点签前台数据能力。",
     "templates": [
         "layout",
         "home",

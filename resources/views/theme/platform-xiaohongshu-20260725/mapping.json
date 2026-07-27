@@ -1,0 +1,12 @@
+{
+  "id": "platform-xiaohongshu-20260725",
+  "reference": {"home": "https://www.xiaohongshu.com/explore"},
+  "templates": {"home": "home.blade.php", "category": "category.blade.php", "article": "article.blade.php"},
+  "modules": {
+    "header": "Compact brand, centered search and horizontal interest navigation",
+    "home": "Persistent left navigation and responsive image-first masonry feed",
+    "category": "Interest tabs with the same masonry content rhythm",
+    "article": "Centered note-like reading page with author context"
+  },
+  "unchanged_contracts": ["public routes", "SEO and canonical metadata", "JSON-LD schema output", "GEOFlow variables", "rendered article HTML", "optional article detail ad data"]
+}

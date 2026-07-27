@@ -3,6 +3,7 @@
 namespace App\Services\GeoFlow;
 
 use App\Exceptions\ApiException;
+use App\Exceptions\ArticleDuplicateGateException;
 use App\Exceptions\ArticleRiskGateException;
 use App\Models\Article;
 use App\Models\ArticleImage;
@@ -17,6 +18,7 @@ class ArticleGeoFlowService
 {
     public function __construct(
         private readonly ArticleRiskScanner $articleRiskScanner,
+        private readonly ArticleDuplicateDetector $articleDuplicateDetector,
         private readonly ArticleWorkflowTransitionService $articleWorkflowTransitionService,
     ) {}
 
@@ -100,6 +102,7 @@ class ArticleGeoFlowService
             ]);
 
             $this->articleRiskScanner->record($article, 'api_save', $auditAdminId);
+            $this->articleDuplicateDetector->record($article, 'api_save', $auditAdminId);
 
             $gateRejection = null;
             if (
@@ -118,7 +121,7 @@ class ArticleGeoFlowService
                         ! $isAutomaticApproval,
                         $fallbackWorkflowState,
                     );
-                } catch (ArticleRiskGateException $exception) {
+                } catch (ArticleRiskGateException|ArticleDuplicateGateException $exception) {
                     $gateRejection = $exception;
                 }
             }
@@ -127,8 +130,8 @@ class ArticleGeoFlowService
         });
 
         $article = $creation['article'];
-        if ($creation['gate_rejection'] instanceof ArticleRiskGateException) {
-            throw $this->riskBlockedException($article, $creation['gate_rejection']);
+        if ($creation['gate_rejection'] instanceof ArticleRiskGateException || $creation['gate_rejection'] instanceof ArticleDuplicateGateException) {
+            throw $this->gateBlockedException($article, $creation['gate_rejection']);
         }
 
         return $this->getArticle((int) $article->id);
@@ -214,6 +217,7 @@ class ArticleGeoFlowService
                 Article::query()->whereKey($articleId)->update($normalized);
                 $article = Article::query()->findOrFail($articleId);
                 $this->articleRiskScanner->record($article, 'api_save', $auditAdminId);
+                $this->articleDuplicateDetector->record($article, 'api_save', $auditAdminId);
             });
         } else {
             Article::query()->whereKey($articleId)->update($normalized);
@@ -272,7 +276,7 @@ class ArticleGeoFlowService
                 $riskOverrideReason,
                 $fallbackWorkflowState,
                 $reviewStatus,
-            ): ?ArticleRiskGateException {
+            ): ArticleRiskGateException|ArticleDuplicateGateException|null {
                 try {
                     $this->articleWorkflowTransitionService->transition(
                         Article::query()->findOrFail($articleId),
@@ -283,7 +287,7 @@ class ArticleGeoFlowService
                         ! $isAutomaticApproval,
                         $fallbackWorkflowState,
                     );
-                } catch (ArticleRiskGateException $exception) {
+                } catch (ArticleRiskGateException|ArticleDuplicateGateException $exception) {
                     return $exception;
                 }
 
@@ -297,8 +301,8 @@ class ArticleGeoFlowService
                 return null;
             });
 
-            if ($gateRejection instanceof ArticleRiskGateException) {
-                throw $this->riskBlockedException(Article::query()->findOrFail($articleId), $gateRejection);
+            if ($gateRejection instanceof ArticleRiskGateException || $gateRejection instanceof ArticleDuplicateGateException) {
+                throw $this->gateBlockedException(Article::query()->findOrFail($articleId), $gateRejection);
             }
         } else {
             DB::transaction(function () use ($articleId, $workflowState, $reviewStatus, $reviewNote, $auditAdminId) {
@@ -348,8 +352,8 @@ class ArticleGeoFlowService
                     }
                 },
             );
-        } catch (ArticleRiskGateException $exception) {
-            throw $this->riskBlockedException(Article::query()->findOrFail($articleId), $exception);
+        } catch (ArticleRiskGateException|ArticleDuplicateGateException $exception) {
+            throw $this->gateBlockedException(Article::query()->findOrFail($articleId), $exception);
         }
 
         return $this->getArticle($articleId);
@@ -396,7 +400,7 @@ class ArticleGeoFlowService
             $errors['keywords'] = '关键词不能超过 500 个字符';
         }
         if (mb_strlen($metaDescription, 'UTF-8') > 500) {
-            $errors['meta_description'] = 'Meta 描述不能超过 500 个字符';
+            $errors['meta_description'] = 'SEO 描述不能超过 500 个字符';
         }
         if (mb_strlen($riskOverrideReason, 'UTF-8') > 1000) {
             $errors['risk_override_reason'] = '风险放行原因不能超过 1000 个字符';
@@ -595,8 +599,18 @@ class ArticleGeoFlowService
         return in_array(strtolower(trim((string) $value)), ['1', 'true', 'yes', 'on'], true) ? 1 : 0;
     }
 
-    private function riskBlockedException(Article $article, ArticleRiskGateException $exception): ApiException
+    private function gateBlockedException(Article $article, ArticleRiskGateException|ArticleDuplicateGateException $exception): ApiException
     {
+        if ($exception instanceof ArticleDuplicateGateException) {
+            return new ApiException('article_duplicate_blocked', '文章重复度检查未通过', 409, [
+                'article_id' => (int) $article->getKey(),
+                'duplicate_status' => $exception->duplicateStatus,
+                'max_similarity' => (float) $exception->scan->max_similarity,
+                'matched_article_id' => $exception->scan->matched_article_id,
+                'matches' => $exception->scan->matches ?? [],
+            ]);
+        }
+
         return new ApiException('article_risk_blocked', '文章风险检查未通过', 409, [
             'article_id' => (int) $article->getKey(),
             'risk_status' => $exception->riskStatus,

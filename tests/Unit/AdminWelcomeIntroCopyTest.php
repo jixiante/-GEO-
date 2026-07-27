@@ -11,7 +11,7 @@ class AdminWelcomeIntroCopyTest extends TestCase
         /** @var array<string, array<string, mixed>> $copy */
         $copy = require app_path('Support/AdminWelcome/intro_copy.php');
 
-        $this->assertSame('写给点签GEO使用者的一封信', $copy['zh-CN']['letter']['title']);
+        $this->assertSame('写给点签使用者的一封信', $copy['zh-CN']['letter']['title']);
         $this->assertSame('A Letter to Dianqian Users', $copy['en']['letter']['title']);
         $this->assertStringContainsString('提高被理解、引用和推荐的概率', $copy['zh-CN']['letter']['subtitle']);
         $this->assertStringContainsString('不承诺排名', $copy['zh-CN']['letter']['subtitle']);

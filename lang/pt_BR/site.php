@@ -18,6 +18,11 @@ return [
     'article_not_found' => 'Artigo não encontrado',
     'article_published_on' => 'Publicado em :date',
     'article_related' => 'Artigos relacionados',
+    'article_related_desc' => 'Veja artigos relacionados e continue lendo.',
+    'article_views' => ':count visualizações',
+    'article_helpful' => 'Isso foi útil?',
+    'article_helpful_yes' => 'Sim',
+    'article_helpful_no' => 'Não',
     'article_ad_close' => 'Fechar promoção',
     'archive_title' => 'Arquivo',
     'archive_month_title' => 'Artigos em :period',
@@ -26,4 +31,5 @@ return [
     'pagination_next' => 'Próximo',
     'search_placeholder' => 'Buscar título ou resumo…',
     'search_button' => 'Buscar',
+    'footer_copyright' => '© :year :site. Todos os direitos reservados.',
 ];

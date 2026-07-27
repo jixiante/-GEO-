@@ -77,7 +77,7 @@ class ApiTokenController extends Controller
     public function revoke(int $tokenId): RedirectResponse
     {
         if ($tokenId <= 0) {
-            return back()->withErrors(__('admin.api_tokens.error.operation_failed', ['message' => 'Token ID 无效']));
+            return back()->withErrors(__('admin.api_tokens.error.operation_failed', ['message' => '令牌 ID 无效']));
         }
 
         try {

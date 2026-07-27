@@ -2,6 +2,8 @@
 
 namespace Tests\Unit;
 
+use App\Jobs\ProcessArticleDistributionJob;
+use App\Jobs\RunAiExposurePlatformCheckJob;
 use PHPUnit\Framework\TestCase;
 
 class DistributionQueueConfigurationTest extends TestCase
@@ -29,6 +31,27 @@ class DistributionQueueConfigurationTest extends TestCase
             ['geoflow', 'distribution'],
             $horizon['defaults']['supervisor-1']['queue'] ?? null
         );
+    }
+
+    public function test_distribution_job_allows_enough_time_for_browser_publishing(): void
+    {
+        $job = new ProcessArticleDistributionJob(1);
+
+        $this->assertSame(270, $job->timeout);
+    }
+
+    public function test_supported_queue_retry_windows_exceed_ai_exposure_timeout(): void
+    {
+        $queue = require dirname(__DIR__, 2).'/config/queue.php';
+        $job = new RunAiExposurePlatformCheckJob(1, 'deepseek');
+
+        foreach (['database', 'redis', 'beanstalkd'] as $connection) {
+            $this->assertGreaterThan(
+                $job->timeout,
+                $queue['connections'][$connection]['retry_after'] ?? 0,
+                $connection.' retry_after must exceed the longest AI exposure job timeout.'
+            );
+        }
     }
 
     public function test_compose_init_services_scope_the_fresh_install_confirmation(): void

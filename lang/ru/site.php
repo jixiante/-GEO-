@@ -18,6 +18,11 @@ return [
     'article_not_found' => 'Статья не найдена',
     'article_published_on' => 'Опубликовано: :date',
     'article_related' => 'Похожие статьи',
+    'article_related_desc' => 'Посмотрите похожие статьи и продолжите чтение.',
+    'article_views' => ':count просмотров',
+    'article_helpful' => 'Материал был полезен?',
+    'article_helpful_yes' => 'Да',
+    'article_helpful_no' => 'Нет',
     'article_ad_close' => 'Закрыть промо',
     'archive_title' => 'Архив',
     'archive_month_title' => 'Статьи за :period',
@@ -26,4 +31,5 @@ return [
     'pagination_next' => 'Далее',
     'search_placeholder' => 'Искать заголовок или выдержку…',
     'search_button' => 'Поиск',
+    'footer_copyright' => '© :year :site. Все права защищены.',
 ];

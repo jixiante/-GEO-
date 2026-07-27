@@ -3,6 +3,7 @@
 @php
     $channelType = old('channel_type', 'geoflow_agent');
     $usesGenericHttpTransport = in_array($channelType, ['generic_http_api', 'toutiao_bridge'], true);
+    $browserPlatform = old('browser_platform', 'toutiao');
     $frontMode = old('front_mode', 'static');
     $themes = $availableThemes ?? [];
     $selectedTheme = old('template_key', '');
@@ -51,7 +52,7 @@
                     <fieldset class="rounded-lg border border-gray-200 bg-gray-50 p-4">
                         <legend class="text-sm font-medium text-gray-900">{{ __('admin.distribution.field.channel_type') }}</legend>
                         <p class="mt-1 text-sm text-gray-600">{{ __('admin.distribution.help.channel_type') }}</p>
-                        <div class="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+                        <div class="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
                             <label class="flex cursor-pointer gap-3 rounded-md border border-gray-200 bg-white p-4 hover:border-blue-300">
                                 <input type="radio" name="channel_type" value="geoflow_agent" class="mt-1 text-blue-600 focus:ring-blue-500" @checked($channelType === 'geoflow_agent')>
                                 <span>
@@ -80,6 +81,13 @@
                                     <span class="mt-1 block text-sm text-gray-600">{{ __('admin.distribution.channel_type.toutiao_bridge_desc') }}</span>
                                 </span>
                             </label>
+                            <label class="flex cursor-pointer gap-3 rounded-md border border-gray-200 bg-white p-4 hover:border-blue-300">
+                                <input type="radio" name="channel_type" value="browser_runner" class="mt-1 text-blue-600 focus:ring-blue-500" @checked($channelType === 'browser_runner')>
+                                <span>
+                                    <span class="block text-sm font-semibold text-gray-900">{{ __('admin.distribution.channel_type.browser_runner') }}</span>
+                                    <span class="mt-1 block text-sm text-gray-600">{{ __('admin.distribution.channel_type.browser_runner_desc') }}</span>
+                                </span>
+                            </label>
                         </div>
                     </fieldset>
 
@@ -92,6 +100,44 @@
                             <label for="endpoint_url" class="block text-sm font-medium text-gray-700">{{ __('admin.distribution.field.endpoint_url') }} *</label>
                             <input id="endpoint_url" name="endpoint_url" type="text" required value="{{ old('endpoint_url') }}" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="{{ __('admin.distribution.placeholder.endpoint_url') }}">
                             <p class="mt-1 text-xs text-gray-500">{{ __('admin.distribution.help.endpoint_url') }}</p>
+                        </div>
+                    </div>
+
+                    <div data-channel-type-panel="browser_runner" @class(['rounded-lg border border-emerald-100 bg-emerald-50 p-5', 'hidden' => $channelType !== 'browser_runner'])>
+                        <div class="mb-5">
+                            <h2 class="text-lg font-medium text-gray-900">{{ __('admin.distribution.browser.section_title') }}</h2>
+                            <p class="mt-1 text-sm leading-6 text-gray-600">{{ __('admin.distribution.browser.section_desc') }}</p>
+                        </div>
+                        <div class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+                            <div>
+                                <label for="browser_platform" class="block text-sm font-medium text-gray-700">{{ __('admin.distribution.browser.platform') }}</label>
+                                <select id="browser_platform" name="browser_platform" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    @foreach (\App\Models\DistributionChannel::BROWSER_PLATFORMS as $platform)
+                                        <option value="{{ $platform }}" @selected($browserPlatform === $platform)>{{ __('admin.distribution.browser.platform_'.$platform) }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div>
+                                <label for="browser_account_id" class="block text-sm font-medium text-gray-700">{{ __('admin.distribution.browser.account_id') }}</label>
+                                <input id="browser_account_id" name="browser_account_id" type="text" value="{{ old('browser_account_id', 'default') }}" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="company_main">
+                            </div>
+                            <div>
+                                <label for="browser_publish_mode" class="block text-sm font-medium text-gray-700">{{ __('admin.distribution.browser.publish_mode') }}</label>
+                                <select id="browser_publish_mode" name="browser_publish_mode" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    <option value="publish" @selected(old('browser_publish_mode', 'publish') === 'publish')>{{ __('admin.distribution.browser.mode_publish') }}</option>
+                                    <option value="draft" @selected(old('browser_publish_mode') === 'draft')>{{ __('admin.distribution.browser.mode_draft') }}</option>
+                                    <option value="simulate" @selected(old('browser_publish_mode') === 'simulate')>{{ __('admin.distribution.browser.mode_simulate') }}</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="browser_timeout_seconds" class="block text-sm font-medium text-gray-700">{{ __('admin.distribution.browser.timeout_seconds') }}</label>
+                                <input id="browser_timeout_seconds" name="browser_timeout_seconds" type="number" min="30" max="240" value="{{ old('browser_timeout_seconds', 180) }}" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            </div>
+                        </div>
+                        <div class="mt-6">
+                            <label for="browser_runner_token" class="block text-sm font-medium text-gray-700">{{ __('admin.distribution.browser.runner_token') }}</label>
+                            <input id="browser_runner_token" name="browser_runner_token" type="password" value="{{ old('browser_runner_token') }}" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" autocomplete="new-password">
+                            <p class="mt-1 text-xs leading-5 text-gray-500">{{ __('admin.distribution.browser.runner_token_help') }}</p>
                         </div>
                     </div>
 

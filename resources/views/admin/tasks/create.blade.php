@@ -113,7 +113,7 @@
                                 <select name="title_library_id" id="title_library_id" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                                     <option value="">{{ $t('task_create.option.select_title_library') }}</option>
                                     @foreach ($formOptions['titleLibraries'] as $library)
-                                        <option value="{{ $library['id'] }}" @selected((string) old('title_library_id', (string) ($taskForm['title_library_id'] ?? '')) === (string) $library['id'])>
+                                        <option value="{{ $library['id'] }}" data-title-count="{{ $library['count'] }}" @selected((string) old('title_library_id', (string) ($taskForm['title_library_id'] ?? '')) === (string) $library['id'])>
                                             {{ $t('task_create.option.library_count', ['name' => $library['name'], 'count' => $library['count']]) }}
                                         </option>
                                     @endforeach
@@ -829,8 +829,15 @@
                     return;
                 }
 
-                if (!document.getElementById('title_library_id').value) {
+                const titleLibrarySelect = document.getElementById('title_library_id');
+                if (!titleLibrarySelect.value) {
                     alert(@json(__('admin.task_create.error.title_library_required')));
+                    event.preventDefault();
+                    return;
+                }
+
+                if (Number(titleLibrarySelect.selectedOptions[0]?.dataset.titleCount || 0) < 1) {
+                    alert(@json(__('admin.task_create.error.title_library_empty')));
                     event.preventDefault();
                     return;
                 }

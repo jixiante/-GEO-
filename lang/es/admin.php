@@ -3,8 +3,39 @@
 $base = require __DIR__.'/../en/admin.php';
 
 return array_replace_recursive($base, [
+    'distribution' => [
+        'button' => [
+            'confirm_remote_url' => 'Confirmar URL remota',
+        ],
+        'message' => [
+            'remote_url_confirmed' => 'URL del artículo remoto confirmada. La monitorización de exposición por IA la tratará como fuente publicada.',
+        ],
+        'remote_url_confirmation' => [
+            'title' => 'Confirmar URL del artículo remoto',
+            'desc' => 'Registra la URL pública del artículo y marca esta distribución como sincronizada.',
+            'url_label' => 'URL pública del artículo',
+            'url_help' => 'La URL debe pertenecer a :domain y apuntar directamente a una página de artículo.',
+            'confirm_label' => 'Confirmo que esta URL es pública y contiene el artículo actual.',
+            'submit' => 'Confirmar y monitorizar',
+            'audit_message' => 'Un administrador confirmó la URL pública del artículo remoto',
+            'validation' => [
+                'required' => 'Introduce la URL pública del artículo.',
+                'max' => 'La URL pública no puede superar los 500 caracteres.',
+                'url' => 'Introduce una URL pública http o https válida y sin credenciales.',
+                'host' => 'El dominio de la URL debe coincidir con el canal de distribución actual.',
+                'article_path' => 'La URL debe apuntar a un artículo, no a la página principal.',
+                'toutiao_path' => 'Una URL de Toutiao debe usar el formato /article/id-numérico/.',
+                'delete_action' => 'Una tarea de eliminación no puede recibir una URL remota.',
+                'status' => 'Solo se pueden confirmar tareas fallidas o sincronizadas sin URL.',
+                'existing_url' => 'Esta distribución ya tiene otra URL remota y no puede sobrescribirse.',
+                'not_confirmable' => 'Esta tarea de distribución no admite una URL remota.',
+                'confirmed' => 'Acepta la declaración de confirmación manual.',
+            ],
+        ],
+    ],
     'nav' => [
         'dashboard' => 'Panel',
+        'ai_exposure' => 'Exposición en respuestas IA',
         'tasks' => 'Tareas',
         'articles' => 'Artículos',
         'materials' => 'Materiales',
@@ -16,6 +47,9 @@ return array_replace_recursive($base, [
         'system_settings' => 'Ajustes del sistema',
         'admin_management' => 'Gestión de usuarios',
         'activity_logs' => 'Registro de actividad',
+    ],
+    'ai_exposure' => [
+        'frequency' => ['5min' => 'Cada 5 minutos'],
     ],
     'ai_models' => [
         'quick_help' => 'Haz clic para autocompletar configuraciones comunes. Gemini usa la API nativa v1beta de Google; los demás proveedores conservan las reglas compatibles con OpenAI.',

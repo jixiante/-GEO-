@@ -12,9 +12,11 @@ use App\Models\DistributionChannel;
 use App\Models\KnowledgeBase;
 use App\Models\Prompt;
 use App\Models\Task;
+use App\Models\Title;
 use App\Models\TitleLibrary;
 use App\Support\AdminWeb;
 use App\Support\GeoFlow\ApiKeyCrypto;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -47,6 +49,12 @@ class AdminTasksPageTest extends TestCase
             ->assertOk()
             ->assertSee(__('admin.tasks.page_title'))
             ->assertSee(__('admin.tasks.empty_title'))
+            ->assertSee(__('admin.tasks.worker.title'))
+            ->assertSee(__('admin.tasks.jobs.recent'))
+            ->assertSee(__('admin.tasks.jobs.job_prefix'))
+            ->assertDontSee('Job #')
+            ->assertDontSee('>running<', false)
+            ->assertDontSee('>idle<', false)
             ->assertViewHas('tasks')
             ->assertViewHas('taskI18n');
     }
@@ -66,6 +74,94 @@ class AdminTasksPageTest extends TestCase
             ->get(route('admin.tasks.create'))
             ->assertOk()
             ->assertSee(__('admin.task_create.page_heading'));
+    }
+
+    public function test_admin_cannot_create_task_with_an_empty_title_library(): void
+    {
+        $admin = $this->createTaskFormAdmin('tasks_empty_title_library_admin');
+        $dependencies = $this->createTaskFormDependencies();
+        $emptyTitleLibrary = TitleLibrary::query()->create([
+            'name' => '空标题库',
+            'title_count' => 8,
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.tasks.create'))
+            ->assertOk()
+            ->assertSee('data-title-count="0"', false);
+
+        $this->actingAs($admin, 'admin')
+            ->from(route('admin.tasks.create'))
+            ->post(route('admin.tasks.store'), $this->validTaskPayload($dependencies, [
+                'task_name' => '空标题库任务',
+                'title_library_id' => (int) $emptyTitleLibrary->id,
+            ]))
+            ->assertRedirect(route('admin.tasks.create'))
+            ->assertSessionHasErrors([
+                'title_library_id' => '标题库里面没有任何标题',
+            ]);
+
+        $this->assertDatabaseMissing('tasks', [
+            'name' => '空标题库任务',
+        ]);
+    }
+
+    public function test_admin_cannot_start_a_task_with_an_empty_title_library(): void
+    {
+        $admin = $this->createTaskFormAdmin('tasks_start_empty_title_library_admin');
+        $titleLibrary = TitleLibrary::query()->create([
+            'name' => '已有任务的空标题库',
+        ]);
+        $task = Task::query()->create([
+            'name' => '待启动的空标题库任务',
+            'title_library_id' => (int) $titleLibrary->id,
+            'status' => 'paused',
+            'schedule_enabled' => 0,
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->from(route('admin.tasks.index'))
+            ->post(route('admin.tasks.toggle-status', ['taskId' => (int) $task->id]), [
+                'status' => 'paused',
+            ])
+            ->assertRedirect(route('admin.tasks.index'))
+            ->assertSessionHasErrors([
+                'title_library_id' => '标题库里面没有任何标题',
+            ]);
+
+        $this->assertSame('paused', (string) $task->fresh()->status);
+    }
+
+    public function test_admin_cannot_update_a_task_to_use_an_empty_title_library(): void
+    {
+        $admin = $this->createTaskFormAdmin('tasks_update_empty_title_library_admin');
+        $dependencies = $this->createTaskFormDependencies();
+        $emptyTitleLibrary = TitleLibrary::query()->create([
+            'name' => '编辑时选择的空标题库',
+        ]);
+        $task = Task::query()->create([
+            'name' => '原任务名称',
+            'title_library_id' => (int) $dependencies['title_library']->id,
+            'prompt_id' => (int) $dependencies['prompt']->id,
+            'ai_model_id' => (int) $dependencies['ai_model']->id,
+            'status' => 'paused',
+            'schedule_enabled' => 0,
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->from(route('admin.tasks.edit', ['taskId' => (int) $task->id]))
+            ->put(route('admin.tasks.update', ['taskId' => (int) $task->id]), $this->validTaskPayload($dependencies, [
+                'task_name' => '不应保存的新名称',
+                'title_library_id' => (int) $emptyTitleLibrary->id,
+            ]))
+            ->assertRedirect(route('admin.tasks.edit', ['taskId' => (int) $task->id]))
+            ->assertSessionHasErrors([
+                'title_library_id' => '标题库里面没有任何标题',
+            ]);
+
+        $task->refresh();
+        $this->assertSame('原任务名称', (string) $task->name);
+        $this->assertSame((int) $dependencies['title_library']->id, (int) $task->title_library_id);
     }
 
     public function test_task_create_and_edit_forms_use_full_admin_content_width(): void
@@ -210,6 +306,10 @@ class AdminTasksPageTest extends TestCase
         ]);
         $titleLibrary = TitleLibrary::query()->create([
             'name' => '标题库',
+        ]);
+        Title::query()->create([
+            'library_id' => (int) $titleLibrary->id,
+            'title' => '测试标题',
         ]);
         $category = Category::query()->create([
             'name' => '科技资讯',
@@ -577,6 +677,14 @@ class AdminTasksPageTest extends TestCase
      */
     private function createTaskFormDependencies(): array
     {
+        $titleLibrary = TitleLibrary::query()->create([
+            'name' => '任务标题库',
+        ]);
+        Title::query()->create([
+            'library_id' => (int) $titleLibrary->id,
+            'title' => '任务测试标题',
+        ]);
+
         return [
             'ai_model' => AiModel::query()->create([
                 'name' => '任务测试模型',
@@ -591,9 +699,7 @@ class AdminTasksPageTest extends TestCase
                 'type' => 'content',
                 'content' => '请写 {{title}}',
             ]),
-            'title_library' => TitleLibrary::query()->create([
-                'name' => '任务标题库',
-            ]),
+            'title_library' => $titleLibrary,
             'category' => Category::query()->create([
                 'name' => '任务分类',
                 'slug' => 'task-category-'.uniqid(),
@@ -602,11 +708,11 @@ class AdminTasksPageTest extends TestCase
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Collection<int, KnowledgeBase>
+     * @return Collection<int, KnowledgeBase>
      */
-    private function createKnowledgeBases(int $count): \Illuminate\Database\Eloquent\Collection
+    private function createKnowledgeBases(int $count): Collection
     {
-        $knowledgeBases = new \Illuminate\Database\Eloquent\Collection();
+        $knowledgeBases = new Collection;
         for ($index = 1; $index <= $count; $index++) {
             $knowledgeBases->push(KnowledgeBase::query()->create([
                 'name' => '任务知识库 '.$index,

@@ -3,12 +3,15 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\ConfirmArticleDistributionRemoteUrlRequest;
 use App\Jobs\ProcessArticleDistributionJob;
 use App\Models\Admin;
 use App\Models\ArticleDistribution;
 use App\Models\DistributionChannel;
 use App\Models\DistributionChannelSecret;
 use App\Models\DistributionLog;
+use App\Services\GeoFlow\BrowserRunnerClient;
+use App\Services\GeoFlow\ConfirmArticleDistributionRemoteUrlAction;
 use App\Services\GeoFlow\DistributionOrchestrator;
 use App\Services\GeoFlow\DistributionPublisherManager;
 use App\Services\GeoFlow\DistributionTargetSitePackageBuilder;
@@ -37,6 +40,8 @@ class DistributionController extends Controller
         private readonly DistributionTargetSitePackageBuilder $targetSitePackageBuilder,
         private readonly SiteThemeCatalog $siteThemeCatalog,
         private readonly FrontendExperienceInspector $frontendExperienceInspector,
+        private readonly BrowserRunnerClient $browserRunnerClient,
+        private readonly ConfirmArticleDistributionRemoteUrlAction $confirmRemoteUrl,
     ) {}
 
     public function index(Request $request): View
@@ -131,6 +136,14 @@ class DistributionController extends Controller
                 ->with('message', __('admin.distribution.message.created'));
         }
 
+        if ($channel->isBrowserRunner()) {
+            $this->createBrowserRunnerSecret($channel, (string) $payload['browser_runner_token']);
+
+            return redirect()
+                ->route('admin.distribution.show', ['channelId' => (int) $channel->id])
+                ->with('message', __('admin.distribution.message.created'));
+        }
+
         $secret = $this->createChannelSecret($channel);
 
         return redirect()
@@ -189,6 +202,17 @@ class DistributionController extends Controller
                 ]);
             }
         }
+        if (($payload['channel_type'] ?? 'geoflow_agent') === DistributionChannel::CHANNEL_TYPE_BROWSER_RUNNER) {
+            $hasActiveSecret = DistributionChannelSecret::query()
+                ->where('distribution_channel_id', (int) $channel->id)
+                ->where('status', 'active')
+                ->exists();
+            if (! $hasActiveSecret && ! filled($payload['browser_runner_token'] ?? null)) {
+                throw ValidationException::withMessages([
+                    'browser_runner_token' => __('admin.distribution.validation.browser_runner_token'),
+                ]);
+            }
+        }
 
         $channel->forceFill([
             'name' => (string) $payload['name'],
@@ -225,10 +249,17 @@ class DistributionController extends Controller
                 $this->createGenericHttpSecret($channel, (string) $payload['generic_secret']);
             }
         }
+        if ($channel->isBrowserRunner() && filled($payload['browser_runner_token'] ?? null)) {
+            DistributionChannelSecret::query()
+                ->where('distribution_channel_id', (int) $channel->id)
+                ->where('status', 'active')
+                ->update(['status' => 'revoked']);
+            $this->createBrowserRunnerSecret($channel, (string) $payload['browser_runner_token']);
+        }
 
         $message = __('admin.distribution.message.updated');
         $channel->load('activeSecret');
-        if ($channel->activeSecret || ($channel->usesGenericHttpTransport() && $channel->resolvedGenericHttpConfig()['generic_auth_type'] === 'none')) {
+        if (! $channel->isBrowserRunner() && ($channel->activeSecret || ($channel->usesGenericHttpTransport() && $channel->resolvedGenericHttpConfig()['generic_auth_type'] === 'none'))) {
             if ($channel->isGeoFlowAgent() && $this->frontendExperienceInspector->requiresSyncConfirmation($channel)) {
                 return redirect()
                     ->route('admin.distribution.show', ['channelId' => (int) $channel->id])
@@ -264,7 +295,7 @@ class DistributionController extends Controller
         }
 
         $jobs = ArticleDistribution::query()
-            ->with('article:id,title,slug,status')
+            ->with(['article:id,title,slug,status', 'channel:id,name,domain'])
             ->where('distribution_channel_id', $channelId)
             ->orderByDesc('id')
             ->limit(20)
@@ -297,7 +328,7 @@ class DistributionController extends Controller
             'status' => (string) $request->query('status', ''),
             'channel_id' => max(0, (int) $request->query('channel_id', 0)),
         ];
-        if (! in_array($filters['status'], ['queued', 'sending', 'synced', 'failed'], true)) {
+        if (! in_array($filters['status'], ['queued', 'sending', 'synced', 'simulated', 'failed'], true)) {
             $filters['status'] = '';
         }
 
@@ -524,6 +555,44 @@ class DistributionController extends Controller
         ]);
     }
 
+    public function editRemoteUrl(int $distributionId): View|RedirectResponse
+    {
+        $distribution = ArticleDistribution::query()
+            ->with(['article', 'channel'])
+            ->whereKey($distributionId)
+            ->first();
+
+        if (! $distribution || ! $distribution->article || ! $distribution->channel) {
+            return back()->withErrors(__('admin.distribution.message.job_not_found'));
+        }
+        if (! $this->confirmRemoteUrl->canConfirm($distribution)) {
+            return back()->withErrors(__('admin.distribution.remote_url_confirmation.validation.not_confirmable'));
+        }
+
+        return view('admin.distribution.remote-url-confirm', [
+            'pageTitle' => __('admin.distribution.remote_url_confirmation.title'),
+            'activeMenu' => 'distribution',
+            'adminSiteName' => AdminWeb::siteName(),
+            'distribution' => $distribution,
+            'article' => $distribution->article,
+            'channel' => $distribution->channel,
+        ]);
+    }
+
+    public function updateRemoteUrl(ConfirmArticleDistributionRemoteUrlRequest $request, int $distributionId): RedirectResponse
+    {
+        $payload = $request->validated();
+        $distribution = $this->confirmRemoteUrl->execute(
+            $distributionId,
+            (int) $request->user('admin')->getAuthIdentifier(),
+            (string) $payload['remote_url'],
+        );
+
+        return redirect()
+            ->route('admin.distribution.show', ['channelId' => (int) $distribution->distribution_channel_id])
+            ->with('message', __('admin.distribution.message.remote_url_confirmed'));
+    }
+
     public function updateArticle(Request $request, int $distributionId): RedirectResponse
     {
         $distribution = ArticleDistribution::query()
@@ -643,6 +712,51 @@ class DistributionController extends Controller
             ])->save();
 
             return back()->withErrors(__('admin.distribution.message.health_failed', ['message' => $e->getMessage()]));
+        }
+    }
+
+    public function openBrowserLogin(int $channelId): RedirectResponse
+    {
+        $channel = DistributionChannel::query()->with('activeSecret')->whereKey($channelId)->first();
+        if (! $channel) {
+            return redirect()->route('admin.distribution.index')->withErrors(__('admin.distribution.message.not_found'));
+        }
+        if (! $channel->isBrowserRunner()) {
+            return back()->withErrors(__('admin.distribution.message.browser_login_not_available'));
+        }
+
+        try {
+            $result = $this->browserRunnerClient->openLogin($channel);
+
+            return back()->with('message', __('admin.distribution.message.browser_login_opened', [
+                'platform' => __('admin.distribution.browser.platform_'.$channel->resolvedBrowserRunnerConfig()['browser_platform']),
+            ]).' '.json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+        } catch (Throwable $e) {
+            return back()->withErrors(__('admin.distribution.message.browser_login_failed', ['message' => $e->getMessage()]));
+        }
+    }
+
+    public function controlBrowserRunner(Request $request, int $channelId): RedirectResponse
+    {
+        $channel = DistributionChannel::query()->with('activeSecret')->whereKey($channelId)->first();
+        if (! $channel) {
+            return redirect()->route('admin.distribution.index')->withErrors(__('admin.distribution.message.not_found'));
+        }
+        if (! $channel->isBrowserRunner()) {
+            return back()->withErrors(__('admin.distribution.message.browser_login_not_available'));
+        }
+
+        $payload = $request->validate(['runner_action' => ['required', 'string', 'in:start,stop']]);
+
+        try {
+            $enabled = $payload['runner_action'] === 'start';
+            $this->browserRunnerClient->control($channel, $enabled);
+
+            return back()->with('message', __($enabled
+                ? 'admin.distribution.message.browser_runner_started'
+                : 'admin.distribution.message.browser_runner_stopped'));
+        } catch (Throwable $e) {
+            return back()->withErrors(__('admin.distribution.message.browser_control_failed', ['message' => $e->getMessage()]));
         }
     }
 
@@ -983,6 +1097,11 @@ class DistributionController extends Controller
             'generic_remote_id_path' => ['nullable', 'string', 'max:120'],
             'generic_remote_url_path' => ['nullable', 'string', 'max:120'],
             'generic_payload_wrapper' => ['nullable', 'string', 'in:none,data'],
+            'browser_platform' => ['nullable', 'string', 'in:'.implode(',', DistributionChannel::BROWSER_PLATFORMS)],
+            'browser_account_id' => ['nullable', 'string', 'max:80', 'regex:/^[A-Za-z0-9_-]+$/'],
+            'browser_publish_mode' => ['nullable', 'string', 'in:publish,draft,simulate'],
+            'browser_timeout_seconds' => ['nullable', 'integer', 'min:30', 'max:240'],
+            'browser_runner_token' => ['nullable', 'string', 'min:24', 'max:500'],
             'site_name' => ['nullable', 'string', 'max:120'],
             'site_subtitle' => ['nullable', 'string', 'max:255'],
             'site_description' => ['nullable', 'string'],
@@ -1087,6 +1206,23 @@ class DistributionController extends Controller
                     ]);
                 }
                 $payload[$field] = $path;
+            }
+        }
+        if ($payload['channel_type'] === DistributionChannel::CHANNEL_TYPE_BROWSER_RUNNER) {
+            if (! filled($payload['browser_platform'] ?? null)) {
+                throw ValidationException::withMessages([
+                    'browser_platform' => __('admin.distribution.validation.browser_platform'),
+                ]);
+            }
+            if (! filled($payload['browser_account_id'] ?? null)) {
+                throw ValidationException::withMessages([
+                    'browser_account_id' => __('admin.distribution.validation.browser_account_id'),
+                ]);
+            }
+            if ($request->isMethod('post') && ! filled($payload['browser_runner_token'] ?? null)) {
+                throw ValidationException::withMessages([
+                    'browser_runner_token' => __('admin.distribution.validation.browser_runner_token'),
+                ]);
             }
         }
 
@@ -1302,13 +1438,13 @@ class DistributionController extends Controller
      */
     private function normalizeChannelSiteSettings(array $payload, ?DistributionChannel $channel = null): array
     {
-        $defaultName = trim((string) ($payload['name'] ?? 'GEOFlow Target Site'));
+        $defaultName = trim((string) ($payload['name'] ?? '点签目标站'));
         $defaults = $channel?->resolvedSiteSettings() ?? [
-            'site_name' => $defaultName !== '' ? $defaultName : 'GEOFlow Target Site',
+            'site_name' => $defaultName !== '' ? $defaultName : '点签目标站',
             'site_subtitle' => '',
-            'site_description' => '由 GEOFlow 自动分发和管理的目标站点。',
+            'site_description' => '由点签自动分发和管理的目标站点。',
             'site_keywords' => '',
-            'copyright_info' => '© '.date('Y').' '.($defaultName !== '' ? $defaultName : 'GEOFlow Target Site'),
+            'copyright_info' => '© '.date('Y').' '.($defaultName !== '' ? $defaultName : '点签目标站').'，版权所有。',
             'site_logo' => '',
             'site_favicon' => '',
             'seo_title_template' => '{title} - {site_name}',
@@ -1409,6 +1545,19 @@ class DistributionController extends Controller
                 'generic_remote_id_path' => trim((string) ($payload['generic_remote_id_path'] ?? $defaults['generic_remote_id_path'])),
                 'generic_remote_url_path' => trim((string) ($payload['generic_remote_url_path'] ?? $defaults['generic_remote_url_path'])),
                 'generic_payload_wrapper' => (string) ($payload['generic_payload_wrapper'] ?? $defaults['generic_payload_wrapper']),
+            ], $channel);
+        }
+
+        if ($channelType === DistributionChannel::CHANNEL_TYPE_BROWSER_RUNNER) {
+            $defaults = $channel?->resolvedBrowserRunnerConfig() ?? (new DistributionChannel)->resolvedBrowserRunnerConfig();
+
+            return $this->withExistingFrontendCapabilitiesCache([
+                'article_text_ad_policy' => $articleTextAdPolicy,
+                'frontend_experience_mode' => $frontendExperienceMode,
+                'browser_platform' => (string) ($payload['browser_platform'] ?? $defaults['browser_platform']),
+                'browser_account_id' => trim((string) ($payload['browser_account_id'] ?? $defaults['browser_account_id'])),
+                'browser_publish_mode' => (string) ($payload['browser_publish_mode'] ?? $defaults['browser_publish_mode']),
+                'browser_timeout_seconds' => min(240, max(30, (int) ($payload['browser_timeout_seconds'] ?? $defaults['browser_timeout_seconds']))),
             ], $channel);
         }
 
@@ -1517,6 +1666,17 @@ class DistributionController extends Controller
             'secret_ciphertext' => $this->apiKeyCrypto->encrypt($secret),
             'status' => 'active',
             'scopes' => [$isToutiao ? 'toutiao.publish' : 'generic.http'],
+        ]);
+    }
+
+    private function createBrowserRunnerSecret(DistributionChannel $channel, string $secret): void
+    {
+        DistributionChannelSecret::query()->create([
+            'distribution_channel_id' => (int) $channel->id,
+            'key_id' => 'browser_'.Str::lower(Str::random(18)),
+            'secret_ciphertext' => $this->apiKeyCrypto->encrypt($secret),
+            'status' => 'active',
+            'scopes' => ['browser.publish', 'browser.login', 'browser.health'],
         ]);
     }
 

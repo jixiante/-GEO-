@@ -1,8 +1,8 @@
 {
     "id": "geoflow-template-06-public-broadcast",
-    "name": "GEOFlow 06 Public Broadcast",
+    "name": "点签 06 公共广播",
     "version": "1.0.0",
-    "description": "A public-news variant with high contrast blocks, clear navigation, and accessible reading hierarchy. Preserves GEOFlow frontend data contracts and derives from the NetEase News Inspired base theme.",
+    "description": "公共资讯风格，采用高对比区块、清晰导航和易读层级，保留点签前台数据能力。",
     "templates": [
         "layout",
         "home",

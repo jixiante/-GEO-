@@ -42,7 +42,7 @@
 
         @if ($previews === [])
             <div class="rounded-lg border border-dashed border-gray-300 bg-white px-6 py-12 text-center text-sm text-gray-500 shadow">
-                当前没有可同步的 GeoFlow Agent 渠道。
+                当前没有可同步的点签 Agent 渠道。
             </div>
         @else
             <div class="space-y-5">
@@ -95,7 +95,7 @@
                                         <dd class="font-medium text-gray-900">{{ $summary['frontend_experience_mode'] ?? '' }}</dd>
                                     </div>
                                     <div class="flex justify-between gap-4">
-                                        <dt class="text-gray-500">主题 / front_mode</dt>
+                                        <dt class="text-gray-500">主题 / 前台模式</dt>
                                         <dd class="font-medium text-gray-900">{{ ($summary['active_theme'] ?? '') !== '' ? $summary['active_theme'] : '默认主题' }} / {{ $summary['front_mode'] ?? '' }}</dd>
                                     </div>
                                     <div class="flex justify-between gap-4">
@@ -122,7 +122,7 @@
                                         <dd class="font-medium text-gray-900">{{ ($remote['capability_version'] ?? '') !== '' ? $remote['capability_version'] : '-' }} / {{ ($remote['package_version'] ?? '') !== '' ? $remote['package_version'] : '-' }}</dd>
                                     </div>
                                     <div class="flex justify-between gap-4">
-                                        <dt class="text-gray-500">远端主题 / front_mode</dt>
+                                        <dt class="text-gray-500">远端主题 / 前台模式</dt>
                                         <dd class="font-medium text-gray-900">{{ ($remote['active_theme'] ?? '') !== '' ? $remote['active_theme'] : '-' }} / {{ ($remote['front_mode'] ?? '') !== '' ? $remote['front_mode'] : '-' }}</dd>
                                     </div>
                                     <div class="flex justify-between gap-4">

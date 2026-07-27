@@ -2,7 +2,7 @@
     "$schema": "https://getcomposer.org/schema.json",
     "name": "jian-ux/dianqian-geo",
     "type": "project",
-    "description": "Dianqian GEO intelligent content production and distribution platform.",
+    "description": "Dianqian intelligent content production and distribution platform.",
     "keywords": ["geo", "content", "rag", "laravel"],
     "license": "Apache-2.0",
     "require": {

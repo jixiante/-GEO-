@@ -33,7 +33,7 @@
 
         <div class="rounded-md border border-gray-200 bg-gray-50">
             <div class="flex items-center justify-between border-b border-gray-200 px-4 py-3">
-                <div class="text-sm font-semibold text-gray-900">Nginx server 配置</div>
+                <div class="text-sm font-semibold text-gray-900">Nginx 服务器配置</div>
                 <button type="button" class="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50" data-distribution-copy="#{{ $rewriteBlockId }}-nginx" data-copy-label="{{ __('admin.distribution.rewrite.copy_nginx') }}" data-copied-label="{{ __('admin.distribution.rewrite.copied') }}">
                     <i data-lucide="copy" class="mr-1.5 h-3.5 w-3.5"></i>
                     <span>{{ __('admin.distribution.rewrite.copy_nginx') }}</span>
@@ -44,7 +44,7 @@
 
         <div class="rounded-md border border-amber-200 bg-amber-50/70">
             <div class="flex items-center justify-between border-b border-amber-200 px-4 py-3">
-                <div class="text-sm font-semibold text-gray-900">宝塔纯 rewrite</div>
+                <div class="text-sm font-semibold text-gray-900">宝塔纯重写规则</div>
                 <button type="button" class="inline-flex items-center rounded-md border border-amber-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-amber-50" data-distribution-copy="#{{ $rewriteBlockId }}-bt" data-copy-label="{{ __('admin.distribution.rewrite.copy_bt') }}" data-copied-label="{{ __('admin.distribution.rewrite.copied') }}">
                     <i data-lucide="copy" class="mr-1.5 h-3.5 w-3.5"></i>
                     <span>{{ __('admin.distribution.rewrite.copy_bt') }}</span>

@@ -513,8 +513,9 @@
                                 };
                                 $distributionTotal = (int) ($article->distribution_total_count ?? 0);
                                 $distributionSynced = (int) ($article->distribution_synced_count ?? 0);
+                                $distributionSimulated = (int) ($article->distribution_simulated_count ?? 0);
                                 $distributionFailed = (int) ($article->distribution_failed_count ?? 0);
-                                $distributionPending = max(0, $distributionTotal - $distributionSynced - $distributionFailed);
+                                $distributionPending = max(0, $distributionTotal - $distributionSynced - $distributionSimulated - $distributionFailed);
                                 $articleDistributionChannels = collect($article->distributions ?? []);
                                 if (count($selectedDistributionChannelIds) > 0) {
                                     $articleDistributionChannels = $articleDistributionChannels->filter(
@@ -588,6 +589,12 @@
                                             'label' => __('admin.distribution.article_status.synced'),
                                             'detail' => $distributionSynced.'/'.$distributionTotal,
                                             'class' => 'bg-emerald-50 text-emerald-700 ring-emerald-100',
+                                        ];
+                                    } elseif ($distributionSimulated > 0 && ($distributionSynced + $distributionSimulated) >= $distributionTotal) {
+                                        $distributionBadge = [
+                                            'label' => __('admin.distribution.article_status.simulated'),
+                                            'detail' => $distributionSimulated.'/'.$distributionTotal,
+                                            'class' => 'bg-violet-50 text-violet-700 ring-violet-100',
                                         ];
                                     } else {
                                         $distributionBadge = [

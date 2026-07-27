@@ -1,6 +1,6 @@
-# 点签GEO部署脚本 / Deployment Scripts
+# 点签部署脚本 / Deployment Scripts
 
-这个目录用于存放点签GEO的参考部署脚本，方便技术人员在常见云服务器、VPS、Docker 主机或面板服务器上快速完成环境自检和生产部署。
+这个目录用于存放点签的参考部署脚本，方便技术人员在常见云服务器、VPS、Docker 主机或面板服务器上快速完成环境自检和生产部署。
 
 脚本默认走仓库现有的 `docker-compose.prod.yml` 生产链路，不绕开项目标准部署方式。
 

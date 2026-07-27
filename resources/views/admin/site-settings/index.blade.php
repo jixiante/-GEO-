@@ -187,7 +187,7 @@
                         <input type="text" name="copyright_info"
                                value="{{ $settings['copyright_info'] }}"
                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                               placeholder="© 2024 Site Name. All rights reserved.">
+                               placeholder="© 2026 点签，版权所有。">
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -600,7 +600,7 @@
                                 </div>
                                 <div class="mt-4">
                                     <label class="mb-2 block text-xs font-medium text-gray-600">{{ __('admin.site_settings.homepage.field_custom_html') }}</label>
-                                    <textarea name="homepage_modules[{{ $index }}][custom_html]" rows="3" class="w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-xs shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="<p>HTML snippet</p>">{{ $module['custom_html'] ?? '' }}</textarea>
+                                    <textarea name="homepage_modules[{{ $index }}][custom_html]" rows="3" class="w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-xs shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="<p>在此输入 HTML 代码</p>">{{ $module['custom_html'] ?? '' }}</textarea>
                                 </div>
                                 <label class="mt-4 flex items-center gap-2 text-sm font-medium text-gray-700">
                                     <input type="checkbox" name="homepage_modules[{{ $index }}][enabled]" value="1" @checked(!empty($module['enabled'])) class="rounded border-gray-300 text-blue-600">
@@ -1113,7 +1113,7 @@
             </div>
             <div class="mt-4">
                 <label class="mb-2 block text-xs font-medium text-gray-600">{{ __('admin.site_settings.homepage.field_custom_html') }}</label>
-                <textarea name="homepage_modules[__INDEX__][custom_html]" rows="3" class="w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-xs shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="<p>HTML snippet</p>"></textarea>
+                <textarea name="homepage_modules[__INDEX__][custom_html]" rows="3" class="w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-xs shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="<p>在此输入 HTML 代码</p>"></textarea>
             </div>
             <label class="mt-4 flex items-center gap-2 text-sm font-medium text-gray-700">
                 <input type="checkbox" name="homepage_modules[__INDEX__][enabled]" value="1" checked class="rounded border-gray-300 text-blue-600">

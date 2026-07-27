@@ -156,6 +156,7 @@ class TaskMonitoringQueryService
                 articles.task_id,
                 COUNT(*) AS distribution_total_count,
                 SUM(CASE WHEN article_distributions.status = 'synced' THEN 1 ELSE 0 END) AS distribution_synced_count,
+                SUM(CASE WHEN article_distributions.status = 'simulated' THEN 1 ELSE 0 END) AS distribution_simulated_count,
                 SUM(CASE WHEN article_distributions.status = 'failed' THEN 1 ELSE 0 END) AS distribution_failed_count
             ")
             ->whereIn('articles.task_id', $taskIds)
@@ -166,6 +167,7 @@ class TaskMonitoringQueryService
                 (int) $row->task_id => [
                     'distribution_total_count' => (int) ($row->distribution_total_count ?? 0),
                     'distribution_synced_count' => (int) ($row->distribution_synced_count ?? 0),
+                    'distribution_simulated_count' => (int) ($row->distribution_simulated_count ?? 0),
                     'distribution_failed_count' => (int) ($row->distribution_failed_count ?? 0),
                 ],
             ]);
@@ -218,7 +220,7 @@ class TaskMonitoringQueryService
         return $tasks->map(function (Task $task) use ($articleStats, $distributionStats, $runStats, $latestRuns, $titleNames, $modelNames, $legacyKnowledgeBaseNames, $taskKnowledgeBaseLinks): array {
             $taskId = (int) $task->id;
             $articles = $articleStats->get($taskId, ['total_articles' => 0, 'published_articles' => 0, 'draft_articles' => 0, 'publishable_drafts' => 0]);
-            $distributions = $distributionStats->get($taskId, ['distribution_total_count' => 0, 'distribution_synced_count' => 0, 'distribution_failed_count' => 0]);
+            $distributions = $distributionStats->get($taskId, ['distribution_total_count' => 0, 'distribution_synced_count' => 0, 'distribution_simulated_count' => 0, 'distribution_failed_count' => 0]);
             $runs = $runStats->get($taskId, ['pending_jobs' => 0, 'running_jobs' => 0, 'completed_jobs' => 0, 'failed_jobs' => 0]);
             /** @var TaskRun|null $latestRun */
             $latestRun = $latestRuns->get($taskId);
@@ -293,6 +295,7 @@ class TaskMonitoringQueryService
                 'publishable_drafts' => (int) $articles['publishable_drafts'],
                 'distribution_total_count' => (int) $distributions['distribution_total_count'],
                 'distribution_synced_count' => (int) $distributions['distribution_synced_count'],
+                'distribution_simulated_count' => (int) $distributions['distribution_simulated_count'],
                 'distribution_failed_count' => (int) $distributions['distribution_failed_count'],
                 'pending_jobs' => (int) $runs['pending_jobs'],
                 'running_jobs' => (int) $runs['running_jobs'],

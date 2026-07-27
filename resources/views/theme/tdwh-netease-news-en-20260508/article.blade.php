@@ -64,7 +64,7 @@
                     @if($article->author)
                         <span>{{ $article->author->name }}</span>
                     @endif
-                    <span>{{ (int) $article->view_count }} views</span>
+                    <span>{{ __('site.article_views', ['count' => (int) $article->view_count]) }}</span>
                 </div>
 
                 @if($excerptPlain !== '')

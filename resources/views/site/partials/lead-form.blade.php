@@ -26,7 +26,7 @@
         @csrf
         <input type="hidden" name="source_url" value="{{ url()->full() }}">
         <div class="absolute left-[-9999px] top-auto h-1 w-1 overflow-hidden" aria-hidden="true">
-            <label>Website <input type="text" name="website" tabindex="-1" autocomplete="off"></label>
+            <label>网站 <input type="text" name="website" tabindex="-1" autocomplete="off"></label>
         </div>
 
         @foreach ($leadForm->normalizedFields() as $field)

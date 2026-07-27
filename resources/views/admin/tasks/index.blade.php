@@ -15,7 +15,7 @@
         if (str_contains($message, '正文过短')) {
             return __('admin.tasks.failure.content_too_short_detail');
         }
-        if (str_contains($message, '没有可用的标题')) {
+        if (str_contains($message, '没有可用的标题') || str_contains($message, '标题库里面没有任何标题')) {
             return __('admin.tasks.failure.title_exhausted_detail');
         }
         if (preg_match('/CURL错误:\s*Operation timed out after\s+(\d+)\s+milliseconds/i', $message, $matches)) {
@@ -38,7 +38,7 @@
         if (str_contains($message, '正文过短')) {
             return ['label' => __('admin.tasks.failure.content_too_short'), 'detail' => __('admin.tasks.failure.content_too_short_detail'), 'tone' => 'amber'];
         }
-        if (str_contains($message, '没有可用的标题')) {
+        if (str_contains($message, '没有可用的标题') || str_contains($message, '标题库里面没有任何标题')) {
             return ['label' => __('admin.tasks.failure.title_exhausted'), 'detail' => __('admin.tasks.failure.title_exhausted_detail'), 'tone' => 'amber'];
         }
         if (str_contains($message, '任务已暂停') || str_contains($message, '管理员手动停止')) {
@@ -145,8 +145,9 @@
                                         $progressPercent = (int) floor(($createdForProgress / $articleLimit) * 100);
                                         $distributionTotal = (int) ($task['distribution_total_count'] ?? 0);
                                         $distributionSynced = (int) ($task['distribution_synced_count'] ?? 0);
+                                        $distributionSimulated = (int) ($task['distribution_simulated_count'] ?? 0);
                                         $distributionFailed = (int) ($task['distribution_failed_count'] ?? 0);
-                                        $distributionPending = max(0, $distributionTotal - $distributionSynced - $distributionFailed);
+                                        $distributionPending = max(0, $distributionTotal - $distributionSynced - $distributionSimulated - $distributionFailed);
                                         $taskDistributionBadge = null;
                                         if ($distributionTotal > 0) {
                                             if ($distributionFailed > 0) {
@@ -158,6 +159,11 @@
                                                 $taskDistributionBadge = [
                                                     'label' => __('admin.distribution.task_status.synced', ['count' => $distributionTotal]),
                                                     'class' => 'bg-emerald-50 text-emerald-700 ring-emerald-100',
+                                                ];
+                                            } elseif ($distributionSimulated > 0 && ($distributionSynced + $distributionSimulated) >= $distributionTotal) {
+                                                $taskDistributionBadge = [
+                                                    'label' => __('admin.distribution.task_status.simulated', ['count' => $distributionSimulated]),
+                                                    'class' => 'bg-violet-50 text-violet-700 ring-violet-100',
                                                 ];
                                             } else {
                                                 $taskDistributionBadge = [
@@ -308,7 +314,7 @@
                                         <div class="flex items-center justify-between gap-3">
                                             <span class="font-mono text-xs text-gray-700">{{ $worker['worker_id'] ?? '' }}</span>
                                             <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {{ ($worker['status'] ?? '') === 'running' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-gray-50 text-gray-700 border border-gray-200' }}">
-                                                {{ $worker['status'] ?? 'idle' }}
+                                                {{ ($worker['status'] ?? 'idle') === 'running' ? __('admin.tasks.status.running') : __('admin.tasks.worker.idle') }}
                                             </span>
                                         </div>
                                         <div class="mt-2 text-xs text-gray-500">
@@ -364,14 +370,20 @@
                                         <div class="flex items-center justify-between gap-3">
                                             <div class="min-w-0">
                                                 <div class="text-sm font-medium text-gray-900 truncate">{{ $job['task_name'] ?: __('admin.tasks.jobs.unknown_task') }}</div>
-                                                <div class="text-xs text-gray-500">Job #{{ (int) $job['id'] }} · {{ __('admin.tasks.jobs.task_prefix') }} #{{ (int) $job['task_id'] }}</div>
+                                                <div class="text-xs text-gray-500">{{ __('admin.tasks.jobs.job_prefix') }} #{{ (int) $job['id'] }} · {{ __('admin.tasks.jobs.task_prefix') }} #{{ (int) $job['task_id'] }}</div>
                                             </div>
                                             <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium border
                                                 @if (($job['status'] ?? '') === 'running') bg-emerald-50 text-emerald-700 border-emerald-200
                                                 @elseif (($job['status'] ?? '') === 'pending') bg-blue-50 text-blue-700 border-blue-200
                                                 @elseif (($job['status'] ?? '') === 'failed') bg-red-50 text-red-700 border-red-200
                                                 @else bg-gray-50 text-gray-700 border-gray-200 @endif">
-                                                {{ $job['status'] ?? 'idle' }}
+                                                {{ match ($job['status'] ?? 'idle') {
+                                                    'running' => __('admin.tasks.status.running'),
+                                                    'pending' => __('admin.tasks.status.pending'),
+                                                    'failed' => __('admin.tasks.queue.failed'),
+                                                    'completed' => __('admin.tasks.queue.completed'),
+                                                    default => __('admin.tasks.worker.idle'),
+                                                } }}
                                             </span>
                                         </div>
                                         <div class="mt-2 text-xs text-gray-500">
@@ -409,8 +421,10 @@ const TASK_TEXT = {
     workerLastSeen: @js(__('admin.tasks.worker.last_seen')),
     jobsNone: @js(__('admin.tasks.jobs.none')),
     jobsUnknownTask: @js(__('admin.tasks.jobs.unknown_task')),
+    jobsJobPrefix: @js(__('admin.tasks.jobs.job_prefix')),
     jobsTaskPrefix: @js(__('admin.tasks.jobs.task_prefix')),
     jobsUpdatedAt: @js(__('admin.tasks.jobs.updated_at')),
+    jobsFailed: @js(__('admin.tasks.queue.failed')),
 };
 
 function renderIcons() { if (typeof lucide !== 'undefined') { lucide.createIcons(); } }
@@ -563,11 +577,12 @@ function renderWorkerOverview(workers) {
         const statusClasses = status === 'running'
             ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
             : 'bg-gray-50 text-gray-700 border border-gray-200';
+        const statusLabel = status === 'running' ? TASK_I18N.running : TASK_TEXT.workerIdle;
         const currentJob = worker.current_job_id ? `#${Number(worker.current_job_id)}` : escapeHtml(TASK_TEXT.workerIdle);
         return `<div class="rounded-lg border border-gray-200 px-3 py-3">
             <div class="flex items-center justify-between gap-3">
                 <span class="font-mono text-xs text-gray-700">${escapeHtml(String(worker.worker_id || ''))}</span>
-                <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${statusClasses}">${escapeHtml(status)}</span>
+                <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${statusClasses}">${escapeHtml(statusLabel)}</span>
             </div>
             <div class="mt-2 text-xs text-gray-500">
                 <div>${escapeHtml(TASK_TEXT.workerCurrentJob)}: ${currentJob}</div>
@@ -596,13 +611,22 @@ function renderRecentRuns(recentRuns) {
             badgeClass = 'bg-red-50 text-red-700 border-red-200';
         }
         const taskName = String(job.task_name || '') || TASK_TEXT.jobsUnknownTask;
+        const statusLabel = status === 'running'
+            ? TASK_I18N.running
+            : status === 'pending'
+                ? TASK_I18N.queued
+                : status === 'failed'
+                    ? TASK_TEXT.jobsFailed
+                    : status === 'completed'
+                        ? TASK_I18N.completed
+                        : TASK_TEXT.workerIdle;
         return `<div class="rounded-lg border border-gray-200 px-3 py-3">
             <div class="flex items-center justify-between gap-3">
                 <div class="min-w-0">
                     <div class="text-sm font-medium text-gray-900 truncate">${escapeHtml(taskName)}</div>
-                    <div class="text-xs text-gray-500">Job #${Number(job.id || 0)} · ${escapeHtml(TASK_TEXT.jobsTaskPrefix)} #${Number(job.task_id || 0)}</div>
+                    <div class="text-xs text-gray-500">${escapeHtml(TASK_TEXT.jobsJobPrefix)} #${Number(job.id || 0)} · ${escapeHtml(TASK_TEXT.jobsTaskPrefix)} #${Number(job.task_id || 0)}</div>
                 </div>
-                <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium border ${badgeClass}">${escapeHtml(status)}</span>
+                <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium border ${badgeClass}">${escapeHtml(statusLabel)}</span>
             </div>
             <div class="mt-2 text-xs text-gray-500">
                 <div>${escapeHtml(TASK_TEXT.jobsUpdatedAt)}: ${escapeHtml(String(job.updated_at || ''))}</div>

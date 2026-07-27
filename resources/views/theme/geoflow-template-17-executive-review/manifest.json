@@ -1,8 +1,8 @@
 {
     "id": "geoflow-template-17-executive-review",
-    "name": "GEOFlow 17 Executive Review",
+    "name": "点签 17 高管评论",
     "version": "1.0.0",
-    "description": "An executive-review variant with mature red accents, structured summaries, and business-reading polish. Preserves GEOFlow frontend data contracts and derives from the NetEase News Inspired base theme.",
+    "description": "高管评论风格，采用成熟红色、结构化摘要和商务阅读版式，保留点签前台数据能力。",
     "templates": [
         "layout",
         "home",

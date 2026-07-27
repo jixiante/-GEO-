@@ -18,6 +18,11 @@ return [
     'article_not_found' => '記事が見つかりません',
     'article_published_on' => '公開日：:date',
     'article_related' => '関連記事',
+    'article_related_desc' => '関連記事を続けてご覧ください。',
+    'article_views' => ':count 回閲覧',
+    'article_helpful' => '役に立ちましたか？',
+    'article_helpful_yes' => 'はい',
+    'article_helpful_no' => 'いいえ',
     'article_ad_close' => 'プロモーションを閉じる',
     'archive_title' => 'アーカイブ',
     'archive_month_title' => ':period の記事',
@@ -26,4 +31,5 @@ return [
     'pagination_next' => '次へ',
     'search_placeholder' => 'タイトルまたは概要を検索…',
     'search_button' => '検索',
+    'footer_copyright' => '© :year :site. 無断転載を禁じます。',
 ];

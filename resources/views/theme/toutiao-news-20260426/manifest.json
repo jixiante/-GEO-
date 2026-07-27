@@ -1,8 +1,8 @@
 {
   "id": "toutiao-news-20260426",
-  "name": "Toutiao News Inspired",
+  "name": "点签 头条资讯",
   "version": "1.0.0",
-  "description": "A Toutiao-inspired GEOFlow frontend theme with a channel rail, news feed, compact cards, and right-side hot list.",
+  "description": "头条资讯风格的点签前台主题，包含频道栏、资讯流、紧凑卡片和右侧热门列表。",
   "templates": [
     "layout",
     "home",

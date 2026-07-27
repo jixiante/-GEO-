@@ -20,9 +20,9 @@ $appVersion = $appVersion !== '' ? $appVersion : '1.0.0';
 return [
 
     // 站点展示名称（页眉、标题等）
-    'site_name' => env('SITE_NAME', '点签GEO'),
+    'site_name' => env('SITE_NAME', '点签'),
     // 站点完整/副标题文案
-    'site_full_name' => env('SITE_FULL_NAME', '点签GEO · 智能内容中台'),
+    'site_full_name' => env('SITE_FULL_NAME', '点签 · 智能内容中台'),
     // 站点根 URL，用于生成绝对链接（末尾无斜杠）
     'site_url' => rtrim((string) env('SITE_URL', 'http://localhost'), '/'),
     // SEO 描述
@@ -102,6 +102,30 @@ return [
     // 正文生成默认最大输出 token 数；当 AI 模型未单独配置 max_tokens 时使用此兜底值，
     // 避免依赖各服务商较小的默认上限（常见 4K）导致长文被截断。
     'content_max_tokens' => max(256, (int) env('GEOFLOW_CONTENT_MAX_TOKENS', 8192)),
+
+    // 今日头条浏览器渠道：使用任务图片库素材和文章内容生成独立横版封面。
+    'toutiao_cover' => [
+        'enabled' => filter_var(env('GEOFLOW_TOUTIAO_COVER_GENERATION_ENABLED', true), FILTER_VALIDATE_BOOLEAN),
+        'provider' => trim((string) env('GEOFLOW_TOUTIAO_COVER_PROVIDER', 'gemini')) ?: 'gemini',
+        'model' => trim((string) env('GEOFLOW_TOUTIAO_COVER_MODEL', '')),
+        'quality' => in_array(env('GEOFLOW_TOUTIAO_COVER_QUALITY', 'medium'), ['low', 'medium', 'high'], true)
+            ? env('GEOFLOW_TOUTIAO_COVER_QUALITY', 'medium')
+            : 'medium',
+        'reference_limit' => min(6, max(1, (int) env('GEOFLOW_TOUTIAO_COVER_REFERENCE_LIMIT', 4))),
+        'timeout_seconds' => min(240, max(30, (int) env('GEOFLOW_TOUTIAO_COVER_TIMEOUT', 120))),
+        'max_bytes' => min(10 * 1024 * 1024, max(1024, (int) env('GEOFLOW_TOUTIAO_COVER_MAX_BYTES', 5 * 1024 * 1024))),
+    ],
+
+    // 文章查重：先比较规范化正文哈希，再用中文友好的字符 3-gram 计算近似度。
+    'duplicate_detection' => [
+        'enabled' => filter_var(env('GEOFLOW_DUPLICATE_DETECTION_ENABLED', true), FILTER_VALIDATE_BOOLEAN),
+        'warning_threshold' => max(0, min(1, (float) env('GEOFLOW_DUPLICATE_WARNING_THRESHOLD', 0.85))),
+        'block_threshold' => max(0, min(1, (float) env('GEOFLOW_DUPLICATE_BLOCK_THRESHOLD', 0.95))),
+        // 0 表示比较全部未删除文章；数据量很大时可限制为最近 N 篇。
+        'candidate_limit' => max(0, (int) env('GEOFLOW_DUPLICATE_CANDIDATE_LIMIT', 0)),
+        'max_matches' => max(1, (int) env('GEOFLOW_DUPLICATE_MAX_MATCHES', 5)),
+        'generation_retry_count' => max(1, (int) env('GEOFLOW_DUPLICATE_GENERATION_RETRIES', 3)),
+    ],
 
     // 本地上传根目录（绝对路径）
     'upload_path' => env('GEOFLOW_UPLOAD_PATH', public_path('assets/images')),

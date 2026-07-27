@@ -4,6 +4,9 @@
 .vscode
 vendor
 node_modules
+browser-runner/node_modules
+browser-runner/data
+browser-runner/.env
 .env
 .env.*
 !.env.example

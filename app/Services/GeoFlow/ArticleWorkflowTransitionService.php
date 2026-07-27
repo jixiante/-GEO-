@@ -2,13 +2,17 @@
 
 namespace App\Services\GeoFlow;
 
+use App\Exceptions\ArticleDuplicateGateException;
 use App\Exceptions\ArticleRiskGateException;
 use App\Models\Article;
 use Illuminate\Support\Facades\DB;
 
 class ArticleWorkflowTransitionService
 {
-    public function __construct(private readonly ArticleRiskGate $articleRiskGate) {}
+    public function __construct(
+        private readonly ArticleRiskGate $articleRiskGate,
+        private readonly ArticleDuplicateGate $articleDuplicateGate,
+    ) {}
 
     /**
      * @param  array{status: string, review_status: string, published_at: mixed}  $workflowState
@@ -34,7 +38,7 @@ class ArticleWorkflowTransitionService
             $allowExistingOverride,
             $rejectedWorkflowState,
             $lockedGuard,
-        ): Article|ArticleRiskGateException {
+        ): Article|ArticleRiskGateException|ArticleDuplicateGateException {
             $lockedArticle = Article::query()
                 ->whereKey($article->getKey())
                 ->lockForUpdate()
@@ -52,7 +56,14 @@ class ArticleWorkflowTransitionService
                     $overrideReason,
                     $allowExistingOverride,
                 );
-            } catch (ArticleRiskGateException $exception) {
+                $this->articleDuplicateGate->check(
+                    $lockedArticle,
+                    $trigger,
+                    $adminId,
+                    $overrideReason,
+                    $allowExistingOverride,
+                );
+            } catch (ArticleRiskGateException|ArticleDuplicateGateException $exception) {
                 if ($rejectedWorkflowState !== null) {
                     $lockedArticle->update([
                         'status' => $rejectedWorkflowState['status'],
@@ -73,7 +84,7 @@ class ArticleWorkflowTransitionService
             return $lockedArticle->refresh();
         });
 
-        if ($result instanceof ArticleRiskGateException) {
+        if ($result instanceof ArticleRiskGateException || $result instanceof ArticleDuplicateGateException) {
             throw $result;
         }
 

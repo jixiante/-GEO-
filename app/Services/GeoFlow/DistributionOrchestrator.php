@@ -2,6 +2,7 @@
 
 namespace App\Services\GeoFlow;
 
+use App\Exceptions\ArticleDuplicateGateException;
 use App\Exceptions\ArticleRiskGateException;
 use App\Jobs\ProcessArticleDistributionJob;
 use App\Models\Article;
@@ -20,6 +21,7 @@ class DistributionOrchestrator
         private readonly DistributionPublisherManager $publisherManager,
         private readonly TaskDistributionChannelSelector $channelSelector,
         private readonly ArticleRiskGate $articleRiskGate,
+        private readonly ArticleDuplicateGate $articleDuplicateGate,
     ) {}
 
     /**
@@ -55,39 +57,51 @@ class DistributionOrchestrator
         $task->distributionChannels()->sync($syncPayload);
     }
 
-    public function enqueueForArticle(int|Article $article, string $action = 'publish'): void
-    {
+    public function enqueueForArticle(
+        int|Article $article,
+        string $action = 'publish',
+        bool $forceAllChannels = false,
+        bool $skipSynced = false,
+    ): int {
         try {
             $articleModel = $article instanceof Article
                 ? $article
                 : Article::query()->whereKey($article)->first();
 
             if (! $articleModel || ! $articleModel->task_id) {
-                return;
+                return 0;
             }
 
             $articleModel->load('task.distributionChannels');
             $publishScope = (string) ($articleModel->task?->publish_scope ?? 'local_and_distribution');
             if ($publishScope === 'local_only') {
-                return;
+                return 0;
             }
             $canDistribute = $articleModel->status === 'published'
                 || ($publishScope === 'distribution_only' && in_array((string) $articleModel->status, ['private', 'published'], true));
             if (! $canDistribute) {
-                return;
+                return 0;
             }
 
             $channels = $articleModel->task?->distributionChannels
                 ?->where('status', 'active') ?? new Collection;
 
             if ($channels->isEmpty()) {
-                return;
+                return 0;
             }
 
-            $channels = $this->channelSelector->selectChannelsForArticle($articleModel, $channels, $action);
+            $channels = $forceAllChannels
+                ? collect($channels->all())
+                    ->sortBy(static fn (DistributionChannel $channel): string => sprintf(
+                        '%010d-%010d',
+                        (int) ($channel->pivot?->sort_order ?? 0),
+                        (int) $channel->id,
+                    ))
+                    ->values()
+                : $this->channelSelector->selectChannelsForArticle($articleModel, $channels, $action);
 
             if ($channels->isEmpty()) {
-                return;
+                return 0;
             }
 
             $payload = $action === 'delete'
@@ -95,7 +109,23 @@ class DistributionOrchestrator
                 : $this->buildVerifiedPayload($articleModel, 'distribution_enqueue');
             $payloadHash = hash('sha256', json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '');
 
+            $queuedCount = 0;
             foreach ($channels as $channel) {
+                $existingDistribution = ArticleDistribution::query()
+                    ->where('article_id', (int) $articleModel->id)
+                    ->where('distribution_channel_id', (int) $channel->id)
+                    ->where('action', $action)
+                    ->first();
+
+                if ($skipSynced && in_array((string) $existingDistribution?->status, ['queued', 'sending', 'synced'], true)) {
+                    $this->log('info', '渠道已有待处理或成功发布记录，本次一键分发已跳过', $channel->id, $existingDistribution?->id, $articleModel->id, [
+                        'event' => 'distribution.skipped_already_handled',
+                        'existing_status' => (string) $existingDistribution?->status,
+                    ]);
+
+                    continue;
+                }
+
                 $distribution = ArticleDistribution::query()->updateOrCreate(
                     [
                         'article_id' => (int) $articleModel->id,
@@ -117,11 +147,16 @@ class DistributionOrchestrator
                 ProcessArticleDistributionJob::dispatch((int) $distribution->id)
                     ->onQueue('distribution')
                     ->afterCommit();
+                $queuedCount++;
             }
+
+            return $queuedCount;
         } catch (Throwable $e) {
             $this->log('error', '文章分发入队失败：'.$e->getMessage(), null, null, $article instanceof Article ? (int) $article->id : $article, [
                 'event' => 'distribution.enqueue_failed',
             ]);
+
+            return 0;
         }
     }
 
@@ -134,6 +169,16 @@ class DistributionOrchestrator
     }
 
     public function process(ArticleDistribution $distribution): void
+    {
+        $this->processDistribution($distribution, false);
+    }
+
+    public function processClaimed(ArticleDistribution $distribution): void
+    {
+        $this->processDistribution($distribution, true);
+    }
+
+    private function processDistribution(ArticleDistribution $distribution, bool $alreadyClaimed): void
     {
         $distribution->loadMissing(['article', 'channel']);
         $article = $distribution->article;
@@ -149,12 +194,17 @@ class DistributionOrchestrator
             $payload['event'] = 'article.update';
         }
 
-        $distribution->forceFill([
-            'status' => 'sending',
-            'attempt_count' => (int) $distribution->attempt_count + 1,
-            'last_attempt_at' => now(),
-            'last_error_message' => null,
-        ])->save();
+        if ($alreadyClaimed && (string) $distribution->status !== 'sending') {
+            return;
+        }
+        if (! $alreadyClaimed) {
+            $distribution->forceFill([
+                'status' => 'sending',
+                'attempt_count' => (int) $distribution->attempt_count + 1,
+                'last_attempt_at' => now(),
+                'last_error_message' => null,
+            ])->save();
+        }
 
         $publisher = $this->publisherManager->forChannel($channel);
         $response = match ((string) $distribution->action) {
@@ -164,8 +214,9 @@ class DistributionOrchestrator
         };
         $existingMeta = is_array($distribution->remote_meta) ? $distribution->remote_meta : [];
         $responseMeta = is_array($response['remote_meta'] ?? null) ? $response['remote_meta'] : [];
+        $completedStatus = (string) ($response['status'] ?? '') === 'simulated' ? 'simulated' : 'synced';
         $distribution->forceFill([
-            'status' => 'synced',
+            'status' => $completedStatus,
             'remote_id' => is_scalar($response['remote_id'] ?? null) ? (string) $response['remote_id'] : $distribution->remote_id,
             'remote_url' => (string) $distribution->action === 'delete'
                 ? null
@@ -174,7 +225,7 @@ class DistributionOrchestrator
             'last_error_message' => null,
         ])->save();
 
-        $this->log('info', '文章分发成功', $channel->id, $distribution->id, $article->id, $response);
+        $this->log('info', $completedStatus === 'simulated' ? '文章模拟发布完成' : '文章分发成功', $channel->id, $distribution->id, $article->id, $response);
     }
 
     public function updateRemoteArticle(ArticleDistribution $distribution): void
@@ -318,7 +369,7 @@ class DistributionOrchestrator
      */
     private function buildVerifiedPayload(Article $article, string $trigger): array
     {
-        $result = DB::transaction(function () use ($article, $trigger): Article|ArticleRiskGateException {
+        $result = DB::transaction(function () use ($article, $trigger): Article|ArticleRiskGateException|ArticleDuplicateGateException {
             $lockedArticle = Article::query()
                 ->whereKey($article->getKey())
                 ->lockForUpdate()
@@ -336,14 +387,15 @@ class DistributionOrchestrator
 
             try {
                 $this->articleRiskGate->check($lockedArticle, $trigger);
-            } catch (ArticleRiskGateException $exception) {
+                $this->articleDuplicateGate->check($lockedArticle, $trigger);
+            } catch (ArticleRiskGateException|ArticleDuplicateGateException $exception) {
                 return $exception;
             }
 
             return clone $lockedArticle;
         });
 
-        if ($result instanceof ArticleRiskGateException) {
+        if ($result instanceof ArticleRiskGateException || $result instanceof ArticleDuplicateGateException) {
             throw $result;
         }
 

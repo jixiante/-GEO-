@@ -2,11 +2,13 @@
 
 namespace App\Providers;
 
+use App\Contracts\AiExposure\AiExposureAnswerProvider;
 use App\Contracts\Outbound\HostResolver;
 use App\Contracts\Outbound\OutboundTransport;
 use App\Models\Admin;
 use App\Services\Admin\AdminUpdateMetadataService;
 use App\Services\Admin\AdminWelcomeModalService;
+use App\Services\AiExposure\LaravelAiExposureAnswerProvider;
 use App\Services\GeoFlow\ArticleGeoFlowService;
 use App\Services\GeoFlow\HorizonMetricsAdapter;
 use App\Services\GeoFlow\JobQueueService;
@@ -20,7 +22,9 @@ use App\Services\Outbound\SystemHostResolver;
 use App\View\Composers\SiteLayoutComposer;
 use Closure;
 use GuzzleHttp\Utils;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Client\Factory as HttpFactory;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -35,6 +39,7 @@ class AppServiceProvider extends ServiceProvider
         $trustedTerminal = Closure::fromCallable(Utils::chooseHandler());
 
         $this->app->bind(HostResolver::class, SystemHostResolver::class);
+        $this->app->bind(AiExposureAnswerProvider::class, LaravelAiExposureAnswerProvider::class);
         $this->app->singleton(FinalOutboundSecurityPolicy::class);
         $this->app->bind(OutboundTransport::class, function () use ($fixedContextCapability): LaravelPinnedOutboundTransport {
             return new LaravelPinnedOutboundTransport($fixedContextCapability);
@@ -64,6 +69,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        RateLimiter::for('ai-exposure', static function (object $job): Limit {
+            return Limit::perMinute(6)->by((string) ($job->platform ?? $job::class));
+        });
+
         View::composer(['site.layout', 'theme.*.layout'], SiteLayoutComposer::class);
 
         View::composer('admin.layouts.app', function ($view): void {

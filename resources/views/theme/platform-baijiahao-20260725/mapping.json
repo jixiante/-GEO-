@@ -1,0 +1,12 @@
+{
+  "id": "platform-baijiahao-20260725",
+  "reference": {"home": "https://baijiahao.baidu.com/"},
+  "templates": {"home": "home.blade.php", "category": "category.blade.php", "article": "article.blade.php"},
+  "modules": {
+    "header": "Blue brand emphasis, wide search and restrained navigation",
+    "home": "Workspace-like left rail, white content surface and right metrics-style ranking",
+    "category": "Structured category panel and article rows",
+    "article": "White reading surface with clear information hierarchy"
+  },
+  "unchanged_contracts": ["public routes", "SEO and canonical metadata", "JSON-LD schema output", "GEOFlow variables", "rendered article HTML", "optional article detail ad data"]
+}

@@ -1,0 +1,15 @@
+{
+  "name": "dianqian-geo-browser-runner",
+  "version": "1.0.0",
+  "private": true,
+  "description": "点签本地多平台浏览器发布助手",
+  "type": "module",
+  "license": "Apache-2.0",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "playwright": "^1.54.1"
+  }
+}

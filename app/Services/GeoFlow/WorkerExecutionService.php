@@ -3,6 +3,7 @@
 namespace App\Services\GeoFlow;
 
 use App\Ai\Agents\MarkdownContentWriterAgent;
+use App\Exceptions\ArticleDuplicateGateException;
 use App\Exceptions\ArticleRiskGateException;
 use App\Models\AiModel;
 use App\Models\Article;
@@ -19,6 +20,7 @@ use App\Support\GeoFlow\ApiKeyCrypto;
 use App\Support\GeoFlow\ArticleWorkflow;
 use App\Support\GeoFlow\ImageUrlNormalizer;
 use App\Support\GeoFlow\OpenAiRuntimeProvider;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
@@ -40,6 +42,7 @@ class WorkerExecutionService
         private readonly KnowledgeRetrievalService $knowledgeRetrievalService,
         private readonly DistributionOrchestrator $distributionOrchestrator,
         private readonly ArticleRiskScanner $articleRiskScanner,
+        private readonly ArticleDuplicateDetector $articleDuplicateDetector,
         private readonly ArticleWorkflowTransitionService $articleWorkflowTransitionService,
     ) {}
 
@@ -87,7 +90,43 @@ class WorkerExecutionService
         $keyword = (string) ($titleRow->keyword ?? '');
         $knowledgeContext = $this->resolveKnowledgeContext($task, (string) $titleRow->title, $keyword);
         $contentPrompt = $this->buildContentPrompt((string) $titleRow->title, $keyword, $prompt?->content, $knowledgeContext);
-        $generation = $this->generateContentWithModelSelection($task, $contentPrompt);
+        $maxDuplicateAttempts = max(1, (int) config('geoflow.duplicate_detection.generation_retry_count', 3));
+        $duplicateAttempts = [];
+        $modelAttempts = [];
+        $generation = null;
+
+        for ($attempt = 1; $attempt <= $maxDuplicateAttempts; $attempt++) {
+            $attemptPrompt = $attempt === 1
+                ? $contentPrompt
+                : $this->appendDuplicateRetryInstruction($contentPrompt, $attempt, $duplicateAttempts[array_key_last($duplicateAttempts)] ?? []);
+            $generation = $this->generateContentWithModelSelection($task, $attemptPrompt);
+            $generation['content'] = $this->sanitizeGeneratedArticleContent($generation['content']);
+            if ($generation['content'] === '') {
+                throw new RuntimeException('AI 未生成可用正文');
+            }
+            $modelAttempts = array_merge($modelAttempts, $generation['attempts']);
+            $duplicateResult = $this->articleDuplicateDetector->scan($generation['content']);
+            $duplicateAttempts[] = [
+                'attempt' => $attempt,
+                'status' => $duplicateResult['status'],
+                'max_similarity' => $duplicateResult['max_similarity'],
+                'matched_article_id' => $duplicateResult['matched_article_id'],
+            ];
+
+            if ($duplicateResult['status'] === 'clean') {
+                break;
+            }
+
+            if ($attempt === $maxDuplicateAttempts) {
+                $similarity = number_format((float) $duplicateResult['max_similarity'] * 100, 1);
+                throw new RuntimeException("AI 连续 {$maxDuplicateAttempts} 次生成重复或高度相似内容（最高相似度 {$similarity}%），已停止创建和发布");
+            }
+        }
+
+        if ($generation === null) {
+            throw new RuntimeException('AI 未生成可用正文');
+        }
+
         $aiModel = $generation['model'];
         $generatedContent = $generation['content'];
         $imageResult = $this->insertTaskImagesIntoContent($task, $generatedContent);
@@ -100,84 +139,93 @@ class WorkerExecutionService
             'published_at' => null,
         ];
 
-        $articleId = DB::transaction(function () use ($task, $titleRow, $author, $category, $keyword, $content, $excerpt, $workflow, $selectedImages): int {
-            $freshTask = Task::query()
-                ->whereKey((int) $task->id)
-                ->lockForUpdate()
-                ->first(['id', 'status', 'schedule_enabled', 'created_count', 'draft_limit', 'article_limit', 'publish_interval', 'next_publish_at']);
-            if (! $freshTask || ($freshTask->status ?? 'paused') !== 'active' || (int) ($freshTask->schedule_enabled ?? 1) !== 1) {
-                throw new RuntimeException('任务未激活');
-            }
-            $generationBlockReason = $this->getGenerationBlockReason($freshTask, true);
-            if ($generationBlockReason !== null) {
-                throw new RuntimeException($generationBlockReason);
+        $articleId = Cache::lock('geoflow:article-duplicate:persist', 60)->block(15, function () use ($task, $titleRow, $author, $category, $keyword, $content, $excerpt, $workflow, $selectedImages): int {
+            $finalDuplicateResult = $this->articleDuplicateDetector->scan($content);
+            if ($finalDuplicateResult['status'] !== 'clean') {
+                $similarity = number_format((float) $finalDuplicateResult['max_similarity'] * 100, 1);
+                throw new RuntimeException("文章落库前复检发现重复或高度相似内容（最高相似度 {$similarity}%），已停止创建和发布");
             }
 
-            $pendingWorkflow = ArticleWorkflow::normalizeState('draft', 'pending');
-            $article = Article::query()->create([
-                'title' => (string) $titleRow->title,
-                'slug' => ArticleWorkflow::generateUniqueSlug((string) $titleRow->title),
-                'excerpt' => $excerpt,
-                'content' => $content,
-                'category_id' => $category?->id,
-                'author_id' => $author?->id,
-                'task_id' => (int) $task->id,
-                'original_keyword' => $keyword,
-                'keywords' => $keyword,
-                'meta_description' => mb_substr($excerpt, 0, 120),
-                'status' => $pendingWorkflow['status'],
-                'review_status' => $pendingWorkflow['review_status'],
-                'is_ai_generated' => 1,
-                'published_at' => $pendingWorkflow['published_at'],
-                'view_count' => 0,
-            ]);
-
-            $this->articleRiskScanner->record($article, 'worker_generation');
-
-            if ($workflow['review_status'] === 'approved') {
-                try {
-                    $this->articleWorkflowTransitionService->transition(
-                        $article,
-                        $workflow,
-                        'worker_generation',
-                        null,
-                        null,
-                        false,
-                        $pendingWorkflow,
-                    );
-                } catch (ArticleRiskGateException) {
-                    // 风险扫描和待审状态随当前生成事务一并保留。
+            return DB::transaction(function () use ($task, $titleRow, $author, $category, $keyword, $content, $excerpt, $workflow, $selectedImages): int {
+                $freshTask = Task::query()
+                    ->whereKey((int) $task->id)
+                    ->lockForUpdate()
+                    ->first(['id', 'status', 'schedule_enabled', 'created_count', 'draft_limit', 'article_limit', 'publish_interval', 'next_publish_at']);
+                if (! $freshTask || ($freshTask->status ?? 'paused') !== 'active' || (int) ($freshTask->schedule_enabled ?? 1) !== 1) {
+                    throw new RuntimeException('任务未激活');
                 }
-            }
-            if ($selectedImages !== []) {
-                foreach ($selectedImages as $position => $image) {
-                    ArticleImage::query()->create([
-                        'article_id' => (int) $article->id,
-                        'image_id' => (int) $image->id,
-                        'position' => $position,
-                    ]);
-                    Image::query()->whereKey((int) $image->id)->update([
-                        'used_count' => DB::raw('COALESCE(used_count,0)+1'),
-                        'usage_count' => DB::raw('COALESCE(usage_count,0)+1'),
-                    ]);
+                $generationBlockReason = $this->getGenerationBlockReason($freshTask, true);
+                if ($generationBlockReason !== null) {
+                    throw new RuntimeException($generationBlockReason);
                 }
-            }
 
-            // 保持与旧逻辑一致：每次任务执行会消耗标题并累加任务计数。
-            Title::query()->whereKey($titleRow->id)->increment('used_count');
-            Title::query()->whereKey($titleRow->id)->increment('usage_count');
+                $pendingWorkflow = ArticleWorkflow::normalizeState('draft', 'pending');
+                $article = Article::query()->create([
+                    'title' => (string) $titleRow->title,
+                    'slug' => ArticleWorkflow::generateUniqueSlug((string) $titleRow->title),
+                    'excerpt' => $excerpt,
+                    'content' => $content,
+                    'category_id' => $category?->id,
+                    'author_id' => $author?->id,
+                    'task_id' => (int) $task->id,
+                    'original_keyword' => $keyword,
+                    'keywords' => $keyword,
+                    'meta_description' => mb_substr($excerpt, 0, 120),
+                    'status' => $pendingWorkflow['status'],
+                    'review_status' => $pendingWorkflow['review_status'],
+                    'is_ai_generated' => 1,
+                    'published_at' => $pendingWorkflow['published_at'],
+                    'view_count' => 0,
+                ]);
 
-            $taskUpdate = [
-                'created_count' => DB::raw('COALESCE(created_count,0)+1'),
-                'loop_count' => DB::raw('COALESCE(loop_count,0)+1'),
-                'updated_at' => now(),
-            ];
-            if ($freshTask->next_publish_at === null || ! $freshTask->next_publish_at->greaterThan(now())) {
-                $taskUpdate['next_publish_at'] = now()->addSeconds($this->normalizePublishInterval($freshTask));
-            }
-            Task::query()->whereKey($task->id)->update($taskUpdate);
+                $this->articleRiskScanner->record($article, 'worker_generation');
+                $this->articleDuplicateDetector->record($article, 'worker_generation');
 
-            return (int) $article->id;
+                if ($workflow['review_status'] === 'approved') {
+                    try {
+                        $this->articleWorkflowTransitionService->transition(
+                            $article,
+                            $workflow,
+                            'worker_generation',
+                            null,
+                            null,
+                            false,
+                            $pendingWorkflow,
+                        );
+                    } catch (ArticleRiskGateException|ArticleDuplicateGateException) {
+                        // 检测记录和待审状态随当前生成事务一并保留。
+                    }
+                }
+                if ($selectedImages !== []) {
+                    foreach ($selectedImages as $position => $image) {
+                        ArticleImage::query()->create([
+                            'article_id' => (int) $article->id,
+                            'image_id' => (int) $image->id,
+                            'position' => $position,
+                        ]);
+                        Image::query()->whereKey((int) $image->id)->update([
+                            'used_count' => DB::raw('COALESCE(used_count,0)+1'),
+                            'usage_count' => DB::raw('COALESCE(usage_count,0)+1'),
+                        ]);
+                    }
+                }
+
+                // 保持与旧逻辑一致：每次任务执行会消耗标题并累加任务计数。
+                Title::query()->whereKey($titleRow->id)->increment('used_count');
+                Title::query()->whereKey($titleRow->id)->increment('usage_count');
+
+                $taskUpdate = [
+                    'created_count' => DB::raw('COALESCE(created_count,0)+1'),
+                    'loop_count' => DB::raw('COALESCE(loop_count,0)+1'),
+                    'updated_at' => now(),
+                ];
+                if ($freshTask->next_publish_at === null || ! $freshTask->next_publish_at->greaterThan(now())) {
+                    $taskUpdate['next_publish_at'] = now()->addSeconds($this->normalizePublishInterval($freshTask));
+                }
+                Task::query()->whereKey($task->id)->update($taskUpdate);
+
+                return (int) $article->id;
+            });
         });
 
         return [
@@ -195,7 +243,8 @@ class WorkerExecutionService
                 'model_selection_mode' => (string) ($task->model_selection_mode ?? 'fixed'),
                 'used_model_id' => (int) $aiModel->id,
                 'used_model_name' => (string) $aiModel->name,
-                'model_attempts' => $generation['attempts'],
+                'model_attempts' => $modelAttempts,
+                'duplicate_attempts' => $duplicateAttempts,
             ],
         ];
     }
@@ -232,8 +281,12 @@ class WorkerExecutionService
                 ->whereNull('deleted_at')
                 ->orderBy('id')
                 ->lockForUpdate()
-                ->first(['id', 'title', 'review_status']);
+                ->first(['id', 'title', 'excerpt', 'content', 'meta_description', 'review_status', 'is_ai_generated']);
             if (! $article) {
+                return null;
+            }
+
+            if (! $this->sanitizeAiGeneratedArticleBeforePublish($article)) {
                 return null;
             }
 
@@ -253,7 +306,7 @@ class WorkerExecutionService
                     $reviewStatus !== 'auto_approved',
                     $fallbackWorkflow,
                 );
-            } catch (ArticleRiskGateException) {
+            } catch (ArticleRiskGateException|ArticleDuplicateGateException) {
                 return null;
             }
 
@@ -275,6 +328,37 @@ class WorkerExecutionService
                 ],
             ];
         });
+    }
+
+    private function sanitizeAiGeneratedArticleBeforePublish(Article $article): bool
+    {
+        if ((int) $article->is_ai_generated !== 1) {
+            return true;
+        }
+
+        $sanitizedContent = $this->sanitizeGeneratedArticleContent((string) $article->content);
+        if ($sanitizedContent === '') {
+            $article->update(['review_status' => 'pending']);
+
+            return false;
+        }
+
+        $updates = [];
+        foreach (['content', 'excerpt', 'meta_description'] as $field) {
+            $currentValue = (string) ($article->{$field} ?? '');
+            $sanitizedValue = $field === 'content'
+                ? $sanitizedContent
+                : $this->sanitizeGeneratedArticleContent($currentValue);
+            if ($sanitizedValue !== $currentValue) {
+                $updates[$field] = $sanitizedValue;
+            }
+        }
+
+        if ($updates !== []) {
+            $article->update($updates);
+        }
+
+        return true;
     }
 
     /**
@@ -471,7 +555,11 @@ class WorkerExecutionService
             ->first();
 
         if (! $title) {
-            throw new RuntimeException((int) ($task->is_loop ?? 0) === 1 ? '没有可用的标题' : '标题库已用尽');
+            if (! Title::query()->where('library_id', $libraryId)->exists()) {
+                throw new RuntimeException('标题库里面没有任何标题');
+            }
+
+            throw new RuntimeException('标题库已用尽');
         }
 
         return $title;
@@ -493,8 +581,8 @@ class WorkerExecutionService
         }
 
         return Author::query()->firstOrCreate(
-            ['name' => 'GEOFlow'],
-            ['bio' => 'Default GEOFlow author for automated content generation.']
+            ['name' => '点签'],
+            ['bio' => '点签自动内容生成的默认作者。']
         );
     }
 
@@ -531,11 +619,23 @@ class WorkerExecutionService
         }
 
         $finalInstructions = array_values(array_filter([
-            $this->knowledgeCitationInstruction($renderedPrompt, $knowledgeContext),
+            $this->knowledgeUseInstruction($renderedPrompt, $knowledgeContext),
             $this->finalPromptInstruction($renderedPrompt),
         ], static fn (string $instruction): bool => trim($instruction) !== ''));
 
         return trim($renderedPrompt)."\n\n".implode("\n", $finalInstructions);
+    }
+
+    /** @param array<string, mixed> $previousAttempt */
+    private function appendDuplicateRetryInstruction(string $contentPrompt, int $attempt, array $previousAttempt): string
+    {
+        $matchedArticleId = (int) ($previousAttempt['matched_article_id'] ?? 0);
+        $similarity = number_format((float) ($previousAttempt['max_similarity'] ?? 0) * 100, 1);
+        $reference = $matchedArticleId > 0 ? "本地文章 #{$matchedArticleId}" : '已有本地文章';
+
+        return $contentPrompt."\n\n"
+            ."第 {$attempt} 次重写要求：上一稿与{$reference}相似度为 {$similarity}%。"
+            .'请更换核心切入角度、章节结构、论据案例和表达方式，不要只做同义词替换；保留事实准确性，并输出一篇实质不同的完整文章。';
     }
 
     private function promptHasKnownContextVariables(string $prompt): bool
@@ -624,23 +724,125 @@ class WorkerExecutionService
     private function finalPromptInstruction(string $prompt): string
     {
         if ($this->isLikelyEnglishPrompt($prompt)) {
-            return 'Please output only the final article body in Markdown. Do not repeat the prompt or output placeholders.';
+            return 'Please output only the final article body in Markdown. Do not repeat the prompt or output placeholders. Do not include citation markers such as [K1] or [K2], and do not append a References, Sources, or equivalent source list.';
         }
 
-        return '请直接输出最终文章正文（Markdown），不要重复提示词、不要输出占位符。';
+        return '请直接输出最终文章正文（Markdown），不要重复提示词、不要输出占位符。正文中不要插入 [K1]、[K2] 等任何引用标记，也不要在文末列出“参考来源”“参考资料”或其他来源清单。';
     }
 
-    private function knowledgeCitationInstruction(string $prompt, string $knowledgeContext): string
+    private function knowledgeUseInstruction(string $prompt, string $knowledgeContext): string
     {
         if (trim($knowledgeContext) === '') {
             return '';
         }
 
         if ($this->isLikelyEnglishPrompt($prompt)) {
-            return 'Knowledge citation rule: when using facts, data, or business judgments from the reference knowledge, cite the evidence ID such as [K1] in the relevant sentence. If the evidence is insufficient, use cautious wording and do not invent sources or conclusions.';
+            return 'Knowledge use rule: use the reference knowledge internally to verify facts, data, and business judgments. Do not expose evidence IDs in the article. If the evidence is insufficient, use cautious wording and do not invent sources or conclusions.';
         }
 
-        return '知识库引用要求：涉及事实、数据或业务判断时，优先依据参考知识中的 [K1] 等证据编号，并在相关句子后标注证据编号；证据不足时不要编造来源或结论。';
+        return '知识库使用要求：参考知识仅用于核对事实、数据和业务判断，不要在正文中暴露证据编号；证据不足时使用谨慎表述，不要编造来源或结论。';
+    }
+
+    private function sanitizeGeneratedArticleContent(string $content): string
+    {
+        $lines = preg_split('/\R/u', $content);
+        if ($lines === false) {
+            return trim($content);
+        }
+
+        $cleanedLines = [];
+        $discardingSourceSection = false;
+        $sourceHeadingLevel = 0;
+        $fenceCharacter = null;
+        $fenceLength = 0;
+
+        foreach ($lines as $line) {
+            if ($fenceCharacter !== null) {
+                if (! $discardingSourceSection) {
+                    $cleanedLines[] = $line;
+                }
+
+                $closingFencePattern = '/^\s{0,3}'.preg_quote($fenceCharacter, '/').'{'.$fenceLength.',}\s*$/u';
+                if (preg_match($closingFencePattern, $line) === 1) {
+                    $fenceCharacter = null;
+                    $fenceLength = 0;
+                }
+
+                continue;
+            }
+
+            if (preg_match('/^\s{0,3}(`{3,}|~{3,})/u', $line, $fenceMatches) === 1) {
+                $fenceCharacter = $fenceMatches[1][0];
+                $fenceLength = strlen($fenceMatches[1]);
+                if (! $discardingSourceSection) {
+                    $cleanedLines[] = $line;
+                }
+
+                continue;
+            }
+
+            $headingLevel = $this->markdownHeadingLevel($line);
+            if ($discardingSourceSection) {
+                $startsNextSection = $headingLevel > 0
+                    && ($sourceHeadingLevel === 0 || $headingLevel <= $sourceHeadingLevel);
+                if (! $startsNextSection) {
+                    continue;
+                }
+
+                $discardingSourceSection = false;
+            }
+
+            if ($this->isSourceSectionHeading($line)) {
+                $discardingSourceSection = true;
+                $sourceHeadingLevel = $headingLevel;
+
+                continue;
+            }
+
+            $cleanedLines[] = $this->stripCitationArtifacts($line);
+        }
+
+        return trim(implode("\n", $cleanedLines));
+    }
+
+    private function stripCitationArtifacts(string $line): string
+    {
+        $citationDefinitionPattern = '/^\s*\[\^?\s*(?:证据\s*)?[kｋＫ]\s*\d+\s*\]\s*:\s*.*$/iu';
+        if (preg_match($citationDefinitionPattern, $line) === 1) {
+            return '';
+        }
+
+        $citationLinkPattern = '/[ \t]*\[\^?\s*(?:证据\s*)?[kｋＫ]\s*\d+\s*\]\((?:[^()\r\n]+|\([^()\r\n]*\))*\)/iu';
+        $sanitized = preg_replace($citationLinkPattern, '', $line) ?? $line;
+        $citationMarkerPattern = '/[ \t]*[\[［【]\s*\^?(?:证据\s*)?[kｋＫ]\s*\d+(?:\s*[,，、;；\-–—]\s*(?:[kｋＫ]\s*)?\d+)*\s*[\]］】]/iu';
+
+        return preg_replace($citationMarkerPattern, '', $sanitized) ?? $sanitized;
+    }
+
+    private function markdownHeadingLevel(string $line): int
+    {
+        if (preg_match('/^\s{0,3}(#{1,6})\s+/u', $line, $matches) === 1) {
+            return strlen($matches[1]);
+        }
+
+        return preg_match('/^\s{0,3}(?:\*\*|__)\S.*(?:\*\*|__)\s*$/u', $line) === 1 ? 7 : 0;
+    }
+
+    private function isSourceSectionHeading(string $line): bool
+    {
+        $heading = trim($line);
+        $heading = preg_replace('/^#{1,6}\s*/u', '', $heading) ?? $heading;
+        $heading = preg_replace('/\s+#+\s*$/u', '', $heading) ?? $heading;
+        $heading = preg_replace('/^(?:\*\*|__)(.*)(?:\*\*|__)$/u', '$1', $heading) ?? $heading;
+        $heading = trim($heading);
+        $heading = preg_replace(
+            '/^(?:(?:第\s*)?[一二三四五六七八九十百\d]+\s*(?:[章节部分])?\s*[、.．)）\-]?|[ivxlcdm]+\s*[、.．)）\-])\s*/iu',
+            '',
+            $heading
+        ) ?? $heading;
+        $heading = rtrim($heading, " \t\n\r\0\x0B:：");
+
+        return preg_match('/^(?:参考来源|参考资料|资料来源|参考文献|参考书目|引用来源|引用资料|信息来源|资料与来源|参考资料与来源|参考资料及来源|来源列表|资料来源列表|延伸阅读|references?|sources?|citations?|works cited|bibliograph(?:y|ies)|reference sources|reference list|sources and references|references? and further reading|further reading)$/iu', trim($heading)) === 1;
     }
 
     private function isLikelyEnglishPrompt(string $prompt): bool

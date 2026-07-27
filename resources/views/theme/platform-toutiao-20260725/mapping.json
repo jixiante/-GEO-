@@ -1,0 +1,25 @@
+{
+  "id": "platform-toutiao-20260725",
+  "reference": {
+    "home": "https://www.toutiao.com/"
+  },
+  "templates": {
+    "home": "home.blade.php",
+    "category": "category.blade.php",
+    "article": "article.blade.php"
+  },
+  "modules": {
+    "header": "Compact utility strip, search, horizontal channels",
+    "home": "Left channel rail, dense central feed, right ranking rail",
+    "category": "Channel-aware feed with category tabs",
+    "article": "Readable news article with author metadata and related rail"
+  },
+  "unchanged_contracts": [
+    "public routes",
+    "SEO and canonical metadata",
+    "JSON-LD schema output",
+    "GEOFlow category and article variables",
+    "rendered article HTML",
+    "optional article detail ad data"
+  ]
+}

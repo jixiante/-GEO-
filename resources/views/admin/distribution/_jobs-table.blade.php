@@ -21,6 +21,7 @@
                         'queued' => 'bg-blue-100 text-blue-800',
                         'sending' => 'bg-amber-100 text-amber-800',
                         'synced' => 'bg-green-100 text-green-800',
+                        'simulated' => 'bg-violet-100 text-violet-800',
                         'failed' => 'bg-red-100 text-red-800',
                     ])
                     @php($jobActionKey = 'admin.distribution.action.'.(string) $job->action)
@@ -28,6 +29,7 @@
                     @php($jobStatusKey = 'admin.distribution.job_status.'.(string) $job->status)
                     @php($jobStatusLabel = trans()->has($jobStatusKey) ? __($jobStatusKey) : (string) $job->status)
                     @php($isDeletedRemoteCopy = (string) $job->action === 'delete' && (string) $job->status === 'synced')
+                    @php($canConfirmRemoteUrl = $job->article && $job->channel && in_array((string) $job->status, ['failed', 'synced'], true) && (string) $job->action !== 'delete' && blank($job->remote_url))
                     <tr>
                         <td class="min-w-[28rem] max-w-[42rem] break-words px-6 py-4 text-sm font-medium text-gray-900">{{ $job->article?->title ?? __('admin.common.none') }}</td>
                         <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-600">{{ $job->channel?->name ?? __('admin.common.none') }}</td>
@@ -46,6 +48,9 @@
                         <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-600">{{ $job->last_error_message ?: __('admin.common.none') }}</td>
                         <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-600" data-distribution-delete-status>
                             <div class="flex flex-nowrap items-center gap-3">
+                            @if ($canConfirmRemoteUrl)
+                                <a href="{{ route('admin.distribution.article.remote-url.edit', ['distributionId' => (int) $job->id]) }}" class="text-emerald-700 hover:text-emerald-900">{{ __('admin.distribution.button.confirm_remote_url') }}</a>
+                            @endif
                             @if ($isDeletedRemoteCopy)
                                 <span class="text-gray-400">{{ __('admin.distribution.job_state.remote_copy_deleted') }}</span>
                             @elseif ($job->article)

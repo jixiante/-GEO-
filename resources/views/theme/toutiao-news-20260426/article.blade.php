@@ -57,7 +57,7 @@
                 @if($article->author)
                     <span>{{ $article->author->name }}</span>
                 @endif
-                <span>{{ (int) $article->view_count }} views</span>
+                    <span>{{ __('site.article_views', ['count' => (int) $article->view_count]) }}</span>
             </div>
 
             <h1 class="tt-article-h1 mt-4">{{ $article->title }}</h1>

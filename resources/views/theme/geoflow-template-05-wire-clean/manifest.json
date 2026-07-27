@@ -1,8 +1,8 @@
 {
     "id": "geoflow-template-05-wire-clean",
-    "name": "GEOFlow 05 Wire Clean",
+    "name": "点签 05 简洁资讯",
     "version": "1.0.0",
-    "description": "A clean wire-service variant emphasizing fast scanning, calm spacing, and crisp separators. Preserves GEOFlow frontend data contracts and derives from the NetEase News Inspired base theme.",
+    "description": "简洁资讯风格，强调快速浏览、舒缓间距和清晰分隔，保留点签前台数据能力。",
     "templates": [
         "layout",
         "home",

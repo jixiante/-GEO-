@@ -10,3 +10,7 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
 Broadcast::channel('admin.tasks', function (Admin $admin): bool {
     return (string) ($admin->status ?? '') === 'active';
 }, ['guards' => ['admin']]);
+
+Broadcast::channel('admin.ai-exposure', function (Admin $admin): bool {
+    return (string) ($admin->status ?? '') === 'active' && $admin->canManageProtectedWorkflows();
+}, ['guards' => ['admin']]);

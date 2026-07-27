@@ -11,6 +11,7 @@
     $channelTypeLabel = __('admin.distribution.channel_type.'.$channelType);
     $channelConfig = $channel->resolvedChannelConfig();
     $genericConfig = $channel->resolvedGenericHttpConfig();
+    $browserConfig = $channel->resolvedBrowserRunnerConfig();
     $articleTextAdPolicy = \App\Models\DistributionChannel::normalizeArticleTextAdPolicy($articleTextAdPolicy ?? $channel->resolvedArticleTextAdPolicy());
     $effectiveArticleTextAds = is_array($effectiveArticleTextAds ?? null) ? $effectiveArticleTextAds : $channel->effectiveArticleTextAds();
     $frontendExperienceReport = is_array($frontendExperienceReport ?? null) ? $frontendExperienceReport : [];
@@ -43,7 +44,7 @@
             'slug' => 'article-slug',
             'content_format' => 'markdown',
             'content' => 'Markdown content',
-            'content_html' => '<p>HTML content</p>',
+            'content_html' => '<p>HTML 正文</p>',
             'category' => ['name' => 'Category', 'slug' => 'category'],
             'author' => ['name' => 'Author'],
         ],
@@ -61,6 +62,8 @@
     } elseif ($channel->usesGenericHttpTransport()) {
         $genericHealthPath = strtr((string) $genericConfig['generic_health_path'], ['{channel_id}' => (string) $channel->id]);
         $healthCheckUrl = rtrim((string) $channel->endpoint_url, '/').(str_starts_with($genericHealthPath, '/') ? $genericHealthPath : '/'.$genericHealthPath);
+    } elseif ($channel->isBrowserRunner()) {
+        $healthCheckUrl = rtrim((string) $channel->endpoint_url, '/').'/v1/health';
     }
     $indexAgentBaseUrl = str_ends_with(rtrim((string) $channel->endpoint_url, '/'), '/index.php') ? rtrim((string) $channel->endpoint_url, '/') : rtrim((string) $channel->endpoint_url, '/').'/index.php';
     $indexHealthCheckUrl = $indexAgentBaseUrl.'/geoflow-agent/v1/health';
@@ -106,6 +109,29 @@
                         {{ __('admin.distribution.button.health') }}
                     </button>
                 </form>
+                @if ($channel->isBrowserRunner())
+                    <form method="POST" action="{{ route('admin.distribution.browser-login', ['channelId' => (int) $channel->id]) }}">
+                        @csrf
+                        <button type="submit" class="inline-flex items-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">
+                            <i data-lucide="log-in" class="mr-2 h-4 w-4"></i>
+                            {{ __('admin.distribution.button.open_browser_login') }}
+                        </button>
+                    </form>
+                    <form method="POST" action="{{ route('admin.distribution.browser-control', ['channelId' => (int) $channel->id]) }}" onsubmit="return confirm('{{ __('admin.distribution.confirm.stop_browser_runner') }}')">
+                        @csrf
+                        <input type="hidden" name="runner_action" value="stop">
+                        <button type="submit" class="inline-flex items-center rounded-md border border-red-300 bg-white px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-50" title="{{ __('admin.distribution.button.stop_browser_runner') }}">
+                            <i data-lucide="octagon" class="h-4 w-4"></i>
+                        </button>
+                    </form>
+                    <form method="POST" action="{{ route('admin.distribution.browser-control', ['channelId' => (int) $channel->id]) }}">
+                        @csrf
+                        <input type="hidden" name="runner_action" value="start">
+                        <button type="submit" class="inline-flex items-center rounded-md border border-emerald-300 bg-white px-3 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-50" title="{{ __('admin.distribution.button.start_browser_runner') }}">
+                            <i data-lucide="power" class="h-4 w-4"></i>
+                        </button>
+                    </form>
+                @endif
                 @if ($channel->isGeoFlowAgent())
                     <form method="POST" action="{{ route('admin.distribution.frontend-capabilities.refresh', ['channelId' => (int) $channel->id]) }}">
                         @csrf
@@ -115,10 +141,12 @@
                         </button>
                     </form>
                 @endif
-                <a href="{{ route('admin.distribution.sync-settings.preview', ['channelId' => (int) $channel->id]) }}" class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
-                    <i data-lucide="scan-search" class="mr-2 h-4 w-4"></i>
-                    同步预览
-                </a>
+                @unless ($channel->isBrowserRunner())
+                    <a href="{{ route('admin.distribution.sync-settings.preview', ['channelId' => (int) $channel->id]) }}" class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        <i data-lucide="scan-search" class="mr-2 h-4 w-4"></i>
+                        同步预览
+                    </a>
+                @endunless
             </div>
         </div>
 
@@ -182,6 +210,19 @@
                         <div>
                             <dt class="text-gray-500">{{ __('admin.distribution.generic.publish_endpoint') }}</dt>
                             <dd class="mt-1 break-all font-mono text-sm text-gray-900">{{ $genericConfig['generic_publish_method'] }} {{ $genericConfig['generic_publish_path'] }}</dd>
+                        </div>
+                    @elseif ($channel->isBrowserRunner())
+                        <div>
+                            <dt class="text-gray-500">{{ __('admin.distribution.browser.platform') }}</dt>
+                            <dd class="mt-1 font-medium text-gray-900">{{ __('admin.distribution.browser.platform_'.$browserConfig['browser_platform']) }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-gray-500">{{ __('admin.distribution.browser.account_id') }}</dt>
+                            <dd class="mt-1 font-medium text-gray-900">{{ $browserConfig['browser_account_id'] }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-gray-500">{{ __('admin.distribution.browser.publish_mode') }}</dt>
+                            <dd class="mt-1 font-medium text-gray-900">{{ __('admin.distribution.browser.mode_'.$browserConfig['browser_publish_mode']) }}</dd>
                         </div>
                     @endif
                     <div>
@@ -429,6 +470,24 @@
                     </li>
                 </ol>
             </div>
+        @elseif ($channel->isBrowserRunner())
+            <div class="rounded-lg bg-white p-6 shadow">
+                <div class="max-w-3xl">
+                    <h2 class="text-lg font-medium text-gray-900">{{ __('admin.distribution.browser.guide_title') }}</h2>
+                    <p class="mt-2 text-sm leading-6 text-gray-600">{{ __('admin.distribution.browser.guide_desc') }}</p>
+                </div>
+                <ol class="mt-6 grid grid-cols-1 gap-4 text-sm text-gray-700 md:grid-cols-2 xl:grid-cols-4">
+                    @foreach (['start', 'pair', 'login', 'task'] as $index => $step)
+                        <li class="flex gap-3">
+                            <span class="flex h-7 w-7 flex-none items-center justify-center rounded-full bg-emerald-100 text-xs font-semibold text-emerald-700">{{ $index + 1 }}</span>
+                            <span>{{ __('admin.distribution.browser.guide_step_'.$step) }}</span>
+                        </li>
+                    @endforeach
+                </ol>
+                <div class="mt-5 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
+                    {{ __('admin.distribution.browser.risk_notice') }}
+                </div>
+            </div>
         @elseif ($channel->usesGenericHttpTransport())
             <div class="rounded-lg bg-white p-6 shadow">
                 <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -438,7 +497,7 @@
                     </div>
                     <div class="rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700">
                         <span class="font-medium">{{ __('admin.distribution.generic.payload_contract') }}：</span>
-                        <code class="break-all text-gray-900">GEOFlow article JSON v1</code>
+                        <code class="break-all text-gray-900">点签 文章 JSON v1</code>
                     </div>
                 </div>
                 <div class="mt-6 grid grid-cols-1 gap-4 text-sm text-gray-700 md:grid-cols-2 xl:grid-cols-4">

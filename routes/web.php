@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\AdminActivityLogController;
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Admin\AdminWelcomeController;
+use App\Http\Controllers\Admin\AiExposureController;
 use App\Http\Controllers\Admin\AiModelController;
 use App\Http\Controllers\Admin\AiPromptController;
 use App\Http\Controllers\Admin\AiSpecialPromptController;
@@ -82,6 +83,17 @@ Route::prefix($adminPrefix)->name('admin.')->middleware(['admin.locale'])->group
         Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
         Route::get('analytics', [AnalyticsController::class, 'index'])->name('analytics');
 
+        Route::prefix('ai-exposure')->name('ai-exposure.')->middleware('admin.super')->group(function (): void {
+            Route::get('/', [AiExposureController::class, 'index'])->name('index');
+            Route::put('platforms', [AiExposureController::class, 'updatePlatforms'])->name('platforms.update');
+            Route::get('results/{resultId}', [AiExposureController::class, 'showResult'])->name('results.show')->whereNumber('resultId');
+            Route::post('monitors', [AiExposureController::class, 'store'])->name('monitors.store');
+            Route::put('monitors/{monitorId}', [AiExposureController::class, 'update'])->name('monitors.update')->whereNumber('monitorId');
+            Route::post('monitors/{monitorId}/toggle', [AiExposureController::class, 'toggle'])->name('monitors.toggle')->whereNumber('monitorId');
+            Route::post('monitors/{monitorId}/run', [AiExposureController::class, 'run'])->name('monitors.run')->whereNumber('monitorId');
+            Route::delete('monitors/{monitorId}', [AiExposureController::class, 'destroy'])->name('monitors.destroy')->whereNumber('monitorId');
+        });
+
         Route::prefix('system-updates')->name('system-updates.')->group(function () {
             Route::get('/', [SystemUpdateController::class, 'index'])->name('index');
             Route::post('check', [SystemUpdateController::class, 'check'])->name('check');
@@ -141,6 +153,8 @@ Route::prefix($adminPrefix)->name('admin.')->middleware(['admin.locale'])->group
             Route::post('sync-settings-selected', [DistributionController::class, 'syncSettingsSelected'])->name('sync-settings-selected');
             Route::get('jobs/{distributionId}/edit', [DistributionController::class, 'editArticle'])->name('article.edit')->whereNumber('distributionId');
             Route::put('jobs/{distributionId}', [DistributionController::class, 'updateArticle'])->name('article.update')->whereNumber('distributionId');
+            Route::get('jobs/{distributionId}/remote-url/edit', [DistributionController::class, 'editRemoteUrl'])->name('article.remote-url.edit')->whereNumber('distributionId');
+            Route::put('jobs/{distributionId}/remote-url', [DistributionController::class, 'updateRemoteUrl'])->name('article.remote-url.update')->whereNumber('distributionId');
             Route::post('jobs/{distributionId}/delete', [DistributionController::class, 'deleteArticle'])->name('article.delete')->whereNumber('distributionId');
             Route::post('jobs/{distributionId}/retry', [DistributionController::class, 'retry'])->name('retry')->whereNumber('distributionId');
             Route::get('{channelId}/edit', [DistributionController::class, 'edit'])->name('edit')->whereNumber('channelId');
@@ -155,6 +169,8 @@ Route::prefix($adminPrefix)->name('admin.')->middleware(['admin.locale'])->group
             Route::post('{channelId}/sync-settings', [DistributionController::class, 'syncSettings'])->name('sync-settings')->whereNumber('channelId');
             Route::get('{channelId}', [DistributionController::class, 'show'])->name('show')->whereNumber('channelId');
             Route::post('{channelId}/health', [DistributionController::class, 'health'])->name('health')->whereNumber('channelId');
+            Route::post('{channelId}/browser-login', [DistributionController::class, 'openBrowserLogin'])->name('browser-login')->whereNumber('channelId');
+            Route::post('{channelId}/browser-control', [DistributionController::class, 'controlBrowserRunner'])->name('browser-control')->whereNumber('channelId');
         });
 
         // 文章管理（Blade 新路径）

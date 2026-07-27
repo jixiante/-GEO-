@@ -84,6 +84,16 @@ class Article extends Model
         return $this->hasOne(ArticleRiskScan::class, 'article_id')->latestOfMany('scanned_at');
     }
 
+    public function duplicateScans(): HasMany
+    {
+        return $this->hasMany(ArticleDuplicateScan::class, 'article_id');
+    }
+
+    public function latestDuplicateScan(): HasOne
+    {
+        return $this->hasOne(ArticleDuplicateScan::class, 'article_id')->latestOfMany('scanned_at');
+    }
+
     public function taskRuns(): HasMany
     {
         return $this->hasMany(TaskRun::class, 'article_id');

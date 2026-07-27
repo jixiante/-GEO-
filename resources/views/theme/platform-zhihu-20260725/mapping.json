@@ -1,0 +1,12 @@
+{
+  "id": "platform-zhihu-20260725",
+  "reference": {"home": "https://www.zhihu.com/"},
+  "templates": {"home": "home.blade.php", "category": "category.blade.php", "article": "article.blade.php"},
+  "modules": {
+    "header": "White sticky navigation, blue brand accent and centered search",
+    "home": "Knowledge-feed cards with a compact right hot list",
+    "category": "Question-topic style tabs and answer-like rows",
+    "article": "Focused reading card with author context and related questions"
+  },
+  "unchanged_contracts": ["public routes", "SEO and canonical metadata", "JSON-LD schema output", "GEOFlow variables", "rendered article HTML", "optional article detail ad data"]
+}

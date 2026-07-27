@@ -42,6 +42,43 @@ class WorkerArticleRiskWorkflowTest extends TestCase
         $this->assertSame(1, (int) $task->fresh()->published_count);
     }
 
+    public function test_worker_sanitizes_legacy_ai_draft_before_publishing(): void
+    {
+        [$task, $article] = $this->createTaskArticle([
+            'content' => "Safe article content [K1].\n\n## References\n- https://example.com/source",
+            'excerpt' => 'Safe excerpt [K1].',
+            'meta_description' => 'Safe description [K1].',
+            'is_ai_generated' => 1,
+        ]);
+
+        $result = $this->publishDueDraft($task);
+
+        $this->assertSame((int) $article->id, $result['article_id'] ?? null);
+        $article->refresh();
+        $this->assertSame('published', $article->status);
+        $this->assertSame('Safe article content.', $article->content);
+        $this->assertSame('Safe excerpt.', $article->excerpt);
+        $this->assertSame('Safe description.', $article->meta_description);
+        $this->assertSame('clean', $article->latestRiskScan?->status);
+        $this->assertSame('clean', $article->latestDuplicateScan?->status);
+    }
+
+    public function test_worker_downgrades_empty_ai_draft_after_sanitization(): void
+    {
+        [$task, $article] = $this->createTaskArticle([
+            'content' => "[K1]\n\n## References\n- https://example.com/source",
+            'is_ai_generated' => 1,
+        ]);
+
+        $result = $this->publishDueDraft($task);
+
+        $this->assertNull($result);
+        $article->refresh();
+        $this->assertSame('draft', $article->status);
+        $this->assertSame('pending', $article->review_status);
+        $this->assertSame(0, (int) $task->fresh()->published_count);
+    }
+
     public function test_worker_downgrades_unoverridden_warning_to_pending_without_counting_a_publish(): void
     {
         SensitiveWord::query()->create(['word' => 'manual review']);

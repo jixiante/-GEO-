@@ -18,6 +18,13 @@
 /.zed
 /auth.json
 /node_modules
+/output
+/tmp
+__pycache__/
+*.py[cod]
+/browser-runner/.env
+/browser-runner/data/
+/browser-runner/node_modules/
 /public/build
 /public/hot
 /.understand-anything/

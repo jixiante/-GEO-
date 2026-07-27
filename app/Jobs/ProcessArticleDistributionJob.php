@@ -7,6 +7,7 @@ use App\Services\GeoFlow\DistributionOrchestrator;
 use App\Services\GeoFlow\DistributionRetryPolicy;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\DB;
 use Throwable;
 
 class ProcessArticleDistributionJob implements ShouldQueue
@@ -15,19 +16,37 @@ class ProcessArticleDistributionJob implements ShouldQueue
 
     public int $tries = 1;
 
-    public int $timeout = 60;
+    public int $timeout = 270;
 
     public function __construct(private readonly int $distributionId) {}
 
     public function handle(DistributionOrchestrator $orchestrator, DistributionRetryPolicy $retryPolicy): void
     {
-        $distribution = ArticleDistribution::query()->whereKey($this->distributionId)->first();
+        $distribution = DB::transaction(function (): ?ArticleDistribution {
+            $distribution = ArticleDistribution::query()
+                ->whereKey($this->distributionId)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $distribution || (string) $distribution->status !== 'queued') {
+                return null;
+            }
+
+            $distribution->forceFill([
+                'status' => 'sending',
+                'attempt_count' => (int) $distribution->attempt_count + 1,
+                'last_attempt_at' => now(),
+                'last_error_message' => null,
+            ])->save();
+
+            return $distribution;
+        }, 3);
         if (! $distribution) {
             return;
         }
 
         try {
-            $orchestrator->process($distribution);
+            $orchestrator->processClaimed($distribution);
         } catch (Throwable $e) {
             $distribution->loadMissing(['article.task.distributionChannels']);
             $attemptCount = (int) $distribution->attempt_count;

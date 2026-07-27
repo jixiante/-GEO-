@@ -12,6 +12,7 @@ class DistributionPublisherManager
         private readonly WordPressRestPublisher $wordPressRestPublisher,
         private readonly GenericHttpApiPublisher $genericHttpApiPublisher,
         private readonly ToutiaoBridgePublisher $toutiaoBridgePublisher,
+        private readonly BrowserRunnerPublisher $browserRunnerPublisher,
     ) {}
 
     public function forChannel(DistributionChannel $channel): DistributionPublisherInterface
@@ -21,6 +22,7 @@ class DistributionPublisherManager
             'wordpress_rest' => $this->wordPressRestPublisher,
             'generic_http_api' => $this->genericHttpApiPublisher,
             'toutiao_bridge' => $this->toutiaoBridgePublisher,
+            'browser_runner' => $this->browserRunnerPublisher,
             default => throw new RuntimeException('不支持的分发渠道类型：'.(string) $channel->channel_type),
         };
     }

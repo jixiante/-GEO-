@@ -9,6 +9,7 @@ use App\Models\KeywordLibrary;
 use App\Models\KnowledgeBase;
 use App\Models\Prompt;
 use App\Models\Task;
+use App\Models\Title;
 use App\Models\TitleLibrary;
 use App\Services\GeoFlow\JobQueueService;
 use App\Services\GeoFlow\TaskLifecycleService;
@@ -255,6 +256,68 @@ class ApiV1ContractTest extends TestCase
         $this->assertDatabaseMissing('tasks', ['id' => $task->id]);
     }
 
+    public function test_task_create_rejects_a_title_library_without_titles(): void
+    {
+        $admin = $this->createActiveAdmin('u8_empty_titles', 'p');
+        $bearer = $this->createBearerToken($admin, ['tasks:write']);
+        $model = AiModel::query()->create([
+            'name' => 'Empty Titles Model',
+            'model_id' => 'empty-titles-model',
+            'model_type' => 'chat',
+            'status' => 'active',
+        ]);
+        $prompt = Prompt::query()->create([
+            'name' => 'Empty Titles Prompt',
+            'type' => 'content',
+            'content' => 'Write an article.',
+        ]);
+        $titleLibrary = TitleLibrary::query()->create([
+            'name' => 'Empty API Title Library',
+            'title_count' => 9,
+        ]);
+
+        $this->withHeader('Authorization', 'Bearer '.$bearer['plain'])
+            ->postJson('/api/v1/tasks', [
+                'name' => 'Task with empty title library',
+                'title_library_id' => (int) $titleLibrary->id,
+                'prompt_id' => (int) $prompt->id,
+                'ai_model_id' => (int) $model->id,
+                'status' => 'paused',
+                'category_mode' => 'smart',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonPath('error.code', 'title_library_empty')
+            ->assertJsonPath('error.message', '标题库里面没有任何标题')
+            ->assertJsonPath('error.details.field_errors.title_library_id', '标题库里面没有任何标题');
+
+        $this->assertDatabaseMissing('tasks', [
+            'name' => 'Task with empty title library',
+        ]);
+    }
+
+    public function test_task_start_rejects_an_existing_empty_title_library(): void
+    {
+        $admin = $this->createActiveAdmin('u8_start_empty_titles', 'p');
+        $bearer = $this->createBearerToken($admin, ['tasks:write']);
+        $titleLibrary = TitleLibrary::query()->create([
+            'name' => 'Existing Empty API Title Library',
+        ]);
+        $task = Task::query()->create([
+            'name' => 'Existing empty title task',
+            'title_library_id' => (int) $titleLibrary->id,
+            'status' => 'paused',
+            'schedule_enabled' => 0,
+        ]);
+
+        $this->withHeader('Authorization', 'Bearer '.$bearer['plain'])
+            ->postJson("/api/v1/tasks/{$task->id}/start")
+            ->assertUnprocessable()
+            ->assertJsonPath('error.code', 'title_library_empty')
+            ->assertJsonPath('error.message', '标题库里面没有任何标题');
+
+        $this->assertSame('paused', (string) $task->fresh()->status);
+    }
+
     public function test_task_create_accepts_omitted_optional_material_fields(): void
     {
         $admin = $this->createActiveAdmin('u9', 'p');
@@ -274,6 +337,10 @@ class ApiV1ContractTest extends TestCase
             'name' => 'Task Create Titles',
             'description' => '',
             'title_count' => 0,
+        ]);
+        Title::query()->create([
+            'library_id' => (int) $titleLibrary->id,
+            'title' => 'An available API title',
         ]);
 
         $response = $this->withHeader('Authorization', 'Bearer '.$bearer['plain'])
@@ -324,6 +391,10 @@ class ApiV1ContractTest extends TestCase
             'name' => 'Task Create Titles With Knowledge',
             'description' => '',
             'title_count' => 0,
+        ]);
+        Title::query()->create([
+            'library_id' => (int) $titleLibrary->id,
+            'title' => 'An available API title with knowledge',
         ]);
         $legacyKnowledgeBase = KnowledgeBase::query()->create([
             'name' => 'Legacy Knowledge',

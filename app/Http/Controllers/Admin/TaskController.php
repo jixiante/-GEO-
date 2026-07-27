@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Exceptions\ApiException;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\SaveTaskRequest;
 use App\Models\AiModel;
 use App\Models\Author;
 use App\Models\Category;
@@ -94,6 +96,14 @@ class TaskController extends Controller
             $this->taskLifecycleService->startTask($taskId, false);
 
             return back()->with('message', __('admin.tasks.message.activated'));
+        } catch (ApiException $e) {
+            if ($e->getErrorCode() === 'title_library_empty') {
+                return back()->withErrors([
+                    'title_library_id' => $e->getMessage(),
+                ]);
+            }
+
+            return back()->withErrors(__('admin.tasks.message.status_update_failed'));
         } catch (Throwable $e) {
             return back()->withErrors(__('admin.tasks.message.status_update_failed'));
         }
@@ -141,7 +151,7 @@ class TaskController extends Controller
     /**
      * 创建任务（对应上游 task-create.php 的提交逻辑）。
      */
-    public function store(Request $request): RedirectResponse
+    public function store(SaveTaskRequest $request): RedirectResponse
     {
         if (! Category::query()->exists()) {
             return redirect()
@@ -149,7 +159,7 @@ class TaskController extends Controller
                 ->withErrors(__('admin.task_create.error.no_categories_configured'));
         }
 
-        $payload = $this->validateTaskForm($request);
+        $payload = $request->validated();
         $taskData = $this->buildTaskPayload($request, $payload);
 
         try {
@@ -224,7 +234,7 @@ class TaskController extends Controller
     /**
      * 更新任务：与创建流程共享同一套字段校验与映射逻辑。
      */
-    public function update(Request $request, int $taskId): RedirectResponse
+    public function update(SaveTaskRequest $request, int $taskId): RedirectResponse
     {
         if (! Category::query()->exists()) {
             return redirect()
@@ -232,7 +242,7 @@ class TaskController extends Controller
                 ->withErrors(__('admin.task_create.error.no_categories_configured'));
         }
 
-        $payload = $this->validateTaskForm($request);
+        $payload = $request->validated();
         $taskData = $this->buildTaskPayload($request, $payload);
 
         try {
@@ -498,54 +508,6 @@ class TaskController extends Controller
             'categories' => $categories,
             'distributionChannels' => $distributionChannels,
         ];
-    }
-
-    /**
-     * @return array{
-     *     task_name: string,
-     *     title_library_id: int,
-     *     prompt_id: int,
-     *     ai_model_id: int,
-     *     author_id: int|null,
-     *     image_library_id: int|null,
-     *     image_count: int|null,
-     *     knowledge_base_id: int|null,
-     *     knowledge_base_ids: list<int>,
-     *     fixed_category_id: int|null,
-     *     status: string,
-     *     article_limit: int|null,
-     *     draft_limit: int|null,
-     *     publish_interval: int|null,
-     *     category_mode: string|null,
-     *     model_selection_mode: string|null,
-     *     distribution_strategy: string|null
-     * }
-     */
-    private function validateTaskForm(Request $request): array
-    {
-        return $request->validate([
-            'task_name' => ['required', 'string', 'max:200'],
-            'title_library_id' => ['required', 'integer', 'min:1'],
-            'prompt_id' => ['required', 'integer', 'min:1'],
-            'ai_model_id' => ['required', 'integer', 'min:1'],
-            'author_id' => ['nullable', 'integer', 'min:0'],
-            'image_library_id' => ['nullable', 'integer', 'min:1'],
-            'image_count' => ['nullable', 'integer', 'min:0', 'max:5'],
-            'knowledge_base_id' => ['nullable', 'integer', 'min:1', 'exists:knowledge_bases,id'],
-            'knowledge_base_ids' => ['nullable', 'array', 'max:5'],
-            'knowledge_base_ids.*' => ['integer', 'min:1', 'distinct', 'exists:knowledge_bases,id'],
-            'fixed_category_id' => ['nullable', 'integer', 'min:1'],
-            'status' => ['required', 'string', 'in:active,paused'],
-            'article_limit' => ['nullable', 'integer', 'min:1', 'max:99999'],
-            'draft_limit' => ['nullable', 'integer', 'min:1', 'max:9999'],
-            'publish_interval' => ['nullable', 'integer', 'min:1'],
-            'category_mode' => ['nullable', 'string', 'in:smart,fixed,random'],
-            'model_selection_mode' => ['nullable', 'string', 'in:fixed,smart_failover'],
-            'publish_scope' => ['nullable', 'string', 'in:local_and_distribution,distribution_only,local_only'],
-            'distribution_strategy' => ['nullable', 'string', 'in:'.implode(',', TaskDistributionChannelSelector::strategies())],
-            'distribution_channel_ids' => ['nullable', 'array'],
-            'distribution_channel_ids.*' => ['integer', 'min:1'],
-        ]);
     }
 
     /**

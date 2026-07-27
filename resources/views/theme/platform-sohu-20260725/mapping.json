@@ -1,0 +1,12 @@
+{
+  "id": "platform-sohu-20260725",
+  "reference": {"home": "https://www.sohu.com/"},
+  "templates": {"home": "home.blade.php", "category": "category.blade.php", "article": "article.blade.php"},
+  "modules": {
+    "header": "Dark utility strip, yellow brand tile, centered search and dense channel matrix",
+    "home": "Portal headline block, compact news feed and right ranking column",
+    "category": "Channel tabs and compact portal rows",
+    "article": "Portal article typography with ranking rail"
+  },
+  "unchanged_contracts": ["public routes", "SEO and canonical metadata", "JSON-LD schema output", "GEOFlow variables", "rendered article HTML", "optional article detail ad data"]
+}

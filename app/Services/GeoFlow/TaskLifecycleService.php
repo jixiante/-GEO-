@@ -33,6 +33,8 @@ use Illuminate\Support\Facades\Schema;
  */
 class TaskLifecycleService
 {
+    private const EMPTY_TITLE_LIBRARY_MESSAGE = '标题库里面没有任何标题';
+
     /**
      * @param  JobQueueService  $queueService  队列调度服务（负责 task_runs 入队、状态流转、重试）
      */
@@ -161,6 +163,9 @@ class TaskLifecycleService
         }
 
         $status = $normalized['status'] ?? null;
+        if ($status === 'active' && ! array_key_exists('title_library_id', $normalized)) {
+            $this->ensureTaskTitleLibraryHasTitles($taskId);
+        }
         unset($normalized['status']);
         $knowledgeBaseIdsProvided = array_key_exists('knowledge_base_ids', $normalized);
         $knowledgeBaseIds = $knowledgeBaseIdsProvided ? $normalized['knowledge_base_ids'] : [];
@@ -246,6 +251,7 @@ class TaskLifecycleService
     public function startTask(int $taskId, bool $enqueueNow = false): array
     {
         $this->ensureTaskExists($taskId);
+        $this->ensureTaskTitleLibraryHasTitles($taskId);
         $jobId = DB::transaction(function () use ($taskId, $enqueueNow): ?int {
             // 手动“立即执行”场景下，不把 next_run_at 强行置为 now，
             // 避免与手动入队叠加导致一次点击触发两次执行。
@@ -316,7 +322,7 @@ class TaskLifecycleService
      */
     public function enqueueTask(int $taskId, string $jobType = 'generate_article', array $payload = []): array
     {
-        $task = Task::query()->find($taskId, ['id', 'status', 'schedule_enabled']);
+        $task = Task::query()->find($taskId, ['id', 'title_library_id', 'status', 'schedule_enabled']);
         if (! $task) {
             throw new ApiException('task_not_found', '任务不存在', 404);
         }
@@ -324,6 +330,8 @@ class TaskLifecycleService
         if (($task->status ?? 'paused') !== 'active' || (int) ($task->schedule_enabled ?? 1) !== 1) {
             throw new ApiException('task_not_active', '任务未启用，无法入队', 409);
         }
+
+        $this->ensureTitleLibraryHasTitles((int) $task->title_library_id);
 
         $jobId = $this->queueService->enqueueTaskJob($taskId, $jobType, $payload);
         if ($jobId === null) {
@@ -494,6 +502,8 @@ class TaskLifecycleService
 
             if (! $exists) {
                 $fieldErrors[$field] = $config['message'];
+            } elseif ($field === 'title_library_id' && ! TitleLibrary::query()->whereKey($id)->whereHas('titles')->exists()) {
+                $fieldErrors[$field] = self::EMPTY_TITLE_LIBRARY_MESSAGE;
             } else {
                 $output[$field] = $id;
             }
@@ -605,7 +615,9 @@ class TaskLifecycleService
         }
 
         if (! empty($fieldErrors)) {
-            throw new ApiException('validation_failed', '参数校验失败', 422, [
+            $titleLibraryIsEmpty = ($fieldErrors['title_library_id'] ?? null) === self::EMPTY_TITLE_LIBRARY_MESSAGE;
+
+            throw new ApiException($titleLibraryIsEmpty ? 'title_library_empty' : 'validation_failed', $titleLibraryIsEmpty ? self::EMPTY_TITLE_LIBRARY_MESSAGE : '参数校验失败', 422, [
                 'field_errors' => $fieldErrors,
             ]);
         }
@@ -668,6 +680,29 @@ class TaskLifecycleService
     {
         if (! Task::query()->whereKey($taskId)->exists()) {
             throw new ApiException('task_not_found', '任务不存在', 404);
+        }
+    }
+
+    private function ensureTaskTitleLibraryHasTitles(int $taskId): void
+    {
+        $libraryId = (int) Task::query()->whereKey($taskId)->value('title_library_id');
+
+        $this->ensureTitleLibraryHasTitles($libraryId);
+    }
+
+    private function ensureTitleLibraryHasTitles(int $libraryId): void
+    {
+        $hasTitles = $libraryId > 0 && TitleLibrary::query()
+            ->whereKey($libraryId)
+            ->whereHas('titles')
+            ->exists();
+
+        if (! $hasTitles) {
+            throw new ApiException('title_library_empty', self::EMPTY_TITLE_LIBRARY_MESSAGE, 422, [
+                'field_errors' => [
+                    'title_library_id' => self::EMPTY_TITLE_LIBRARY_MESSAGE,
+                ],
+            ]);
         }
     }
 

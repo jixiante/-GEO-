@@ -21,7 +21,7 @@
             </div>
         </section>
 
-        <section class="as-topic-strip" aria-label="support topics">
+        <section class="as-topic-strip" aria-label="帮助主题">
             <div class="as-container">
                 <a href="{{ route('site.home') }}">
                     <i data-lucide="layout-grid" class="w-6 h-6"></i>
@@ -42,7 +42,7 @@
             <div class="as-container as-narrow">
                 <div class="as-section-head as-section-head-center">
                     <p class="as-eyebrow">{{ $category->name }}</p>
-                    <h2 id="categoryArticlesTitle">Get help by topic.</h2>
+                    <h2 id="categoryArticlesTitle">{{ __('front.nav.all_articles') }}</h2>
                 </div>
 
                 @if($articles->isEmpty())

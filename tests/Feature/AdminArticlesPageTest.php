@@ -218,6 +218,8 @@ class AdminArticlesPageTest extends TestCase
             ->assertSee(__('admin.articles.quality_scorecard.check_publish_pass'))
             ->assertSee(__('admin.articles.quality_scorecard.check_review_pass'))
             ->assertSee(__('admin.articles.quality_scorecard.check_source_pass'))
+            ->assertSee(__('admin.article_edit.field.meta_description'))
+            ->assertDontSee('Meta 描述')
             ->assertSeeInOrder([
                 __('admin.article_edit.section.content_title'),
                 __('admin.articles.quality_scorecard.title'),
@@ -988,7 +990,7 @@ class AdminArticlesPageTest extends TestCase
 
     public function test_admin_brand_stays_dianqian_when_public_site_name_changes(): void
     {
-        config(['app.name' => '点签GEO']);
+        config(['app.name' => '点签']);
 
         $admin = Admin::query()->create([
             'username' => 'admin_brand_admin',
@@ -1007,7 +1009,7 @@ class AdminArticlesPageTest extends TestCase
         $this->actingAs($admin, 'admin')
             ->get(route('admin.dashboard'))
             ->assertOk()
-            ->assertSee('点签GEO')
+            ->assertSee('点签')
             ->assertDontSee('Public Frontend Name');
     }
 }

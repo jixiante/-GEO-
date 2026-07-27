@@ -50,6 +50,42 @@ MD);
             ->assertSee(__('site.home_latest'));
     }
 
+    public function test_all_theme_footers_use_localized_default_copyright(): void
+    {
+        $footerFiles = glob(resource_path('views/theme/*/partials/footer.blade.php')) ?: [];
+
+        $this->assertNotEmpty($footerFiles);
+
+        foreach ($footerFiles as $footerFile) {
+            $contents = (string) file_get_contents($footerFile);
+
+            $this->assertStringContainsString(
+                "__('site.footer_copyright'",
+                $contents,
+                basename(dirname(dirname($footerFile))).' should use the localized default copyright.'
+            );
+            $this->assertStringNotContainsString('All rights reserved', $contents);
+        }
+    }
+
+    public function test_theme_article_view_counts_use_localized_copy(): void
+    {
+        $articleFiles = glob(resource_path('views/theme/*/article.blade.php')) ?: [];
+
+        $this->assertNotEmpty($articleFiles);
+
+        foreach ($articleFiles as $articleFile) {
+            $contents = (string) file_get_contents($articleFile);
+
+            if (! str_contains($contents, 'view_count')) {
+                continue;
+            }
+
+            $this->assertStringContainsString("__('site.article_views'", $contents);
+            $this->assertStringNotContainsString(' views</span>', $contents);
+        }
+    }
+
     public function test_published_article_page_outputs_normalized_image_url(): void
     {
         $category = Category::query()->create([
@@ -437,12 +473,12 @@ MD);
 
     public function test_frontend_theme_renders_dianqian_brand_mark_and_content_feed(): void
     {
-        config(['geoflow.site_name' => '点签GEO']);
+        config(['geoflow.site_name' => '点签']);
 
         $this->get(route('site.home'))
             ->assertOk()
             ->assertSee('tt-brand-seal', false)
-            ->assertSee('点签GEO 内容流')
+            ->assertSee('点签 内容流')
             ->assertDontSee('GEOFlow Feed');
     }
 

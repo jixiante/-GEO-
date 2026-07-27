@@ -1,0 +1,13 @@
+{
+  "id": "platform-xiaohongshu-20260725",
+  "name": "小红书风格 · 图文发现",
+  "version": "1.0.0",
+  "description": "参考小红书当前公开发现页的左侧导航、顶部搜索、横向兴趣分类和响应式图文瀑布流，适配 GEOFlow 图文内容。",
+  "templates": ["layout", "home", "category", "article"],
+  "reference_urls": ["https://www.xiaohongshu.com/explore"],
+  "notes": [
+    "仅复现公开页面的布局语言，不复制商标 Logo、站点源码、专有图片或外部内容。",
+    "封面仅使用 GEOFlow 文章正文中已存在的图片；无图时使用站点自有文字占位。",
+    "不包含登录、模拟发布、账号自动化或任何会触发平台风控的行为。"
+  ]
+}

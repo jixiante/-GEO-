@@ -18,6 +18,7 @@ use App\Models\ImageLibrary;
 use App\Models\Prompt;
 use App\Models\SiteSetting;
 use App\Models\Task;
+use App\Models\Title;
 use App\Models\TitleLibrary;
 use App\Services\GeoFlow\DistributionHttpClient;
 use App\Services\GeoFlow\DistributionOrchestrator;
@@ -541,6 +542,86 @@ class AdminDistributionPageTest extends TestCase
             ->assertDontSee(__('admin.distribution.button.download_package'));
     }
 
+    public function test_admin_can_create_and_open_login_for_browser_runner_channel(): void
+    {
+        $admin = $this->admin();
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.distribution.create'))
+            ->assertOk()
+            ->assertSee(__('admin.distribution.channel_type.browser_runner'))
+            ->assertSee('name="channel_type" value="browser_runner"', false)
+            ->assertSee('name="browser_platform"', false)
+            ->assertSee(__('admin.distribution.browser.mode_simulate'))
+            ->assertSee(__('admin.distribution.browser.platform_xiaohongshu'));
+
+        $this->actingAs($admin, 'admin')
+            ->post(route('admin.distribution.store'), [
+                'name' => '公司今日头条浏览器',
+                'domain' => 'www.toutiao.com',
+                'endpoint_url' => 'https://example.com',
+                'channel_type' => 'browser_runner',
+                'browser_platform' => 'toutiao',
+                'browser_account_id' => 'company_main',
+                'browser_publish_mode' => 'publish',
+                'browser_timeout_seconds' => 180,
+                'browser_runner_token' => 'runner-pairing-token-123456',
+                'status' => 'active',
+            ])
+            ->assertRedirect();
+
+        $channel = DistributionChannel::query()->where('name', '公司今日头条浏览器')->firstOrFail();
+        $this->assertTrue($channel->isBrowserRunner());
+        $this->assertSame('toutiao', $channel->resolvedBrowserRunnerConfig()['browser_platform']);
+        $this->assertSame('company_main', $channel->resolvedBrowserRunnerConfig()['browser_account_id']);
+        $secret = $channel->activeSecret()->firstOrFail();
+        $this->assertStringStartsWith('browser_', (string) $secret->key_id);
+        $this->assertSame('runner-pairing-token-123456', app(ApiKeyCrypto::class)->decrypt((string) $secret->secret_ciphertext));
+
+        Http::fake([
+            'https://example.com/v1/accounts/login' => Http::response([
+                'ok' => true,
+                'status' => 'login_window_opened',
+            ]),
+        ]);
+        $this->actingAs($admin, 'admin')
+            ->post(route('admin.distribution.browser-login', ['channelId' => (int) $channel->id]))
+            ->assertRedirect()
+            ->assertSessionHas('message');
+
+        Http::assertSent(fn ($request): bool => $request->url() === 'https://example.com/v1/accounts/login'
+            && $request->hasHeader('Authorization', 'Bearer runner-pairing-token-123456')
+            && $request['platform'] === 'toutiao'
+            && $request['account_id'] === 'company_main');
+
+        Http::fake([
+            'https://example.com/v1/control/stop' => Http::response(['ok' => true, 'stopped' => true]),
+        ]);
+        $this->actingAs($admin, 'admin')
+            ->post(route('admin.distribution.browser-control', ['channelId' => (int) $channel->id]), [
+                'runner_action' => 'stop',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('message', __('admin.distribution.message.browser_runner_stopped'));
+    }
+
+    public function test_browser_runner_channel_requires_valid_account_and_pairing_token(): void
+    {
+        $this->actingAs($this->admin(), 'admin')
+            ->post(route('admin.distribution.store'), [
+                'name' => '浏览器渠道',
+                'domain' => 'www.toutiao.com',
+                'endpoint_url' => 'https://example.com',
+                'channel_type' => 'browser_runner',
+                'browser_platform' => 'toutiao',
+                'browser_account_id' => '../outside',
+                'browser_runner_token' => 'short',
+                'status' => 'active',
+            ])
+            ->assertRedirect()
+            ->assertSessionHasErrors(['browser_account_id', 'browser_runner_token']);
+    }
+
     public function test_admin_can_create_generic_api_distribution_channel(): void
     {
         $this->actingAs($this->admin(), 'admin')
@@ -920,7 +1001,7 @@ class AdminDistributionPageTest extends TestCase
             ->assertSee('静态文件模式')
             ->assertSee('伪静态模式')
             ->assertSee('默认前台模板')
-            ->assertSee('Toutiao News Inspired')
+            ->assertSee('点签 头条资讯')
             ->assertSee('查看同步预览')
             ->assertSee('覆盖新版站点包后')
             ->assertSee(route('admin.distribution.sync-settings.preview', ['channelId' => (int) $channel->id]), false);
@@ -2526,9 +2607,9 @@ class AdminDistributionPageTest extends TestCase
             ->assertOk()
             ->assertSee('伪静态规则')
             ->assertSee('复制 Apache .htaccess')
-            ->assertSee('复制 Nginx server 规则')
-            ->assertSee('复制宝塔纯 rewrite 规则')
-            ->assertSee('Nginx server 配置')
+            ->assertSee('复制 Nginx 服务器规则')
+            ->assertSee('复制宝塔纯重写规则')
+            ->assertSee('Nginx 服务器配置')
             ->assertSee('location = /geoflow/')
             ->assertSee('rewrite ^ /geoflow/index.php last;', false)
             ->assertSee('location /geoflow/', false)
@@ -2544,9 +2625,9 @@ class AdminDistributionPageTest extends TestCase
             ->assertOk()
             ->assertSee('伪静态规则')
             ->assertSee('复制 Apache .htaccess')
-            ->assertSee('复制 Nginx server 规则')
-            ->assertSee('复制宝塔纯 rewrite 规则')
-            ->assertSee('Nginx server 配置')
+            ->assertSee('复制 Nginx 服务器规则')
+            ->assertSee('复制宝塔纯重写规则')
+            ->assertSee('Nginx 服务器配置')
             ->assertSee('location = /geoflow/')
             ->assertSee('location /geoflow/', false)
             ->assertSee('try_files $uri /geoflow/index.php?$query_string;', false)
@@ -3698,13 +3779,19 @@ class AdminDistributionPageTest extends TestCase
             (int) $channels[2]->id,
             (int) $channels[0]->id,
         ];
+        $articleContents = [
+            1 => '第一篇文章分析制造企业供应链协同中的交期管理与库存优化。',
+            2 => '第二篇文章介绍数据安全制度中的访问控制、审计记录和应急响应。',
+            3 => '第三篇文章讨论城市公共空间更新时的社区参与和长期维护机制。',
+            4 => '第四篇文章总结客户服务团队改进响应速度与问题闭环的方法。',
+        ];
 
         foreach (range(1, 4) as $index) {
             $article = Article::query()->create([
                 'title' => '轮询文章 '.$index,
                 'slug' => 'round-robin-article-'.$index,
                 'excerpt' => '摘要',
-                'content' => '正文',
+                'content' => $articleContents[$index],
                 'category_id' => $fixtures['category']->id,
                 'author_id' => $fixtures['author']->id,
                 'task_id' => (int) $task->id,
@@ -3755,13 +3842,21 @@ class AdminDistributionPageTest extends TestCase
         $task->distributionChannels()->sync($channels->values()->mapWithKeys(
             static fn (DistributionChannel $channel, int $index): array => [(int) $channel->id => ['sort_order' => $index]]
         )->all());
+        $articleContents = [
+            1 => '市场调研稿聚焦消费者选购办公设备时对能耗、维护和价格的综合判断。',
+            2 => '技术实践稿说明研发团队如何设计接口契约、版本策略和自动化验收流程。',
+            3 => '人才管理稿探讨新员工入职培养、岗位反馈与跨部门协作机制。',
+            4 => '品牌观察稿分析区域文化活动在内容策划、现场运营和传播方面的经验。',
+            5 => '财务管理稿梳理项目预算编制、成本跟踪以及异常支出的复核方法。',
+            6 => '产品设计稿介绍移动端表单的信息层级、可访问性和错误恢复原则。',
+        ];
 
         foreach (range(1, 6) as $index) {
             $article = Article::query()->create([
                 'title' => '均衡文章 '.$index,
                 'slug' => 'balanced-article-'.$index,
                 'excerpt' => '摘要',
-                'content' => '正文',
+                'content' => $articleContents[$index],
                 'category_id' => $fixtures['category']->id,
                 'author_id' => $fixtures['author']->id,
                 'task_id' => (int) $task->id,
@@ -3827,7 +3922,7 @@ class AdminDistributionPageTest extends TestCase
             'title' => '复用文章 1',
             'slug' => 'reuse-article-1',
             'excerpt' => '摘要',
-            'content' => '正文',
+            'content' => '复用策略的第一篇稿件讨论工业设备的巡检周期、故障记录与备件管理。',
             'category_id' => $fixtures['category']->id,
             'author_id' => $fixtures['author']->id,
             'task_id' => (int) $task->id,
@@ -3850,7 +3945,7 @@ class AdminDistributionPageTest extends TestCase
             'title' => '复用文章 2',
             'slug' => 'reuse-article-2',
             'excerpt' => '摘要',
-            'content' => '正文',
+            'content' => '复用策略的第二篇稿件介绍教育机构的课程评价、学员反馈与教学改进。',
             'category_id' => $fixtures['category']->id,
             'author_id' => $fixtures['author']->id,
             'task_id' => (int) $task->id,
@@ -4978,6 +5073,10 @@ MD,
         ]);
         $titleLibrary = TitleLibrary::query()->create([
             'name' => '标题库',
+        ]);
+        Title::query()->create([
+            'library_id' => (int) $titleLibrary->id,
+            'title' => '测试标题',
         ]);
         $category = Category::query()->create([
             'name' => '科技资讯',

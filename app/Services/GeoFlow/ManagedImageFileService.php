@@ -28,6 +28,52 @@ class ManagedImageFileService extends ManagedImagePathHasherV1
         return $this->resolve($path, true)['db_path'];
     }
 
+    public function absolutePathForExisting(string $path): string
+    {
+        return $this->resolve($path, true)['absolute_path'];
+    }
+
+    /**
+     * @return array{filename:string,file_name:string,original_name:string,file_path:string,managed_path_hash:string,file_size:int,mime_type:string,width:int,height:int}
+     */
+    public function storeGeneratedImage(string $contents, string $originalName): array
+    {
+        $maxBytes = max(1, (int) config('geoflow.toutiao_cover.max_bytes', 5 * 1024 * 1024));
+        if ($contents === '' || strlen($contents) > $maxBytes) {
+            throw new InvalidArgumentException('generated_image_size');
+        }
+
+        $imageInfo = @getimagesizefromstring($contents);
+        if (! is_array($imageInfo) || ! str_starts_with((string) ($imageInfo['mime'] ?? ''), 'image/')) {
+            throw new InvalidArgumentException('generated_image_invalid');
+        }
+
+        $temporaryPath = tempnam(sys_get_temp_dir(), 'geoflow-cover-');
+        if (! is_string($temporaryPath) || file_put_contents($temporaryPath, $contents, LOCK_EX) !== strlen($contents)) {
+            if (is_string($temporaryPath) && is_file($temporaryPath)) {
+                @unlink($temporaryPath);
+            }
+
+            throw new RuntimeException('generated_image_temporary_file_failed');
+        }
+
+        try {
+            $uploadedFile = new UploadedFile(
+                $temporaryPath,
+                $originalName,
+                (string) $imageInfo['mime'],
+                UPLOAD_ERR_OK,
+                true,
+            );
+
+            return $this->storeUploadedImage($uploadedFile);
+        } finally {
+            if (is_file($temporaryPath)) {
+                @unlink($temporaryPath);
+            }
+        }
+    }
+
     /**
      * @return array{filename:string,file_name:string,original_name:string,file_path:string,managed_path_hash:string,file_size:int,mime_type:string,width:int,height:int}
      */

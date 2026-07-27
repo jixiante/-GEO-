@@ -127,14 +127,14 @@ class DatabaseSeederTest extends TestCase
 
         $this->seed(DatabaseSeeder::class);
 
-        $this->assertSame('点签GEO', SiteSetting::query()->where('setting_key', 'site_name')->value('setting_value'));
+        $this->assertSame('点签', SiteSetting::query()->where('setting_key', 'site_name')->value('setting_value'));
 
         $category->refresh();
         $this->assertSame('Mac 支持', $category->name);
         $this->assertSame(10, $category->sort_order);
 
         $author->refresh();
-        $this->assertSame('点签GEO内容团队', $author->name);
+        $this->assertSame('点签内容团队', $author->name);
 
         $article = Article::query()->where('slug', 'how-to-reinstall-macos')->firstOrFail();
         $this->assertSame('如何重新安装 macOS', $article->title);

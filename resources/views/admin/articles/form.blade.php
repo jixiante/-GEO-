@@ -68,6 +68,16 @@
         'stale' => ['label' => __('admin.articles.quality_scorecard.risk_status_stale'), 'class' => 'bg-slate-100 text-slate-700 ring-slate-200', 'icon' => 'refresh-cw'],
         'unscanned' => ['label' => __('admin.articles.quality_scorecard.risk_status_unscanned'), 'class' => 'bg-slate-100 text-slate-600 ring-slate-200', 'icon' => 'scan-search'],
     ][$riskDisplayStatus];
+    $duplicateDisplayStatus = ! $isEdit
+        ? 'unscanned'
+        : (($duplicateScan['state'] ?? null) === 'stale' ? 'stale' : (string) ($duplicateScan['status'] ?? 'unscanned'));
+    $duplicateStatusPresentation = [
+        'clean' => ['label' => __('admin.articles.quality_scorecard.duplicate_status_clean'), 'class' => 'bg-emerald-50 text-emerald-700 ring-emerald-100', 'icon' => 'badge-check'],
+        'warning' => ['label' => __('admin.articles.quality_scorecard.duplicate_status_warning'), 'class' => 'bg-amber-50 text-amber-700 ring-amber-100', 'icon' => 'copy-check'],
+        'blocked' => ['label' => __('admin.articles.quality_scorecard.duplicate_status_blocked'), 'class' => 'bg-red-50 text-red-700 ring-red-100', 'icon' => 'copy-x'],
+        'stale' => ['label' => __('admin.articles.quality_scorecard.risk_status_stale'), 'class' => 'bg-slate-100 text-slate-700 ring-slate-200', 'icon' => 'refresh-cw'],
+        'unscanned' => ['label' => __('admin.articles.quality_scorecard.risk_status_unscanned'), 'class' => 'bg-slate-100 text-slate-600 ring-slate-200', 'icon' => 'scan-search'],
+    ][$duplicateDisplayStatus];
     $qualityFieldChecks = [
         [
             'label' => __('admin.articles.quality_scorecard.check_excerpt'),
@@ -124,6 +134,16 @@
             'status_label' => $riskStatusPresentation['label'],
             'status_class' => $riskStatusPresentation['class'],
             'status_icon' => $riskStatusPresentation['icon'],
+        ],
+        [
+            'title' => __('admin.articles.quality_scorecard.duplicate_title'),
+            'desc' => __('admin.articles.quality_scorecard.duplicate_desc'),
+            'icon' => 'copy-check',
+            'class' => 'bg-cyan-50 text-cyan-700 ring-cyan-100',
+            'passed' => $duplicateDisplayStatus === 'clean' || ($duplicateDisplayStatus === 'warning' && ! empty($duplicateScan['is_overridden'])),
+            'status_label' => $duplicateStatusPresentation['label'],
+            'status_class' => $duplicateStatusPresentation['class'],
+            'status_icon' => $duplicateStatusPresentation['icon'],
         ],
         [
             'title' => __('admin.articles.quality_scorecard.attribution_title'),
@@ -316,7 +336,7 @@
                                 @endforeach
                             </div>
                         </div>
-                        <div class="grid grid-cols-1 gap-3 px-6 py-4 md:grid-cols-2 xl:grid-cols-5">
+                        <div class="grid grid-cols-1 gap-3 px-6 py-4 md:grid-cols-2 xl:grid-cols-6">
                             @foreach ($qualityScorecard as $scorecardItem)
                                 @php($scoreStatusClass = $scorecardItem['status_class'] ?? ($scorecardItem['passed'] ? 'bg-emerald-50 text-emerald-700 ring-emerald-100' : 'bg-amber-50 text-amber-700 ring-amber-100'))
                                 @php($scoreStatusIcon = $scorecardItem['status_icon'] ?? ($scorecardItem['passed'] ? 'check' : 'circle-alert'))
@@ -391,6 +411,55 @@
 
                                 @if(! empty($riskScan['is_overridden']))
                                     <p class="mt-4 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-700">{{ __('admin.articles.quality_scorecard.risk_overridden') }}：{{ $riskScan['override_reason'] }}</p>
+                                @endif
+                            </div>
+
+                            <div class="border-t border-gray-100 px-6 py-5">
+                                <div class="flex flex-wrap items-start justify-between gap-3">
+                                    <div>
+                                        <div class="flex flex-wrap items-center gap-2">
+                                            <h4 class="text-sm font-semibold text-gray-900">{{ __('admin.articles.quality_scorecard.duplicate_details_title') }}</h4>
+                                            <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1 {{ $duplicateStatusPresentation['class'] }}">
+                                                <i data-lucide="{{ $duplicateStatusPresentation['icon'] }}" class="mr-1.5 h-3.5 w-3.5"></i>
+                                                {{ $duplicateStatusPresentation['label'] }}
+                                            </span>
+                                        </div>
+                                        <p class="mt-1 text-xs text-gray-500">
+                                            {{ __('admin.articles.quality_scorecard.duplicate_similarity', ['percent' => number_format((float) ($duplicateScan['max_similarity'] ?? 0) * 100, 1)]) }}
+                                            @if(! empty($duplicateScan['scanned_at'])) · {{ $duplicateScan['scanned_at'] }} @endif
+                                        </p>
+                                    </div>
+                                    <p class="max-w-xl text-xs leading-5 text-gray-500">{{ __('admin.articles.quality_scorecard.duplicate_threshold_help') }}</p>
+                                </div>
+
+                                @if($duplicateDisplayStatus === 'stale')
+                                    <p class="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">{{ __('admin.articles.quality_scorecard.duplicate_stale_help') }}</p>
+                                @elseif(empty($duplicateScan))
+                                    <p class="mt-4 rounded-lg border border-dashed border-gray-300 px-3 py-4 text-center text-xs text-gray-500">{{ __('admin.articles.quality_scorecard.duplicate_unscanned_help') }}</p>
+                                @elseif(empty($duplicateScan['matches']))
+                                    <p class="mt-4 rounded-lg border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">{{ __('admin.articles.quality_scorecard.duplicate_clean_help') }}</p>
+                                @else
+                                    <div class="mt-4 grid gap-3 lg:grid-cols-2">
+                                        @foreach($duplicateScan['matches'] as $match)
+                                            <div class="rounded-lg border {{ (float) ($match['similarity'] ?? 0) >= 0.95 ? 'border-red-200 bg-red-50/60' : 'border-amber-200 bg-amber-50/60' }} p-3">
+                                                <div class="flex flex-wrap items-center justify-between gap-2">
+                                                    <a href="{{ route('admin.articles.edit', ['articleId' => (int) ($match['article_id'] ?? 0)]) }}" class="text-sm font-semibold text-blue-700 hover:text-blue-900">
+                                                        #{{ (int) ($match['article_id'] ?? 0) }} {{ $match['title'] ?? '' }}
+                                                    </a>
+                                                    <span class="rounded-full bg-white px-2 py-0.5 text-xs font-semibold text-gray-700 ring-1 ring-gray-200">
+                                                        {{ number_format((float) ($match['similarity'] ?? 0) * 100, 1) }}%
+                                                    </span>
+                                                </div>
+                                                @if(! empty($match['exact']))
+                                                    <p class="mt-2 text-xs font-medium text-red-700">{{ __('admin.articles.quality_scorecard.duplicate_exact') }}</p>
+                                                @endif
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @endif
+
+                                @if(! empty($duplicateScan['is_overridden']))
+                                    <p class="mt-4 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-700">{{ __('admin.articles.quality_scorecard.duplicate_overridden') }}：{{ $duplicateScan['override_reason'] }}</p>
                                 @endif
                             </div>
                         @endif

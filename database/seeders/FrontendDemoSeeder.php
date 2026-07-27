@@ -34,7 +34,7 @@ class FrontendDemoSeeder extends Seeder
     private function seedAuthor(): Author
     {
         $values = [
-            'name' => '点签GEO内容团队',
+            'name' => '点签内容团队',
             'bio' => '用于前台模板、分类页和文章页预览的示例作者。',
             'avatar' => '',
             'website' => '',
@@ -59,12 +59,12 @@ class FrontendDemoSeeder extends Seeder
     private function seedSiteSettings(): void
     {
         $settings = [
-            'site_name' => '点签GEO',
-            'site_title' => '点签GEO',
+            'site_name' => '点签',
+            'site_title' => '点签',
             'site_subtitle' => '智能内容中台',
-            'site_description' => '用于预览点签GEO前台模板的示例内容站，覆盖首页、分类列表页和文章详情页。',
-            'site_keywords' => '点签GEO,GEO,智能内容中台,帮助中心,内容知识库',
-            'copyright_info' => '© '.date('Y').' 点签GEO',
+            'site_description' => '用于预览点签前台模板的示例内容站，覆盖首页、分类列表页和文章详情页。',
+            'site_keywords' => '点签,GEO,智能内容中台,帮助中心,内容知识库',
+            'copyright_info' => '© '.date('Y').' 点签',
             'site_logo' => '',
             'site_favicon' => '',
             'analytics_code' => '',
@@ -138,7 +138,7 @@ class FrontendDemoSeeder extends Seeder
             [
                 'slug' => 'ai-content-workflow',
                 'name' => 'AI 内容工作流',
-                'description' => '展示点签GEO如何组织选题、生成、审核和发布 AI 内容。',
+                'description' => '展示点签如何组织选题、生成、审核和发布 AI 内容。',
                 'sort_order' => 30,
             ],
             [

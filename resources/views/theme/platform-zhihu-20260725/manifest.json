@@ -1,0 +1,13 @@
+{
+  "id": "platform-zhihu-20260725",
+  "name": "知乎风格 · 知识问答",
+  "version": "1.0.0",
+  "description": "参考知乎当前公开首页的白色顶栏、蓝色强调、浅灰画布、内容卡片流和热榜侧栏，面向知识型 GEO 内容站。",
+  "templates": ["layout", "home", "category", "article"],
+  "reference_urls": ["https://www.zhihu.com/"],
+  "notes": [
+    "仅复现公开页面的布局语言，不复制商标 Logo、站点源码、专有图片或外部内容。",
+    "保留 GEOFlow 路由、搜索、分类、SEO、JSON-LD、正文 HTML、相关文章和广告位契约。",
+    "主题新增后保持未启用状态，由管理员预览后手动选择。"
+  ]
+}

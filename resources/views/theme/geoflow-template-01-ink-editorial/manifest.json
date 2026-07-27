@@ -1,8 +1,8 @@
 {
     "id": "geoflow-template-01-ink-editorial",
-    "name": "GEOFlow 01 Ink Editorial",
+    "name": "点签 01 墨韵编辑",
     "version": "1.0.0",
-    "description": "A black-and-white editorial variant with strong headline hierarchy and restrained reading rhythm. Preserves GEOFlow frontend data contracts and derives from the NetEase News Inspired base theme.",
+    "description": "黑白编辑风格，突出标题层级和克制的阅读节奏，保留点签前台数据能力。",
     "templates": [
         "layout",
         "home",

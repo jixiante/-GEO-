@@ -40,7 +40,7 @@
             </div>
 
             @if(count($tags) > 0)
-                <div class="as-tag-list" aria-label="article tags">
+                <div class="as-tag-list" aria-label="文章标签">
                     @foreach($tags as $tag)
                         <span>{{ $tag }}</span>
                     @endforeach
@@ -51,7 +51,7 @@
         <section class="as-help-panel" aria-labelledby="helpPanelTitle">
             <div>
                 <h2 id="helpPanelTitle">{{ __('site.article_related') }}</h2>
-                <p>Find related articles and continue reading.</p>
+                <p>{{ __('site.article_related_desc') }}</p>
             </div>
             @if($relatedArticles->isNotEmpty())
                 <ol class="as-related-list">
@@ -67,10 +67,10 @@
         </section>
 
         <section class="as-feedback-panel" aria-labelledby="feedbackTitle">
-            <h2 id="feedbackTitle">Helpful?</h2>
-            <div class="as-feedback-actions" aria-label="feedback actions">
-                <button type="button">Yes</button>
-                <button type="button">No</button>
+            <h2 id="feedbackTitle">{{ __('site.article_helpful') }}</h2>
+            <div class="as-feedback-actions" aria-label="反馈操作">
+                <button type="button">{{ __('site.article_helpful_yes') }}</button>
+                <button type="button">{{ __('site.article_helpful_no') }}</button>
             </div>
         </section>
 

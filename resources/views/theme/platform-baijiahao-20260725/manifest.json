@@ -1,0 +1,13 @@
+{
+  "id": "platform-baijiahao-20260725",
+  "name": "百家号风格 · 内容工作台",
+  "version": "1.0.0",
+  "description": "参考百家号当前公开入口的百度蓝、浅灰画布、左侧分区、白色内容面板和数据化侧栏，适配 GEOFlow 内容浏览。",
+  "templates": ["layout", "home", "category", "article"],
+  "reference_urls": ["https://baijiahao.baidu.com/"],
+  "notes": [
+    "仅复现公开页面的布局语言，不复制商标 Logo、站点源码、专有图片或外部内容。",
+    "公开入口偏创作者工作台，本主题仅将其视觉层级映射为只读内容站，不实现平台后台操作。",
+    "主题新增后保持未启用状态，由管理员预览后手动选择。"
+  ]
+}

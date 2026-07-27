@@ -43,7 +43,7 @@
                 点
             </div>
             <h1 class="mb-2 text-2xl font-bold text-gray-900">{{ $adminSiteName }}</h1>
-            <p class="text-gray-600">{{ config('geoflow.site_full_name', '点签GEO · 智能内容中台') }}</p>
+            <p class="text-gray-600">{{ config('geoflow.site_full_name', '点签 · 智能内容中台') }}</p>
             <p class="mt-1 text-xs font-medium text-gray-400">{{ __('admin.login.title') }}</p>
         </div>
         @if (session('message'))

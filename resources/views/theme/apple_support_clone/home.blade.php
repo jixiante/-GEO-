@@ -24,7 +24,7 @@
                         <input id="home-search" type="search" name="search" value="{{ $search }}" placeholder="{{ __('site.search_placeholder') }}">
                         <button type="submit">{{ __('site.search_button') }}</button>
                     </form>
-                    <div class="as-action-row" aria-label="primary actions">
+                    <div class="as-action-row" aria-label="主要操作">
                         <a href="#latest-articles">{{ __('site.home_latest') }}</a>
                         <a href="{{ route('site.archive') }}">{{ __('site.archive_title') }}</a>
                     </div>
@@ -36,7 +36,7 @@
                     <div class="as-container">
                         <div class="as-section-head as-section-head-center">
                             <p class="as-eyebrow">{{ __('site.home_featured') }}</p>
-                            <h2 id="featuredTitle">Featured support reads.</h2>
+                            <h2 id="featuredTitle">{{ __('site.home_featured') }}</h2>
                         </div>
                         <div class="as-featured-grid">
                             @foreach($featuredArticles->take(2) as $article)
@@ -98,7 +98,7 @@
                 @if($isLanding)
                     <div class="as-section-head">
                         <p class="as-eyebrow">{{ __('site.home_latest') }}</p>
-                        <h2 id="latestTitle">Latest articles.</h2>
+                        <h2 id="latestTitle">{{ __('site.home_latest') }}</h2>
                     </div>
                 @endif
 

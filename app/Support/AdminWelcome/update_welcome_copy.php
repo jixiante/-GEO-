@@ -43,12 +43,12 @@ return static function (array $welcomeState): array {
                 'changelog_link' => '更新日志',
             ],
             'letter' => [
-                'title' => 'GEOFlow 有新版本可更新',
+                'title' => '点签有新版本可更新',
                 'subtitle' => '当前版本 v'.$currentVersion.'，最新版本 v'.$latestVersion.'。',
                 'blocks' => [
                     [
                         'type' => 'paragraph',
-                        'content' => $titleZh !== '' ? $titleZh : '后台已经检测到 GEOFlow 上游仓库有一个新版本可用。',
+                        'content' => $titleZh !== '' ? $titleZh : '后台已经检测到点签有一个新版本可用。',
                     ],
                     [
                         'type' => 'paragraph',

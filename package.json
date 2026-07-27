@@ -2,7 +2,7 @@
     "$schema": "https://www.schemastore.org/package.json",
     "name": "dianqian-geo",
     "version": "1.0.0",
-    "description": "点签GEO智能内容生产与分发平台",
+    "description": "点签智能内容生产与分发平台",
     "private": true,
     "license": "Apache-2.0",
     "type": "module",

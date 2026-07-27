@@ -40,6 +40,9 @@ class AdminSiteSettingsPageTest extends TestCase
             ->assertSee(__('admin.site_settings.field_admin_base_path'))
             ->assertSee(__('admin.site_settings.section_home_carousel'))
             ->assertSee(__('admin.site_settings.module_sensitive_words'))
+            ->assertSee(__('admin.site_settings.ads.sticky_section_title'))
+            ->assertSee(__('admin.site_settings.ads.add'))
+            ->assertDontSee('悬浮 CTA')
             ->assertSee('value="'.AdminWeb::basePath().'"', false);
     }
 
@@ -78,7 +81,7 @@ class AdminSiteSettingsPageTest extends TestCase
         $this->actingAs($admin, 'admin')
             ->get(route('admin.site-settings.index'))
             ->assertOk()
-            ->assertSee('Apple Support Inspired')
+            ->assertSee('点签 简约支持')
             ->assertSee('value="apple_support_clone"', false)
             ->assertDontSee('value="apple_support_clone" class="mt-1 text-blue-600 focus:ring-blue-500" checked', false);
     }
@@ -95,26 +98,26 @@ class AdminSiteSettingsPageTest extends TestCase
         ]);
 
         $expectedThemes = [
-            'geoflow-template-01-ink-editorial' => 'GEOFlow 01 Ink Editorial',
-            'geoflow-template-02-market-briefing' => 'GEOFlow 02 Market Briefing',
-            'geoflow-template-03-salmon-insight' => 'GEOFlow 03 Salmon Insight',
-            'geoflow-template-04-red-opinion' => 'GEOFlow 04 Red Opinion',
-            'geoflow-template-05-wire-clean' => 'GEOFlow 05 Wire Clean',
-            'geoflow-template-06-public-broadcast' => 'GEOFlow 06 Public Broadcast',
-            'geoflow-template-07-breaking-red' => 'GEOFlow 07 Breaking Red',
-            'geoflow-template-08-section-blue' => 'GEOFlow 08 Section Blue',
-            'geoflow-template-09-tech-spectrum' => 'GEOFlow 09 Tech Spectrum',
-            'geoflow-template-10-wired-feature' => 'GEOFlow 10 Wired Feature',
-            'geoflow-template-11-product-newsroom' => 'GEOFlow 11 Product Newsroom',
-            'geoflow-template-12-saas-gradient' => 'GEOFlow 12 SaaS Gradient',
-            'geoflow-template-13-linear-system' => 'GEOFlow 13 Linear System',
-            'geoflow-template-14-knowledge-paper' => 'GEOFlow 14 Knowledge Paper',
-            'geoflow-template-15-reading-medium' => 'GEOFlow 15 Reading Medium',
-            'geoflow-template-16-newsletter-letter' => 'GEOFlow 16 Newsletter Letter',
-            'geoflow-template-17-executive-review' => 'GEOFlow 17 Executive Review',
-            'geoflow-template-18-consulting-insight' => 'GEOFlow 18 Consulting Insight',
-            'geoflow-template-19-tech-review' => 'GEOFlow 19 Tech Review',
-            'geoflow-template-20-research-journal' => 'GEOFlow 20 Research Journal',
+            'geoflow-template-01-ink-editorial' => '点签 01 墨韵编辑',
+            'geoflow-template-02-market-briefing' => '点签 02 市场简报',
+            'geoflow-template-03-salmon-insight' => '点签 03 暖调洞察',
+            'geoflow-template-04-red-opinion' => '点签 04 红色观点',
+            'geoflow-template-05-wire-clean' => '点签 05 简洁资讯',
+            'geoflow-template-06-public-broadcast' => '点签 06 公共广播',
+            'geoflow-template-07-breaking-red' => '点签 07 红色快讯',
+            'geoflow-template-08-section-blue' => '点签 08 蓝色栏目',
+            'geoflow-template-09-tech-spectrum' => '点签 09 科技光谱',
+            'geoflow-template-10-wired-feature' => '点签 10 深度特写',
+            'geoflow-template-11-product-newsroom' => '点签 11 产品新闻室',
+            'geoflow-template-12-saas-gradient' => '点签 12 SaaS 渐变',
+            'geoflow-template-13-linear-system' => '点签 13 线性系统',
+            'geoflow-template-14-knowledge-paper' => '点签 14 知识文稿',
+            'geoflow-template-15-reading-medium' => '点签 15 沉浸阅读',
+            'geoflow-template-16-newsletter-letter' => '点签 16 通讯信笺',
+            'geoflow-template-17-executive-review' => '点签 17 高管评论',
+            'geoflow-template-18-consulting-insight' => '点签 18 咨询洞察',
+            'geoflow-template-19-tech-review' => '点签 19 科技评论',
+            'geoflow-template-20-research-journal' => '点签 20 研究期刊',
         ];
 
         $catalogIds = collect(app(SiteThemeCatalog::class)->all())

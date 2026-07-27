@@ -1,8 +1,8 @@
 {
     "id": "geoflow-template-15-reading-medium",
-    "name": "GEOFlow 15 Reading Medium",
+    "name": "点签 15 沉浸阅读",
     "version": "1.0.0",
-    "description": "A reading-first variant with generous typography, restrained controls, and article-led flow. Preserves GEOFlow frontend data contracts and derives from the NetEase News Inspired base theme.",
+    "description": "阅读优先风格，采用舒展排版、克制控件和文章主导的信息流，保留点签前台数据能力。",
     "templates": [
         "layout",
         "home",

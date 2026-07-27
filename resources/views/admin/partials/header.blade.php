@@ -18,6 +18,7 @@
     $menu = [
         'dashboard' => ['route' => 'admin.dashboard', 'name' => __('admin.nav.dashboard')],
         'analytics' => ['route' => 'admin.analytics', 'name' => __('admin.nav.analytics')],
+        'ai-exposure' => ['route' => 'admin.ai-exposure.index', 'name' => __('admin.nav.ai_exposure')],
         'tasks' => ['route' => 'admin.tasks.index', 'name' => __('admin.nav.tasks')],
         'distribution' => ['route' => 'admin.distribution.index', 'name' => __('admin.nav.distribution')],
         'articles' => ['route' => 'admin.articles.index', 'name' => __('admin.nav.articles')],
@@ -27,12 +28,21 @@
     ];
     if (!$isSuperAdmin) {
         unset($menu['distribution']);
+        unset($menu['ai-exposure']);
     }
     if ($isSuperAdmin) {
         $menu['admin_users'] = ['route' => 'admin.admin-users.index', 'name' => __('admin.nav.admin_users')];
     }
     $subMap = [
         'admin.analytics' => 'analytics',
+        'admin.ai-exposure.index' => 'ai-exposure',
+        'admin.ai-exposure.platforms.update' => 'ai-exposure',
+        'admin.ai-exposure.results.show' => 'ai-exposure',
+        'admin.ai-exposure.monitors.store' => 'ai-exposure',
+        'admin.ai-exposure.monitors.update' => 'ai-exposure',
+        'admin.ai-exposure.monitors.toggle' => 'ai-exposure',
+        'admin.ai-exposure.monitors.run' => 'ai-exposure',
+        'admin.ai-exposure.monitors.destroy' => 'ai-exposure',
         'admin.system-updates.index' => 'dashboard',
         'admin.system-updates.check' => 'dashboard',
         'admin.system-updates.plan' => 'dashboard',

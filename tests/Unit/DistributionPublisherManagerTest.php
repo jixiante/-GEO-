@@ -3,6 +3,7 @@
 namespace Tests\Unit;
 
 use App\Models\DistributionChannel;
+use App\Services\GeoFlow\BrowserRunnerPublisher;
 use App\Services\GeoFlow\DistributionPublisherManager;
 use App\Services\GeoFlow\GenericHttpApiPublisher;
 use App\Services\GeoFlow\GeoFlowAgentPublisher;
@@ -42,5 +43,13 @@ class DistributionPublisherManagerTest extends TestCase
         $manager = app(DistributionPublisherManager::class);
 
         $this->assertInstanceOf(ToutiaoBridgePublisher::class, $manager->forChannel($channel));
+    }
+
+    public function test_it_resolves_browser_runner_publisher(): void
+    {
+        $channel = new DistributionChannel(['channel_type' => 'browser_runner']);
+        $manager = app(DistributionPublisherManager::class);
+
+        $this->assertInstanceOf(BrowserRunnerPublisher::class, $manager->forChannel($channel));
     }
 }

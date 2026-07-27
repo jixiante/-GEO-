@@ -42,7 +42,7 @@
                     </div>
 
                     <div>
-                        <div class="mb-3 block text-sm font-medium text-gray-700">Scopes *</div>
+                        <div class="mb-3 block text-sm font-medium text-gray-700">{{ __('admin.api_tokens.field.scopes') }}</div>
                         <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
                             @foreach ($availableScopes as $scope)
                                 <label class="flex items-center gap-2 rounded border border-gray-200 px-3 py-2 text-sm text-gray-700">
@@ -76,7 +76,7 @@
                         <thead class="bg-gray-50">
                             <tr>
                                 <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{{ __('admin.api_tokens.column.name') }}</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Scopes</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{{ __('admin.api_tokens.column.scopes') }}</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{{ __('admin.api_tokens.column.created_by') }}</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{{ __('admin.api_tokens.column.last_used') }}</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{{ __('admin.api_tokens.column.expires_at') }}</th>
@@ -94,9 +94,9 @@
                                     <td class="px-6 py-4 text-sm text-gray-600">{{ $token['expires_at'] ?? __('admin.api_tokens.value.no_expiry') }}</td>
                                     <td class="px-6 py-4 text-sm">
                                         @if (($token['status'] ?? 'active') === 'active')
-                                            <span class="inline-flex rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800">active</span>
+                                            <span class="inline-flex rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800">{{ __('admin.api_tokens.status.active') }}</span>
                                         @else
-                                            <span class="inline-flex rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700">revoked</span>
+                                            <span class="inline-flex rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700">{{ __('admin.api_tokens.status.revoked') }}</span>
                                         @endif
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-4 text-sm">

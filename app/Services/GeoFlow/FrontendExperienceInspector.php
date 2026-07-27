@@ -267,7 +267,7 @@ class FrontendExperienceInspector
         if (! $channel->isGeoFlowAgent()) {
             return $this->remoteFailure(
                 'not_applicable',
-                'WordPress REST、今日头条和 Generic API 不作为 GEOFlow 前台渲染目标读取远端能力。'
+                'WordPress REST、今日头条和通用 API 不作为点签前台渲染目标读取远端能力。'
             );
         }
 
@@ -374,7 +374,7 @@ class FrontendExperienceInspector
                 'code' => 'not_applicable',
                 'area' => 'frontend_rendering',
                 'severity' => 'info',
-                'message' => 'WordPress REST、今日头条和 Generic API 不作为一等前台渲染目标，设置同步只做字段透传。',
+                'message' => 'WordPress REST、今日头条和通用 API 不作为一等前台渲染目标，设置同步只做字段透传。',
                 'requires_confirmation' => false,
             ];
 
@@ -466,7 +466,7 @@ class FrontendExperienceInspector
     {
         return match ($status) {
             'not_checked' => '尚未检查远端前台能力。请先刷新能力；如需继续，也可以在预览页确认同步。',
-            'missing_secret' => '渠道缺少有效密钥，无法检查或同步 GeoFlow Agent 目标站。',
+            'missing_secret' => '渠道缺少有效密钥，无法检查或同步点签 Agent 目标站。',
             'unsupported_or_not_found' => '远端目标包未暴露 frontend-capabilities 接口，可能是旧包。请重新下载并覆盖目标站点包，或确认后继续同步。',
             'unavailable' => $fallback !== '' ? $fallback : '远端站点不可达。',
             default => $fallback,
@@ -484,7 +484,7 @@ class FrontendExperienceInspector
             $differences[] = [
                 'area' => 'frontend_rendering',
                 'severity' => 'info',
-                'message' => 'WordPress REST、今日头条和 Generic API 作为外部分发渠道处理，不保证渲染 GEOFlow 首页模块。',
+                'message' => 'WordPress REST、今日头条和通用 API 作为外部分发渠道处理，不保证渲染点签首页模块。',
             ];
 
             return $differences;

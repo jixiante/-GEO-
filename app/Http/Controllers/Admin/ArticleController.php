@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Exceptions\ArticleDuplicateGateException;
 use App\Exceptions\ArticleRiskGateException;
 use App\Http\Controllers\Controller;
 use App\Models\Article;
@@ -9,6 +10,7 @@ use App\Models\Author;
 use App\Models\Category;
 use App\Models\DistributionChannel;
 use App\Models\Task;
+use App\Services\GeoFlow\ArticleDuplicateDetector;
 use App\Services\GeoFlow\ArticleRiskScanner;
 use App\Services\GeoFlow\ArticleWorkflowTransitionService;
 use App\Services\GeoFlow\DistributionOrchestrator;
@@ -34,6 +36,7 @@ class ArticleController extends Controller
     public function __construct(
         private readonly DistributionOrchestrator $distributionOrchestrator,
         private readonly ArticleRiskScanner $articleRiskScanner,
+        private readonly ArticleDuplicateDetector $articleDuplicateDetector,
         private readonly ArticleWorkflowTransitionService $articleWorkflowTransitionService,
     ) {}
 
@@ -215,6 +218,7 @@ class ArticleController extends Controller
             'articleId' => null,
             'articleForm' => null,
             'riskScan' => null,
+            'duplicateScan' => null,
             'formOptions' => $this->loadFormOptions(),
         ]);
     }
@@ -233,7 +237,7 @@ class ArticleController extends Controller
 
         try {
             $adminId = $this->authenticatedAdminId($request);
-            $gateRejection = DB::transaction(function () use (&$article, $payload, $workflowState, $adminId): ?ArticleRiskGateException {
+            $gateRejection = DB::transaction(function () use (&$article, $payload, $workflowState, $adminId): ArticleRiskGateException|ArticleDuplicateGateException|null {
                 $article = Article::query()->create([
                     'title' => $payload['title'],
                     'slug' => ArticleWorkflow::generateUniqueSlug($payload['title']),
@@ -252,10 +256,11 @@ class ArticleController extends Controller
                 ]);
 
                 $this->articleRiskScanner->record($article, 'admin_save', $adminId);
+                $this->articleDuplicateDetector->record($article, 'admin_save', $adminId);
                 if ($this->requiresRiskGate($payload)) {
                     try {
                         $article = $this->transitionGatedArticle($article, $workflowState, $payload, 'admin_save', $adminId);
-                    } catch (ArticleRiskGateException $exception) {
+                    } catch (ArticleRiskGateException|ArticleDuplicateGateException $exception) {
                         return $exception;
                     }
                 } else {
@@ -269,17 +274,17 @@ class ArticleController extends Controller
                 return null;
             });
 
-            if ($gateRejection instanceof ArticleRiskGateException) {
+            if ($gateRejection instanceof ArticleRiskGateException || $gateRejection instanceof ArticleDuplicateGateException) {
                 throw $gateRejection;
             }
             if ($article->status === 'published') {
                 $this->distributionOrchestrator->enqueueForArticle($article);
             }
-        } catch (ArticleRiskGateException $e) {
+        } catch (ArticleRiskGateException|ArticleDuplicateGateException $e) {
             return redirect()
                 ->route('admin.articles.edit', ['articleId' => (int) $article?->id])
                 ->withInput()
-                ->withErrors($e->getMessage());
+                ->withErrors($this->gateFailureMessage($e));
         } catch (Throwable $e) {
             return back()->withInput()->withErrors(__('admin.article_create.error.create_exception', ['message' => $e->getMessage()]));
         }
@@ -322,6 +327,7 @@ class ArticleController extends Controller
                 'is_featured' => (bool) ($article->is_featured ?? false),
             ],
             'riskScan' => $this->riskScanViewData($article),
+            'duplicateScan' => $this->duplicateScanViewData($article),
             'formOptions' => $this->loadFormOptions(),
         ]);
     }
@@ -339,9 +345,16 @@ class ArticleController extends Controller
             if ($scan === null || ! $this->articleRiskScanner->isFresh($article, $scan)) {
                 $scan = $this->articleRiskScanner->record($article, 'admin_recheck', $adminId);
             }
+            $duplicateScan = $article->latestDuplicateScan()->first();
+            if ($duplicateScan === null || ! $this->articleDuplicateDetector->isFresh($article, $duplicateScan)) {
+                $duplicateScan = $this->articleDuplicateDetector->record($article, 'admin_recheck', $adminId);
+            }
 
-            $requiresDowngrade = $scan->status !== 'clean'
-                && ! ($scan->status === 'warning' && $scan->is_overridden)
+            $riskRejected = $scan->status !== 'clean'
+                && ! ($scan->status === 'warning' && $scan->is_overridden);
+            $duplicateRejected = $duplicateScan->status !== 'clean'
+                && ! ($duplicateScan->status === 'warning' && $duplicateScan->is_overridden);
+            $requiresDowngrade = ($riskRejected || $duplicateRejected)
                 && $this->workflowStateRequiresRiskGate([
                     'status' => (string) $article->status,
                     'review_status' => (string) $article->review_status,
@@ -381,7 +394,7 @@ class ArticleController extends Controller
 
         try {
             $adminId = $this->authenticatedAdminId($request);
-            $gateRejection = DB::transaction(function () use (&$article, $payload, $workflowState, $adminId): ?ArticleRiskGateException {
+            $gateRejection = DB::transaction(function () use (&$article, $payload, $workflowState, $adminId): ArticleRiskGateException|ArticleDuplicateGateException|null {
                 $lockedArticle = Article::query()->whereKey($article->id)->lockForUpdate()->firstOrFail();
                 $slug = $payload['title'] === $lockedArticle->title
                     ? $lockedArticle->slug
@@ -401,6 +414,8 @@ class ArticleController extends Controller
                     'keywords' => $payload['keywords'],
                     'meta_description' => $payload['meta_description'],
                 ]);
+                $currentDuplicateHash = $this->articleDuplicateDetector->contentHash((string) $lockedArticle->content);
+                $nextDuplicateHash = $this->articleDuplicateDetector->contentHash((string) $payload['content']);
                 $lockedArticle->fill([
                     'title' => $payload['title'],
                     'slug' => $slug,
@@ -425,10 +440,18 @@ class ArticleController extends Controller
                 ) {
                     $this->articleRiskScanner->record($lockedArticle, 'admin_save', $adminId);
                 }
+                $latestDuplicateScan = $lockedArticle->latestDuplicateScan()->first();
+                if (
+                    ! hash_equals($currentDuplicateHash, $nextDuplicateHash)
+                    || $latestDuplicateScan === null
+                    || ! $this->articleDuplicateDetector->isFresh($lockedArticle, $latestDuplicateScan)
+                ) {
+                    $this->articleDuplicateDetector->record($lockedArticle, 'admin_save', $adminId);
+                }
                 if ($this->requiresRiskGate($payload)) {
                     try {
                         $lockedArticle = $this->transitionGatedArticle($lockedArticle, $workflowState, $payload, 'admin_save', $adminId);
-                    } catch (ArticleRiskGateException $exception) {
+                    } catch (ArticleRiskGateException|ArticleDuplicateGateException $exception) {
                         $article = $lockedArticle;
 
                         return $exception;
@@ -445,17 +468,17 @@ class ArticleController extends Controller
                 return null;
             });
 
-            if ($gateRejection instanceof ArticleRiskGateException) {
+            if ($gateRejection instanceof ArticleRiskGateException || $gateRejection instanceof ArticleDuplicateGateException) {
                 throw $gateRejection;
             }
             if ($article->status === 'published') {
                 $this->distributionOrchestrator->enqueueForArticle($article);
             }
-        } catch (ArticleRiskGateException $e) {
+        } catch (ArticleRiskGateException|ArticleDuplicateGateException $e) {
             return redirect()
                 ->route('admin.articles.edit', ['articleId' => $articleId])
                 ->withInput()
-                ->withErrors($e->getMessage());
+                ->withErrors($this->gateFailureMessage($e));
         } catch (Throwable $e) {
             return back()->withInput()->withErrors(__('admin.article_edit.error.update_exception', ['message' => $e->getMessage()]));
         }
@@ -535,6 +558,7 @@ class ArticleController extends Controller
         ])->withCount([
             'distributions as distribution_total_count',
             'distributions as distribution_synced_count' => fn ($distributionQuery) => $distributionQuery->where('status', 'synced'),
+            'distributions as distribution_simulated_count' => fn ($distributionQuery) => $distributionQuery->where('status', 'simulated'),
             'distributions as distribution_failed_count' => fn ($distributionQuery) => $distributionQuery->where('status', 'failed'),
         ]);
 
@@ -809,6 +833,41 @@ class ArticleController extends Controller
         ];
     }
 
+    /**
+     * @return array{state:string,status:string,max_similarity:float,matched_article_id:?int,matches:array<int,array<string,mixed>>,is_overridden:bool,override_reason:string,scanned_at:string}|null
+     */
+    private function duplicateScanViewData(Article $article): ?array
+    {
+        $scan = $article->latestDuplicateScan()->first();
+        if ($scan === null) {
+            return null;
+        }
+
+        return [
+            'state' => $this->articleDuplicateDetector->isFresh($article, $scan) ? 'fresh' : 'stale',
+            'status' => (string) $scan->status,
+            'max_similarity' => (float) $scan->max_similarity,
+            'matched_article_id' => $scan->matched_article_id === null ? null : (int) $scan->matched_article_id,
+            'matches' => is_array($scan->matches) ? $scan->matches : [],
+            'is_overridden' => (bool) $scan->is_overridden,
+            'override_reason' => (string) ($scan->override_reason ?? ''),
+            'scanned_at' => (string) ($scan->scanned_at?->format('Y-m-d H:i:s') ?? ''),
+        ];
+    }
+
+    private function gateFailureMessage(ArticleRiskGateException|ArticleDuplicateGateException $exception): string
+    {
+        if ($exception instanceof ArticleDuplicateGateException) {
+            $similarity = number_format((float) $exception->scan->max_similarity * 100, 1);
+            $matchedArticleId = (int) ($exception->scan->matched_article_id ?? 0);
+            $matched = $matchedArticleId > 0 ? "文章 #{$matchedArticleId}" : '已有文章';
+
+            return "文章重复度检查未通过：与{$matched}最高相似度 {$similarity}%。95% 及以上禁止发布，85%-95% 需填写放行理由后重新审核。";
+        }
+
+        return $exception->getMessage();
+    }
+
     private function validateRiskOverrideReason(Request $request): ?string
     {
         $validated = $request->validate([
@@ -918,7 +977,7 @@ class ArticleController extends Controller
                         'published_at' => $workflowState['published_at'],
                     ]);
                 }
-            } catch (ArticleRiskGateException) {
+            } catch (ArticleRiskGateException|ArticleDuplicateGateException) {
                 $rejectedCount++;
 
                 continue;
@@ -933,7 +992,7 @@ class ArticleController extends Controller
         $response = back()->with('message', __('admin.articles.message.batch_status_updated', ['count' => $allowedCount]));
 
         return $rejectedCount > 0
-            ? $response->withErrors("Risk gate rejected {$rejectedCount} article(s).")
+            ? $response->withErrors("有 {$rejectedCount} 篇文章未通过风险或重复度检查。")
             : $response;
     }
 
@@ -989,7 +1048,7 @@ class ArticleController extends Controller
                         'published_at' => $workflowState['published_at'],
                     ]);
                 }
-            } catch (ArticleRiskGateException) {
+            } catch (ArticleRiskGateException|ArticleDuplicateGateException) {
                 $rejectedCount++;
 
                 continue;
@@ -1004,7 +1063,7 @@ class ArticleController extends Controller
         $response = back()->with('message', __('admin.articles.message.batch_review_updated', ['count' => $allowedCount]));
 
         return $rejectedCount > 0
-            ? $response->withErrors("Risk gate rejected {$rejectedCount} article(s).")
+            ? $response->withErrors("有 {$rejectedCount} 篇文章未通过风险或重复度检查。")
             : $response;
     }
 
