@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use RuntimeException;
 
 class DistributionChannel extends Model
 {
@@ -485,12 +486,33 @@ class DistributionChannel extends Model
     public function resolvedBrowserRunnerConfig(): array
     {
         $stored = is_array($this->channel_config) ? $this->channel_config : [];
+        $strict = $this->isBrowserRunner();
+        if ($strict
+            && (! array_key_exists('browser_platform', $stored)
+                || trim((string) $stored['browser_platform']) === '')) {
+            throw new RuntimeException('浏览器发布渠道配置缺少 browser_platform。');
+        }
         $platform = trim((string) ($stored['browser_platform'] ?? 'toutiao'));
+        if ($strict && ! in_array($platform, self::BROWSER_PLATFORMS, true)) {
+            throw new RuntimeException('浏览器发布渠道配置中的 browser_platform 不受支持。');
+        }
+        $accountId = trim((string) ($stored['browser_account_id'] ?? ($strict ? '' : 'default')));
+        if ($strict && $accountId === '') {
+            throw new RuntimeException('浏览器发布渠道配置缺少 browser_account_id。');
+        }
+        if ($strict
+            && (! array_key_exists('browser_publish_mode', $stored)
+                || trim((string) $stored['browser_publish_mode']) === '')) {
+            throw new RuntimeException('浏览器发布渠道配置缺少 browser_publish_mode。');
+        }
         $publishMode = trim((string) ($stored['browser_publish_mode'] ?? 'publish'));
+        if ($strict && ! in_array($publishMode, ['publish', 'draft', 'simulate'], true)) {
+            throw new RuntimeException('浏览器发布渠道配置中的 browser_publish_mode 不受支持。');
+        }
 
         return [
             'browser_platform' => in_array($platform, self::BROWSER_PLATFORMS, true) ? $platform : 'toutiao',
-            'browser_account_id' => trim((string) ($stored['browser_account_id'] ?? 'default')) ?: 'default',
+            'browser_account_id' => $accountId !== '' ? $accountId : 'default',
             'browser_publish_mode' => in_array($publishMode, ['publish', 'draft', 'simulate'], true) ? $publishMode : 'publish',
             'browser_timeout_seconds' => min(240, max(30, (int) ($stored['browser_timeout_seconds'] ?? 180))),
         ];

@@ -11,25 +11,60 @@ export class StateStore {
     return this.state.results[idempotencyKey] ?? null;
   }
 
+  getPending(idempotencyKey) {
+    return this.state.pending[idempotencyKey] ?? null;
+  }
+
+  markPending(idempotencyKey, details = {}) {
+    if (this.get(idempotencyKey) || this.getPending(idempotencyKey)) {
+      return false;
+    }
+    this.state.pending[idempotencyKey] = {
+      ...details,
+      state: 'pending',
+      outcome: 'unknown',
+      stored_at: new Date().toISOString(),
+    };
+    this.write();
+    return true;
+  }
+
   put(idempotencyKey, result) {
     this.state.results[idempotencyKey] = {
       ...result,
       stored_at: new Date().toISOString(),
     };
+    delete this.state.pending[idempotencyKey];
     this.prune();
     this.write();
   }
 
   read() {
+    let contents;
     try {
-      const parsed = JSON.parse(fs.readFileSync(this.filePath, 'utf8'));
-      return {
-        version: 1,
-        results: parsed && typeof parsed.results === 'object' ? parsed.results : {},
-      };
-    } catch {
-      return { version: 1, results: {} };
+      contents = fs.readFileSync(this.filePath, 'utf8');
+    } catch (error) {
+      if (error?.code === 'ENOENT') {
+        return { version: 2, results: {}, pending: {} };
+      }
+      throw error;
     }
+
+    const parsed = JSON.parse(contents);
+    if (parsed?.version !== 2) {
+      throw new Error('Browser Runner state file has an unsupported version.');
+    }
+    if (!isStateMap(parsed?.results)) {
+      throw new Error('Browser Runner state file has an invalid results map.');
+    }
+    if (!isStateMap(parsed?.pending)) {
+      throw new Error('Browser Runner state file has an invalid pending map.');
+    }
+    return {
+      version: 2,
+      results: parsed.results,
+      pending: parsed.pending,
+    };
   }
 
   write() {
@@ -49,4 +84,8 @@ export class StateStore {
       .slice(0, entries.length - 2000)
       .forEach(([key]) => delete this.state.results[key]);
   }
+}
+
+function isStateMap(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
 }

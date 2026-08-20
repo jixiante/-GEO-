@@ -30,6 +30,10 @@
                     @php($jobStatusLabel = trans()->has($jobStatusKey) ? __($jobStatusKey) : (string) $job->status)
                     @php($isDeletedRemoteCopy = (string) $job->action === 'delete' && (string) $job->status === 'synced')
                     @php($canConfirmRemoteUrl = $job->article && $job->channel && in_array((string) $job->status, ['failed', 'synced'], true) && (string) $job->action !== 'delete' && blank($job->remote_url))
+                    @php($isSohuBrowserJob = $job->channel?->isBrowserRunner() && data_get($job->channel?->channel_config, 'browser_platform') === 'sohu')
+                    @php($isToutiaoBrowserJob = $job->channel?->isBrowserRunner() && data_get($job->channel?->channel_config, 'browser_platform') === 'toutiao')
+                    @php($needsToutiaoTitleApproval = $isToutiaoBrowserJob && mb_strlen((string) $job->article?->title, 'UTF-8') > 30)
+                    @php($canConfirmSubmission = $job->article && $job->channel?->isBrowserRunner() && (string) $job->status === 'failed' && (string) $job->action === 'publish' && blank($job->remote_url) && data_get($job->channel?->channel_config, 'browser_publish_mode') === 'publish' && in_array(data_get($job->channel?->channel_config, 'browser_platform'), ['toutiao', 'sohu'], true))
                     <tr>
                         <td class="min-w-[28rem] max-w-[42rem] break-words px-6 py-4 text-sm font-medium text-gray-900">{{ $job->article?->title ?? __('admin.common.none') }}</td>
                         <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-600">{{ $job->channel?->name ?? __('admin.common.none') }}</td>
@@ -51,6 +55,9 @@
                             @if ($canConfirmRemoteUrl)
                                 <a href="{{ route('admin.distribution.article.remote-url.edit', ['distributionId' => (int) $job->id]) }}" class="text-emerald-700 hover:text-emerald-900">{{ __('admin.distribution.button.confirm_remote_url') }}</a>
                             @endif
+                            @if ($canConfirmSubmission)
+                                <a href="{{ route('admin.distribution.article.submission.edit', ['distributionId' => (int) $job->id]) }}" class="text-amber-700 hover:text-amber-900">{{ __('admin.distribution.button.confirm_submission') }}</a>
+                            @endif
                             @if ($isDeletedRemoteCopy)
                                 <span class="text-gray-400">{{ __('admin.distribution.job_state.remote_copy_deleted') }}</span>
                             @elseif ($job->article)
@@ -63,7 +70,15 @@
                             @if ($job->status === 'failed')
                                 <form method="POST" action="{{ route('admin.distribution.retry', ['distributionId' => (int) $job->id]) }}">
                                     @csrf
-                                    <button type="submit" class="text-blue-600 hover:text-blue-800">{{ __('admin.distribution.button.retry') }}</button>
+                                    @if ($isSohuBrowserJob)
+                                        <input type="hidden" name="approve_plain_source_names" value="1">
+                                        <button type="submit" class="text-amber-700 hover:text-amber-900" title="保留来源名称，但不保留外部可点击链接">按搜狐规则重试</button>
+                                    @elseif ($needsToutiaoTitleApproval)
+                                        <input type="text" name="approved_platform_title" maxlength="30" required value="{{ data_get($job->remote_meta, 'platform_title_approval.approved_title', '') }}" placeholder="输入 30 字以内的头条标题" class="w-64 rounded border-gray-300 px-2 py-1 text-sm">
+                                        <button type="submit" class="text-amber-700 hover:text-amber-900">按批准标题重试</button>
+                                    @else
+                                        <button type="submit" class="text-blue-600 hover:text-blue-800">{{ __('admin.distribution.button.retry') }}</button>
+                                    @endif
                                 </form>
                             @endif
                             @if (! $job->article && $job->status !== 'failed')

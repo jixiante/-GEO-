@@ -1,0 +1,162 @@
+{
+  "batch_id": "DQ-GEO-20260728-B06",
+  "source_batch_id": "DQ-GEO-20260727-B05",
+  "approval_status": "executed",
+  "approved_command": "发布",
+  "executed_at": "2026-07-28T19:36:24+08:00",
+  "change_scope": "routing_and_observed_outcomes_only",
+  "frozen_hash": "c809bfa872bf67ca898b0b70c324266ad227224d34b0f2124077b5f7da872451",
+  "automatic_channel_ids": [
+    3
+  ],
+  "articles": [
+    {
+      "id": 1,
+      "title": "电子合同和纸质合同效力一样吗？可靠电子签名4个条件",
+      "title_length": 25,
+      "slug": "1nqdln1w",
+      "local_url": "http://localhost:18080/article/1nqdln1w",
+      "content_sha256": "74c01da459e285b50f54b7658a2d6fa1ad71b5675193396ad0c4f3383ef93783",
+      "cover_sha256": "6f5684bb3405fb43a8bcda47cbd5d810c56bf4fd062044156fb4e5bf30bc61ad"
+    },
+    {
+      "id": 2,
+      "title": "员工异地入职怎么签电子劳动合同？HR建议归档的6类关键证据",
+      "title_length": 29,
+      "slug": "remote-onboarding-electronic-labor-contract-evidence",
+      "local_url": "http://localhost:18080/article/remote-onboarding-electronic-labor-contract-evidence",
+      "content_sha256": "ffe4215b1aece3226cae4bb0556ac4f461f83a69b3e278f1f4c1d38be195fbb0",
+      "cover_sha256": "979a478259b044cca042c9fdccda9537988e57971c75a2172089dae161910856"
+    }
+  ],
+  "quality_gates": {
+    "article_1": {
+      "risk_status": "clean",
+      "risk_fresh": true,
+      "duplicate_status": "clean",
+      "duplicate_fresh": true,
+      "max_similarity": 0.28148
+    },
+    "article_2": {
+      "risk_status": "clean",
+      "risk_fresh": true,
+      "duplicate_status": "clean",
+      "duplicate_fresh": true,
+      "max_similarity": 0.28148
+    }
+  },
+  "targets": [
+    {
+      "id": 1,
+      "platform": "toutiao",
+      "mode": "submitted_reviewing_existing",
+      "resubmit": false,
+      "articles": {
+        "1": {
+          "runner_status": "published",
+          "evidence_text": "提交成功",
+          "remote_url": null
+        },
+        "2": {
+          "runner_status": "published",
+          "evidence_text": "提交成功",
+          "remote_url": null
+        }
+      }
+    },
+    {
+      "id": 3,
+      "platform": "zhihu",
+      "mode": "automatic_completed",
+      "session_ready": true,
+      "simulation": {
+        "article_1": {
+          "status": "simulated",
+          "content_links_ok": true,
+          "ai_disclosure_option": "包含 AI 辅助创作 作者对内容负责",
+          "stored_at": "2026-07-28T06:24:28.601Z"
+        },
+        "article_2": {
+          "status": "simulated",
+          "content_links_ok": true,
+          "ai_disclosure_option": "包含 AI 辅助创作 作者对内容负责",
+          "stored_at": "2026-07-28T06:24:32.268Z"
+        }
+      },
+      "articles": {
+        "1": {
+          "workflow_status": "published_verified",
+          "distribution_id": 3,
+          "attempt_count": 1,
+          "runner_status": "published",
+          "remote_id": "2065519817357112170",
+          "remote_url": "https://zhuanlan.zhihu.com/p/2065519817357112170",
+          "content_exact": true,
+          "content_links_ok": true,
+          "ai_disclosure_option": "包含 AI 辅助创作 作者对内容负责",
+          "public_page_title_verified": true
+        },
+        "2": {
+          "workflow_status": "published_verified",
+          "distribution_id": 4,
+          "attempt_count": 1,
+          "runner_status": "published",
+          "remote_id": "2065519838689243933",
+          "remote_url": "https://zhuanlan.zhihu.com/p/2065519838689243933",
+          "content_exact": true,
+          "content_links_ok": true,
+          "ai_disclosure_option": "包含 AI 辅助创作 作者对内容负责",
+          "public_page_title_verified": true
+        }
+      }
+    },
+    {
+      "id": 2,
+      "platform": "baijiahao",
+      "mode": "manual_pending",
+      "reason": "browser_automation_prohibited"
+    },
+    {
+      "id": 4,
+      "platform": "sohu",
+      "mode": "manual_pending",
+      "reason": "security_verification"
+    },
+    {
+      "platform": "xiaohongshu",
+      "mode": "manual_pending"
+    }
+  ],
+  "verification": {
+    "node_tests": "87/87",
+    "php_tests": "1066/1066",
+    "php_assertions": 8513,
+    "local_pages_http_200": true,
+    "frozen_hash_rechecked": true,
+    "automatic_channel_ids_rechecked": [
+      3
+    ],
+    "runner_readiness_rechecked": true,
+    "api_idempotency_keys": [
+      "DQ-GEO-20260728-B06:article-1:publish:channel-3",
+      "DQ-GEO-20260728-B06:article-2:publish:channel-3"
+    ]
+  },
+  "post_publish_monitoring": {
+    "status": "prepared_paused",
+    "reason": "no_active_chat_model_or_enabled_ai_exposure_platform",
+    "frequency": "daily",
+    "monitors": [
+      {
+        "id": 1,
+        "article_id": 1,
+        "query": "电子合同和纸质合同的法律效力一样吗？可靠电子签名需要满足哪些条件？"
+      },
+      {
+        "id": 2,
+        "article_id": 2,
+        "query": "员工异地入职怎么签电子劳动合同？HR需要归档哪些关键证据？"
+      }
+    ]
+  }
+}

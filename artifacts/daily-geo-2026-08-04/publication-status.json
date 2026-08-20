@@ -1,0 +1,132 @@
+{
+  "batch_id": "DQ-GEO-20260804-B01",
+  "checked_at": "2026-08-04T18:37:46+08:00",
+  "queue": {
+    "queued": 0,
+    "sending": 0
+  },
+  "summary": {
+    "published_verified": 3,
+    "submitted_reviewing": 4,
+    "unknown_after_submit": 1,
+    "manual_publish_pending": 0
+  },
+  "duplicate_risk": {
+    "failed_targets_have_runner_confirmed_result": false,
+    "failed_targets_have_runner_pending_result": true,
+    "failed_targets_submit_attempted": true,
+    "retry_blocked_until_remote_reconciliation": true
+  },
+  "targets": [
+    {
+      "distribution_id": 23,
+      "article_id": 9,
+      "platform": "toutiao",
+      "application_status": "synced",
+      "workflow_status": "submitted_reviewing",
+      "verification_status": "runner_explicit_success_no_public_url",
+      "reason": "修复富文本直写后由本地系统重新提交成功；编辑器内 5 条来源链接全部保留。平台尚未返回公开 URL，不升级为 published_verified。",
+      "application_attempt_count": 2,
+      "live_attempts_consumed": 1,
+      "remote_url": null
+    },
+    {
+      "distribution_id": 24,
+      "article_id": 9,
+      "platform": "baijiahao",
+      "application_status": "synced",
+      "workflow_status": "submitted_reviewing",
+      "verification_status": "runner_explicit_success_no_public_url",
+      "reason": "修复原生复选框状态识别后由本地系统重新提交成功；自动生成视频和自动生成播客均有 checked=false 的明确证据。平台尚未返回公开 URL。",
+      "application_attempt_count": 2,
+      "live_attempts_consumed": 1,
+      "remote_url": null
+    },
+    {
+      "distribution_id": 25,
+      "article_id": 9,
+      "platform": "zhihu",
+      "application_status": "synced",
+      "workflow_status": "published_verified",
+      "verification_status": "public_url_opened",
+      "reason": "公开地址已核验；本轮维修未重试。",
+      "application_attempt_count": 1,
+      "live_attempts_consumed": 1,
+      "remote_id": "2068023505401148630",
+      "management_url": "https://zhuanlan.zhihu.com/p/2068023505401148630/edit",
+      "remote_url": "https://zhuanlan.zhihu.com/p/2068023505401148630"
+    },
+    {
+      "distribution_id": 26,
+      "article_id": 9,
+      "platform": "sohu",
+      "application_status": "failed",
+      "workflow_status": "submitted_reviewing",
+      "verification_status": "platform_backend_reviewing",
+      "reason_code": "remote_unverified",
+      "reason": "搜狐内容管理后台已显示审核中；Runner 保留未知结果防重锁，本轮维修未重试，不得再次发布。",
+      "application_attempt_count": 2,
+      "live_attempts_consumed": 1,
+      "management_url": "https://mp.sohu.com/mpfe/v4/contentManagement/news/articlepreview?id=1058705855&accountId=121766836",
+      "remote_url": null
+    },
+    {
+      "distribution_id": 27,
+      "article_id": 10,
+      "platform": "toutiao",
+      "application_status": "synced",
+      "workflow_status": "submitted_reviewing",
+      "verification_status": "runner_explicit_success_no_public_url",
+      "reason": "使用用户批准且与单一分发任务和冻结载荷绑定的 26 字平台标题，由本地系统重新提交成功；原文章标题未修改。平台尚未返回公开 URL。",
+      "approved_title": "电子合同OpenAPI回调丢失：幂等、重试与状态对账",
+      "approved_title_characters": 26,
+      "title_approved_at": "2026-08-04T18:28:43+08:00",
+      "application_attempt_count": 2,
+      "live_attempts_consumed": 1,
+      "remote_url": null
+    },
+    {
+      "distribution_id": 28,
+      "article_id": 10,
+      "platform": "baijiahao",
+      "application_status": "failed",
+      "workflow_status": "unknown_after_submit",
+      "verification_status": "durable_pending_guard",
+      "reason_code": "remote_outcome_unknown",
+      "reason": "本地系统已完成正文、链接、封面、AI 声明和两个衍生选项校验，并且只点击了一次发布；35 秒内没有取得可确认的远端结果。可能已进入审核，必须先核对百家号内容管理，禁止再次点击发布或重试。",
+      "application_attempt_count": 2,
+      "live_attempts_consumed": 1,
+      "runner_pending_key": "article-10-channel-2-publish-v1",
+      "runner_pending_stored_at": "2026-08-04T10:29:47.474Z",
+      "must_not_retry": true,
+      "remote_url": null
+    },
+    {
+      "distribution_id": 29,
+      "article_id": 10,
+      "platform": "zhihu",
+      "application_status": "synced",
+      "workflow_status": "published_verified",
+      "verification_status": "public_url_opened",
+      "reason": "公开地址已核验；本轮维修未重试。",
+      "application_attempt_count": 1,
+      "live_attempts_consumed": 1,
+      "remote_id": "2068023691192148758",
+      "management_url": "https://zhuanlan.zhihu.com/p/2068023691192148758/edit",
+      "remote_url": "https://zhuanlan.zhihu.com/p/2068023691192148758"
+    },
+    {
+      "distribution_id": 30,
+      "article_id": 10,
+      "platform": "sohu",
+      "application_status": "synced",
+      "workflow_status": "published_verified",
+      "verification_status": "public_url_opened",
+      "reason": "公开地址已核验并回填系统；本轮维修未重试。",
+      "application_attempt_count": 2,
+      "live_attempts_consumed": 1,
+      "remote_id": "1058705202_121766836",
+      "remote_url": "https://www.sohu.com/a/1058705202_121766836"
+    }
+  ]
+}

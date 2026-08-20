@@ -1,0 +1,139 @@
+{
+  "batch_id": "DQ-GEO-20260730-B02",
+  "approval_payload_sha256": "9e57bee5ccb0a4b352155eb17083f678d7ca3172ce6ee99f7208bc22b9ed9c9d",
+  "recorded_at": "2026-07-30T17:01:36+08:00",
+  "status": "partially_published_pending_reconciliation",
+  "post_publish_monitoring": [
+    {
+      "monitor_id": 3,
+      "article_id": 5,
+      "frequency": "manual",
+      "status": "active",
+      "query": "电子合同SaaS、OpenAPI和私有化部署应该怎么选？"
+    },
+    {
+      "monitor_id": 4,
+      "article_id": 6,
+      "frequency": "manual",
+      "status": "active",
+      "query": "公司电子印章如何规范申请、授权、使用和撤销？"
+    }
+  ],
+  "monitoring_note": "知乎分发地址当前以 /edit 结尾；监测已创建但暂不运行，避免公开 URL 精确引用漏判。",
+  "articles": [
+    {
+      "article_id": 5,
+      "title": "电子合同SaaS、OpenAPI和私有化怎么选？看这5个条件",
+      "channels": [
+        {
+          "channel_id": 1,
+          "platform": "toutiao",
+          "distribution_id": 9,
+          "status": "manual_published_verified",
+          "submit_attempted": true,
+          "submitted_at": "2026-07-30T16:45:00+08:00",
+          "remote_id": "7668238399509168674",
+          "public_url": "https://www.toutiao.com/article/7668238399509168674/",
+          "platform_evidence": "exact_title_visible_in_content_management_with_status_published_and_public_page_opened",
+          "source_rendering": "all_5_approved_urls_retained_as_visible_url_text",
+          "application_reconciliation": "pending_remote_url_validator_host_fix"
+        },
+        {
+          "channel_id": 2,
+          "platform": "baijiahao",
+          "distribution_id": 10,
+          "status": "manual_pending",
+          "submit_attempted": true,
+          "attempt_count": 2,
+          "remote_absence_confirmed_by_user_at": "2026-07-30T14:54:00+08:00",
+          "remote_absence_confirmed_after_final_attempt_by_user_at": "2026-07-30T17:01:36+08:00",
+          "final_attempt_at": "2026-07-30T16:18:20+08:00",
+          "automatic_retry_allowed": false,
+          "retry_budget_exhausted": true,
+          "manual_publish_allowed": true,
+          "manual_publish_condition": "satisfied_remote_absence_confirmed_after_final_attempt",
+          "reason": "second_live_attempt_failed_remote_absence_confirmed",
+          "idempotency_key": "article-5-channel-2-publish-v1",
+          "payload_hash": "698e175faf1ab65f29a870cc91d15d3f3adc097e421be1012aee2559fe757ac3",
+          "content_sha256": "cf0fa53ba802607b62905332d58eb23db946729e7b0839fd4e47c7edc38b0598",
+          "platform_evidence": "browser-runner/data/screenshots/baijiahao-dianqian_main-2026-07-30T08-18-19-944Z.png",
+          "maintenance_backup": {
+            "path": "browser-runner/data/state-before-baijiahao-article5-unlock-20260730T161521.json",
+            "sha256": "40513DE6AC57C3C3DB55509BCCA95CDF64010F186BF594FEFF50106BAC73003A"
+          },
+          "next_action": "assisted_manual_publish_exact_frozen_package"
+        },
+        {
+          "channel_id": 3,
+          "platform": "zhihu",
+          "distribution_id": 11,
+          "status": "published_verified",
+          "remote_id": "2066168637786952273",
+          "public_url": "https://zhuanlan.zhihu.com/p/2066168637786952273"
+        },
+        {
+          "channel_id": 4,
+          "platform": "sohu",
+          "distribution_id": 12,
+          "status": "submitted_reviewing",
+          "submit_attempted": true,
+          "plain_source_names_approval": {
+            "approved_by": "admin:1",
+            "approved_at": "2026-07-30T14:56:49+08:00",
+            "payload_hash": "dd903401e0f080a09ce3349706ed2d27d04838065f5c614e9677542e484dc399"
+          },
+          "platform_evidence": "browser-runner/data/screenshots/sohu-dianqian_main-2026-07-30T06-57-31-050Z.png",
+          "application_reconciliation": "pending_public_url"
+        }
+      ]
+    },
+    {
+      "article_id": 6,
+      "title": "公司电子印章怎么管？申请、授权、使用和撤销的操作清单",
+      "channels": [
+        {
+          "channel_id": 1,
+          "platform": "toutiao",
+          "distribution_id": 13,
+          "status": "submitted_reviewing",
+          "submit_attempted": true,
+          "submitted_at": "2026-07-30T16:49:00+08:00",
+          "remote_id": "7668239612124365312",
+          "preview_url": "https://mp.toutiao.com/profile_v4/graphic/preview?pgc_id=7668239612124365312",
+          "platform_evidence": "exact_title_visible_in_content_management_with_status_reviewing",
+          "source_rendering": "all_4_approved_urls_retained_as_visible_url_text",
+          "application_reconciliation": "pending_public_url"
+        },
+        {
+          "channel_id": 2,
+          "platform": "baijiahao",
+          "distribution_id": 14,
+          "status": "submitted_reviewing",
+          "submit_attempted": true
+        },
+        {
+          "channel_id": 3,
+          "platform": "zhihu",
+          "distribution_id": 15,
+          "status": "published_verified",
+          "remote_id": "2066168751976869975",
+          "public_url": "https://zhuanlan.zhihu.com/p/2066168751976869975"
+        },
+        {
+          "channel_id": 4,
+          "platform": "sohu",
+          "distribution_id": 16,
+          "status": "submitted_reviewing",
+          "submit_attempted": true,
+          "plain_source_names_approval": {
+            "approved_by": "admin:1",
+            "approved_at": "2026-07-30T14:57:13+08:00",
+            "payload_hash": "b4fd6b9eb09bd49e2ba4ecb2b33490a4154bd8a513d640121b5d0f71b6bef64c"
+          },
+          "platform_evidence": "browser-runner/data/screenshots/sohu-dianqian_main-2026-07-30T06-58-11-347Z.png",
+          "application_reconciliation": "pending_public_url"
+        }
+      ]
+    }
+  ]
+}

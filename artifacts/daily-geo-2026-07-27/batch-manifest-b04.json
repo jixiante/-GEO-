@@ -1,0 +1,92 @@
+{
+    "batch_id":  "DQ-GEO-20260727-B04",
+    "source_batch_id":  "DQ-GEO-20260727-B03",
+    "approval_status":  "pending",
+    "change_scope":  "routing_only",
+    "local_publish":  {
+                          "enabled":  true,
+                          "mode":  "api_local_only"
+                      },
+    "automatic_channel_ids":  [
+                                  1
+                              ],
+    "targets":  [
+                    {
+                        "id":  1,
+                        "name":  "今日头条",
+                        "platform":  "toutiao",
+                        "mode":  "automatic",
+                        "required_evidence":  [
+                                                  "content_verification",
+                                                  "cover_verification",
+                                                  "ai_disclosure_verification"
+                                              ]
+                    },
+                    {
+                        "id":  2,
+                        "name":  "百家号",
+                        "platform":  "baijiahao",
+                        "mode":  "assisted_manual",
+                        "reason":  "browser_automation_blocked_and_native_ai_disclosure_unverified"
+                    },
+                    {
+                        "id":  3,
+                        "name":  "知乎",
+                        "platform":  "zhihu",
+                        "mode":  "assisted_manual",
+                        "reason":  "native_ai_disclosure_control_not_uniquely_verified"
+                    },
+                    {
+                        "id":  4,
+                        "name":  "搜狐号",
+                        "platform":  "sohu",
+                        "mode":  "assisted_manual",
+                        "reason":  "login_required_and_native_ai_disclosure_unverified"
+                    }
+                ],
+    "routing_validation":  {
+                               "toutiao":  {
+                                               "status":  "passed",
+                                               "simulation":  "content_cover_ai_disclosure_verified",
+                                               "option_text":  "引用AI"
+                                           },
+                               "baijiahao":  {
+                                                 "status":  "manual",
+                                                 "automation":  "prohibited"
+                                             },
+                               "zhihu":  {
+                                             "status":  "manual",
+                                             "last_failure":  "native_ai_disclosure_control_not_uniquely_verified"
+                                         },
+                               "sohu":  {
+                                            "status":  "manual",
+                                            "last_failure":  "login_required"
+                                        }
+                           },
+    "articles":  [
+                     {
+                         "id":  1,
+                         "title":  "电子合同和纸质合同法律效力一样吗？判断可靠电子签名的4个关键条件",
+                         "slug":  "electronic-contract-legal-effect-reliable-signature",
+                         "content_sha256":  "74c01da459e285b50f54b7658a2d6fa1ad71b5675193396ad0c4f3383ef93783",
+                         "package_sha256":  "1f5460022c440e628fe4939ba1bad5d62b8a1962a4040cff917eaad9a871edbb",
+                         "cover_sha256":  "6f5684bb3405fb43a8bcda47cbd5d810c56bf4fd062044156fb4e5bf30bc61ad"
+                     },
+                     {
+                         "id":  2,
+                         "title":  "员工异地入职怎么签电子劳动合同？HR建议归档的6类关键证据",
+                         "slug":  "remote-onboarding-electronic-labor-contract-evidence",
+                         "content_sha256":  "ffe4215b1aece3226cae4bb0556ac4f461f83a69b3e278f1f4c1d38be195fbb0",
+                         "package_sha256":  "e431dda2ebe9e4bac209fa56756f5a76a03848a7eda60e2da03d38e55c47ee64",
+                         "cover_sha256":  "979a478259b044cca042c9fdccda9537988e57971c75a2172089dae161910856"
+                     }
+                 ],
+    "xiaohongshu":  {
+                        "mode":  "manual_pending",
+                        "package_sha256":  "6e911b269b191220bb3c4171e89b7c30e6e4edfa9e68be80006d0cfe172256b9",
+                        "cover_sha256":  [
+                                             "fc7763a2f1100f161cd480516e5805ac0d8ee4dd327ee68b730ed3f7f5fa5eca",
+                                             "2ea411502e026e75eb4fc03da7045531da7c5272c1f319fc9272256bf82517d0"
+                                         ]
+                    }
+}

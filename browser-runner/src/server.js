@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 import http from 'node:http';
-import { URL } from 'node:url';
+import { pathToFileURL, URL } from 'node:url';
 import { BrowserRunner } from './browser-runner.js';
 import { config } from './config.js';
 import { RunnerError } from './errors.js';
@@ -34,14 +34,7 @@ const server = http.createServer(async (request, response) => {
     }
 
     const body = await readJson(request);
-    const routes = {
-      'POST /v1/accounts/login': () => runner.openLogin(body.platform, body.account_id),
-      'POST /v1/publish': () => runner.publish(body),
-      'POST /v1/update': () => runner.update(body),
-      'POST /v1/delete': () => runner.delete(body),
-      'POST /v1/control/stop': () => runner.stop(),
-      'POST /v1/control/start': () => runner.start(),
-    };
+    const routes = createRoutes(runner, body);
     const handler = routes[`${request.method} ${url.pathname}`];
     if (!handler) {
       throw new RunnerError('接口不存在。', { code: 'not_found', status: 404 });
@@ -69,10 +62,17 @@ const server = http.createServer(async (request, response) => {
   }
 });
 
-server.listen(config.port, config.host, () => {
-  logger.write('info', 'server.listening', { host: config.host, port: config.port });
-  process.stdout.write(`点签浏览器发布助手已启动：http://${config.host}:${config.port}\n`);
-});
+const isMainModule = process.argv[1] !== undefined
+  && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (isMainModule) {
+  server.listen(config.port, config.host, () => {
+    logger.write('info', 'server.listening', { host: config.host, port: config.port });
+    process.stdout.write(`点签浏览器发布助手已启动：http://${config.host}:${config.port}\n`);
+  });
+
+  process.on('SIGINT', shutdown);
+  process.on('SIGTERM', shutdown);
+}
 
 async function shutdown() {
   server.close();
@@ -80,8 +80,17 @@ async function shutdown() {
   process.exit(0);
 }
 
-process.on('SIGINT', shutdown);
-process.on('SIGTERM', shutdown);
+export function createRoutes(targetRunner, body) {
+  return {
+    'POST /v1/accounts/login': () => targetRunner.openLogin(body.platform, body.account_id),
+    'POST /v1/publish': () => targetRunner.publish(body),
+    'POST /v2/publish': () => targetRunner.publish(body),
+    'POST /v1/update': () => targetRunner.update(body),
+    'POST /v1/delete': () => targetRunner.delete(body),
+    'POST /v1/control/stop': () => targetRunner.stop(),
+    'POST /v1/control/start': () => targetRunner.start(),
+  };
+}
 
 function authenticate(request) {
   const authorization = String(request.headers.authorization ?? '');

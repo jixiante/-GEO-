@@ -155,6 +155,8 @@ Route::prefix($adminPrefix)->name('admin.')->middleware(['admin.locale'])->group
             Route::put('jobs/{distributionId}', [DistributionController::class, 'updateArticle'])->name('article.update')->whereNumber('distributionId');
             Route::get('jobs/{distributionId}/remote-url/edit', [DistributionController::class, 'editRemoteUrl'])->name('article.remote-url.edit')->whereNumber('distributionId');
             Route::put('jobs/{distributionId}/remote-url', [DistributionController::class, 'updateRemoteUrl'])->name('article.remote-url.update')->whereNumber('distributionId');
+            Route::get('jobs/{distributionId}/submission/edit', [DistributionController::class, 'editSubmission'])->name('article.submission.edit')->whereNumber('distributionId');
+            Route::put('jobs/{distributionId}/submission', [DistributionController::class, 'updateSubmission'])->name('article.submission.update')->whereNumber('distributionId');
             Route::post('jobs/{distributionId}/delete', [DistributionController::class, 'deleteArticle'])->name('article.delete')->whereNumber('distributionId');
             Route::post('jobs/{distributionId}/retry', [DistributionController::class, 'retry'])->name('retry')->whereNumber('distributionId');
             Route::get('{channelId}/edit', [DistributionController::class, 'edit'])->name('edit')->whereNumber('channelId');
@@ -167,6 +169,7 @@ Route::prefix($adminPrefix)->name('admin.')->middleware(['admin.locale'])->group
             Route::post('{channelId}/frontend-capabilities/refresh', [DistributionController::class, 'refreshFrontendCapabilities'])->name('frontend-capabilities.refresh')->whereNumber('channelId');
             Route::get('{channelId}/sync-settings/preview', [DistributionController::class, 'previewSyncSettings'])->name('sync-settings.preview')->whereNumber('channelId');
             Route::post('{channelId}/sync-settings', [DistributionController::class, 'syncSettings'])->name('sync-settings')->whereNumber('channelId');
+            Route::post('{channelId}/articles/enqueue', [DistributionController::class, 'enqueueArticle'])->name('article.enqueue')->whereNumber('channelId');
             Route::get('{channelId}', [DistributionController::class, 'show'])->name('show')->whereNumber('channelId');
             Route::post('{channelId}/health', [DistributionController::class, 'health'])->name('health')->whereNumber('channelId');
             Route::post('{channelId}/browser-login', [DistributionController::class, 'openBrowserLogin'])->name('browser-login')->whereNumber('channelId');

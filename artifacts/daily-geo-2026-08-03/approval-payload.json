@@ -1,0 +1,25 @@
+{
+  "batch_id": "DQ-GEO-20260803-B01",
+  "frozen_at": "2026-08-03T09:50:57+08:00",
+  "distribution_channel_ids": [1, 2, 3, 4],
+  "articles": [
+    {
+      "id": 7,
+      "title": "经办人代表公司签电子合同有效吗？重点看职权、授权和相对人审查",
+      "slug": "employee-rep-sign-electronic-contract-authority",
+      "content_sha256": "ed8f65eaef97a795285b8338b5779b0872cf8c7625e188b04ea8eb552526deef",
+      "cover_sha256": "413d70bc2eb6276245f9c903e00972ff711a0431a137479d314b77f85b69c630",
+      "cover_width": 1200,
+      "cover_height": 675
+    },
+    {
+      "id": 8,
+      "title": "电子合同签错了怎么办？撤回、变更和解除要分清",
+      "slug": "electronic-contract-mistake-withdraw-amend-rescind",
+      "content_sha256": "ef358a2625dfaeba4edc1b4106bb4012f6a033e96925a23256762fbccd46740e",
+      "cover_sha256": "a815712c4b719fc7d525d534bd03c967adeda3dd192ab9a5a1edfbab227d6227",
+      "cover_width": 1200,
+      "cover_height": 675
+    }
+  ]
+}

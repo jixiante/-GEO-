@@ -4770,6 +4770,227 @@ MD,
         Queue::assertPushed(ProcessArticleDistributionJob::class);
     }
 
+    public function test_admin_can_approve_plain_source_names_for_one_failed_sohu_distribution_and_retry(): void
+    {
+        Queue::fake();
+
+        $fixtures = $this->taskFixtures();
+        $channel = DistributionChannel::query()->create([
+            'name' => '搜狐号',
+            'domain' => 'mp.sohu.com',
+            'endpoint_url' => 'http://host.docker.internal:19090',
+            'channel_type' => DistributionChannel::CHANNEL_TYPE_BROWSER_RUNNER,
+            'channel_config' => [
+                'browser_platform' => 'sohu',
+                'browser_account_id' => 'dianqian',
+                'browser_publish_mode' => 'publish',
+                'browser_timeout_seconds' => 180,
+            ],
+            'status' => 'active',
+        ]);
+        $article = Article::query()->create([
+            'title' => '搜狐来源名称降级测试',
+            'slug' => 'sohu-plain-source-names-test',
+            'excerpt' => '摘要',
+            'content' => "正文\n\n[官方来源](https://example.com/source)",
+            'category_id' => $fixtures['category']->id,
+            'author_id' => $fixtures['author']->id,
+            'status' => 'published',
+            'review_status' => 'approved',
+            'published_at' => now(),
+        ]);
+        $stalePayloadHash = hash('sha256', 'stale-sohu-payload');
+        $distribution = ArticleDistribution::query()->create([
+            'article_id' => (int) $article->id,
+            'distribution_channel_id' => (int) $channel->id,
+            'action' => 'publish',
+            'status' => 'failed',
+            'idempotency_key' => 'article-'.$article->id.'-channel-'.$channel->id.'-publish-v1',
+            'payload_hash' => $stalePayloadHash,
+            'remote_meta' => ['diagnostic' => 'kept'],
+            'last_error_message' => '搜狐号编辑器未保留 1 个正文链接。',
+        ]);
+        $admin = $this->admin();
+        $currentPayload = app(DistributionPayloadBuilder::class)->build($article->fresh());
+        $payloadHash = hash(
+            'sha256',
+            json_encode($currentPayload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '',
+        );
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.distribution.jobs'))
+            ->assertOk()
+            ->assertSee('name="approve_plain_source_names"', false)
+            ->assertSee('按搜狐规则重试');
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.distribution.show', ['channelId' => (int) $channel->id]))
+            ->assertOk()
+            ->assertSee('name="approve_plain_source_names"', false)
+            ->assertSee('按搜狐规则重试');
+
+        $this->actingAs($admin, 'admin')
+            ->post(route('admin.distribution.retry', ['distributionId' => (int) $distribution->id]), [
+                'approve_plain_source_names' => '1',
+            ])
+            ->assertRedirect();
+
+        $distribution->refresh();
+        $this->assertSame('queued', $distribution->status);
+        $this->assertNull($distribution->last_error_message);
+        $this->assertSame($payloadHash, $distribution->payload_hash);
+        $this->assertSame('kept', $distribution->remote_meta['diagnostic']);
+        $this->assertSame([
+            'approved' => true,
+            'platform' => 'sohu',
+            'article_distribution_id' => (int) $distribution->id,
+            'approved_by' => 'admin:'.(int) $admin->id,
+            'approved_at' => $distribution->remote_meta['plain_source_names_approval']['approved_at'],
+            'payload_hash' => $payloadHash,
+        ], $distribution->remote_meta['plain_source_names_approval']);
+        $this->assertNotEmpty($distribution->remote_meta['plain_source_names_approval']['approved_at']);
+
+        $log = DistributionLog::query()
+            ->where('article_distribution_id', (int) $distribution->id)
+            ->where('event', 'distribution.plain_source_names_approved')
+            ->sole();
+        $this->assertSame((int) $admin->id, (int) $log->context['approved_by_admin_id']);
+        $this->assertSame($payloadHash, $log->context['payload_hash']);
+        Queue::assertPushed(ProcessArticleDistributionJob::class);
+    }
+
+    public function test_admin_can_approve_an_exact_title_for_one_failed_toutiao_distribution_and_retry(): void
+    {
+        Queue::fake();
+
+        $fixtures = $this->taskFixtures();
+        $channel = DistributionChannel::query()->create([
+            'name' => '头条号',
+            'domain' => 'mp.toutiao.com',
+            'endpoint_url' => 'http://host.docker.internal:19090',
+            'channel_type' => DistributionChannel::CHANNEL_TYPE_BROWSER_RUNNER,
+            'channel_config' => [
+                'browser_platform' => 'toutiao',
+                'browser_account_id' => 'dianqian',
+                'browser_publish_mode' => 'publish',
+                'browser_timeout_seconds' => 180,
+            ],
+            'status' => 'active',
+        ]);
+        $canonicalTitle = '电子合同OpenAPI回调丢了怎么办？幂等、重试和状态对账怎么设计';
+        $approvedTitle = '电子合同OpenAPI回调丢失：幂等、重试与状态对账';
+        $article = Article::query()->create([
+            'title' => $canonicalTitle,
+            'slug' => 'toutiao-approved-platform-title-test',
+            'excerpt' => '摘要',
+            'content' => '正文',
+            'category_id' => $fixtures['category']->id,
+            'author_id' => $fixtures['author']->id,
+            'status' => 'published',
+            'review_status' => 'approved',
+            'published_at' => now(),
+        ]);
+        $distribution = ArticleDistribution::query()->create([
+            'article_id' => (int) $article->id,
+            'distribution_channel_id' => (int) $channel->id,
+            'action' => 'publish',
+            'status' => 'failed',
+            'idempotency_key' => 'article-'.$article->id.'-channel-'.$channel->id.'-publish-v1',
+            'payload_hash' => hash('sha256', 'stale-toutiao-payload'),
+            'remote_meta' => ['diagnostic' => 'kept'],
+            'last_error_message' => '今日头条标题最多 30 个字符。',
+        ]);
+        $admin = $this->admin();
+        $currentPayload = app(DistributionPayloadBuilder::class)->build($article->fresh());
+        $payloadHash = hash(
+            'sha256',
+            json_encode($currentPayload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '',
+        );
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.distribution.jobs'))
+            ->assertOk()
+            ->assertSee('name="approved_platform_title"', false)
+            ->assertSee('按批准标题重试');
+
+        $this->actingAs($admin, 'admin')
+            ->post(route('admin.distribution.retry', ['distributionId' => (int) $distribution->id]), [
+                'approved_platform_title' => $approvedTitle,
+            ])
+            ->assertRedirect();
+
+        $distribution->refresh();
+        $this->assertSame('queued', $distribution->status);
+        $this->assertNull($distribution->last_error_message);
+        $this->assertSame($payloadHash, $distribution->payload_hash);
+        $this->assertSame('kept', $distribution->remote_meta['diagnostic']);
+        $this->assertSame($approvedTitle, $distribution->remote_meta['platform_title_approval']['approved_title']);
+        $this->assertSame('admin:'.(int) $admin->id, $distribution->remote_meta['platform_title_approval']['approved_by']);
+        $this->assertSame($payloadHash, $distribution->remote_meta['platform_title_approval']['payload_hash']);
+        $this->assertSame($canonicalTitle, $article->fresh()->title);
+
+        $log = DistributionLog::query()
+            ->where('article_distribution_id', (int) $distribution->id)
+            ->where('event', 'distribution.platform_title_approved')
+            ->sole();
+        $this->assertSame($approvedTitle, $log->context['approved_title']);
+        $this->assertSame($canonicalTitle, $log->context['canonical_title']);
+        Queue::assertPushed(ProcessArticleDistributionJob::class);
+    }
+
+    public function test_plain_source_names_approval_is_rejected_for_non_sohu_distribution(): void
+    {
+        Queue::fake();
+
+        $fixtures = $this->taskFixtures();
+        $channel = DistributionChannel::query()->create([
+            'name' => '知乎',
+            'domain' => 'zhihu.com',
+            'endpoint_url' => 'http://host.docker.internal:19090',
+            'channel_type' => DistributionChannel::CHANNEL_TYPE_BROWSER_RUNNER,
+            'channel_config' => [
+                'browser_platform' => 'zhihu',
+                'browser_account_id' => 'dianqian',
+                'browser_publish_mode' => 'publish',
+                'browser_timeout_seconds' => 180,
+            ],
+            'status' => 'active',
+        ]);
+        $article = Article::query()->create([
+            'title' => '非搜狐来源名称降级测试',
+            'slug' => 'non-sohu-plain-source-names-test',
+            'excerpt' => '摘要',
+            'content' => "正文\n\n[官方来源](https://example.com/source)",
+            'category_id' => $fixtures['category']->id,
+            'author_id' => $fixtures['author']->id,
+            'status' => 'published',
+            'review_status' => 'approved',
+            'published_at' => now(),
+        ]);
+        $distribution = ArticleDistribution::query()->create([
+            'article_id' => (int) $article->id,
+            'distribution_channel_id' => (int) $channel->id,
+            'action' => 'publish',
+            'status' => 'failed',
+            'idempotency_key' => 'article-'.$article->id.'-channel-'.$channel->id.'-publish-v1',
+            'payload_hash' => hash('sha256', 'frozen-zhihu-payload'),
+            'last_error_message' => '链接校验失败。',
+        ]);
+
+        $this->actingAs($this->admin(), 'admin')
+            ->from(route('admin.distribution.jobs'))
+            ->post(route('admin.distribution.retry', ['distributionId' => (int) $distribution->id]), [
+                'approve_plain_source_names' => '1',
+            ])
+            ->assertRedirect(route('admin.distribution.jobs'))
+            ->assertSessionHasErrors('approve_plain_source_names');
+
+        $distribution->refresh();
+        $this->assertSame('failed', $distribution->status);
+        $this->assertArrayNotHasKey('plain_source_names_approval', $distribution->remote_meta ?? []);
+        Queue::assertNothingPushed();
+    }
+
     public function test_distribution_jobs_page_can_filter_by_status_and_channel(): void
     {
         $fixtures = $this->taskFixtures();
@@ -4889,6 +5110,243 @@ MD,
         $this->assertSame(1, (int) $distribution->attempt_count);
         $this->assertNotNull($distribution->next_retry_at);
         Queue::assertPushed(ProcessArticleDistributionJob::class);
+    }
+
+    public function test_admin_can_enqueue_one_published_approved_article_from_channel_detail(): void
+    {
+        Queue::fake();
+
+        $fixtures = $this->taskFixtures();
+        $channel = DistributionChannel::query()->create([
+            'name' => '百家号补发渠道',
+            'domain' => 'baijiahao.baidu.com',
+            'endpoint_url' => 'http://host.docker.internal:19090',
+            'channel_type' => DistributionChannel::CHANNEL_TYPE_BROWSER_RUNNER,
+            'channel_config' => [
+                'browser_platform' => 'baijiahao',
+                'browser_account_id' => 'dianqian_main',
+                'browser_publish_mode' => 'publish',
+                'browser_timeout_seconds' => 180,
+            ],
+            'status' => 'active',
+        ]);
+        $article = Article::query()->create([
+            'title' => '待补发百家号文章',
+            'slug' => 'manual-channel-enqueue',
+            'excerpt' => '摘要',
+            'content' => '用于验证渠道详情页一键补发的正文。',
+            'category_id' => $fixtures['category']->id,
+            'author_id' => $fixtures['author']->id,
+            'status' => 'published',
+            'review_status' => 'approved',
+            'published_at' => now(),
+        ]);
+
+        $this->actingAs($this->admin(), 'admin')
+            ->post(route('admin.distribution.article.enqueue', ['channelId' => (int) $channel->id]), [
+                'article_id' => (int) $article->id,
+            ])
+            ->assertRedirect(route('admin.distribution.show', ['channelId' => (int) $channel->id]))
+            ->assertSessionHas('message', __('admin.distribution.message.manual_enqueue_queued'));
+
+        $this->assertDatabaseHas('article_distributions', [
+            'article_id' => (int) $article->id,
+            'distribution_channel_id' => (int) $channel->id,
+            'action' => 'publish',
+            'status' => 'queued',
+        ]);
+        Queue::assertPushed(ProcessArticleDistributionJob::class, 1);
+    }
+
+    public function test_channel_detail_enqueue_rejects_an_unapproved_article(): void
+    {
+        Queue::fake();
+
+        $fixtures = $this->taskFixtures();
+        $channel = DistributionChannel::query()->create([
+            'name' => '人工补发审核门禁',
+            'domain' => 'baijiahao.baidu.com',
+            'endpoint_url' => 'http://host.docker.internal:19090',
+            'channel_type' => DistributionChannel::CHANNEL_TYPE_BROWSER_RUNNER,
+            'channel_config' => [
+                'browser_platform' => 'baijiahao',
+                'browser_account_id' => 'dianqian_main',
+                'browser_publish_mode' => 'publish',
+                'browser_timeout_seconds' => 180,
+            ],
+            'status' => 'active',
+        ]);
+        $article = Article::query()->create([
+            'title' => '尚未审核的补发文章',
+            'slug' => 'manual-enqueue-unapproved',
+            'excerpt' => '摘要',
+            'content' => '待审核正文。',
+            'category_id' => $fixtures['category']->id,
+            'author_id' => $fixtures['author']->id,
+            'status' => 'published',
+            'review_status' => 'pending',
+            'published_at' => now(),
+        ]);
+
+        $this->actingAs($this->admin(), 'admin')
+            ->from(route('admin.distribution.show', ['channelId' => (int) $channel->id]))
+            ->post(route('admin.distribution.article.enqueue', ['channelId' => (int) $channel->id]), [
+                'article_id' => (int) $article->id,
+            ])
+            ->assertRedirect(route('admin.distribution.show', ['channelId' => (int) $channel->id]))
+            ->assertSessionHasErrors('article_id');
+
+        $this->assertDatabaseMissing('article_distributions', [
+            'article_id' => (int) $article->id,
+            'distribution_channel_id' => (int) $channel->id,
+        ]);
+        Queue::assertNothingPushed();
+    }
+
+    public function test_channel_detail_enqueue_does_not_duplicate_an_existing_channel_job(): void
+    {
+        Queue::fake();
+
+        $fixtures = $this->taskFixtures();
+        $channel = DistributionChannel::query()->create([
+            'name' => '人工补发防重复',
+            'domain' => 'baijiahao.baidu.com',
+            'endpoint_url' => 'http://host.docker.internal:19090',
+            'channel_type' => DistributionChannel::CHANNEL_TYPE_BROWSER_RUNNER,
+            'channel_config' => [
+                'browser_platform' => 'baijiahao',
+                'browser_account_id' => 'dianqian_main',
+                'browser_publish_mode' => 'publish',
+                'browser_timeout_seconds' => 180,
+            ],
+            'status' => 'active',
+        ]);
+        $article = Article::query()->create([
+            'title' => '已有分发任务的文章',
+            'slug' => 'manual-enqueue-existing-job',
+            'excerpt' => '摘要',
+            'content' => '已存在任务的正文。',
+            'category_id' => $fixtures['category']->id,
+            'author_id' => $fixtures['author']->id,
+            'status' => 'published',
+            'review_status' => 'approved',
+            'published_at' => now(),
+        ]);
+        ArticleDistribution::query()->create([
+            'article_id' => (int) $article->id,
+            'distribution_channel_id' => (int) $channel->id,
+            'action' => 'publish',
+            'status' => 'synced',
+            'idempotency_key' => 'article-'.$article->id.'-channel-'.$channel->id.'-publish-v1',
+        ]);
+
+        $this->actingAs($this->admin(), 'admin')
+            ->from(route('admin.distribution.show', ['channelId' => (int) $channel->id]))
+            ->post(route('admin.distribution.article.enqueue', ['channelId' => (int) $channel->id]), [
+                'article_id' => (int) $article->id,
+            ])
+            ->assertRedirect(route('admin.distribution.show', ['channelId' => (int) $channel->id]))
+            ->assertSessionHasErrors('article_id');
+
+        $this->assertSame(1, ArticleDistribution::query()
+            ->where('article_id', (int) $article->id)
+            ->where('distribution_channel_id', (int) $channel->id)
+            ->count());
+        Queue::assertNothingPushed();
+    }
+
+    public function test_channel_detail_offers_one_click_enqueue_only_for_missing_publishable_articles(): void
+    {
+        $fixtures = $this->taskFixtures();
+        $channel = DistributionChannel::query()->create([
+            'name' => '百家号补发列表',
+            'domain' => 'baijiahao.baidu.com',
+            'endpoint_url' => 'http://host.docker.internal:19090',
+            'channel_type' => DistributionChannel::CHANNEL_TYPE_BROWSER_RUNNER,
+            'channel_config' => [
+                'browser_platform' => 'baijiahao',
+                'browser_account_id' => 'dianqian_main',
+                'browser_publish_mode' => 'publish',
+                'browser_timeout_seconds' => 180,
+            ],
+            'status' => 'active',
+        ]);
+        $eligibleArticle = Article::query()->create([
+            'title' => '唯一可补发文章',
+            'slug' => 'eligible-manual-enqueue',
+            'excerpt' => '摘要',
+            'content' => '可补发正文。',
+            'category_id' => $fixtures['category']->id,
+            'author_id' => $fixtures['author']->id,
+            'status' => 'published',
+            'review_status' => 'approved',
+            'published_at' => now(),
+        ]);
+        $pendingArticle = Article::query()->create([
+            'title' => '尚未审核文章',
+            'slug' => 'pending-manual-enqueue',
+            'excerpt' => '摘要',
+            'content' => '待审核正文。',
+            'category_id' => $fixtures['category']->id,
+            'author_id' => $fixtures['author']->id,
+            'status' => 'published',
+            'review_status' => 'pending',
+            'published_at' => now()->subMinute(),
+        ]);
+        $existingArticle = Article::query()->create([
+            'title' => '已有当前渠道任务',
+            'slug' => 'existing-manual-enqueue',
+            'excerpt' => '摘要',
+            'content' => '已有任务正文。',
+            'category_id' => $fixtures['category']->id,
+            'author_id' => $fixtures['author']->id,
+            'status' => 'published',
+            'review_status' => 'approved',
+            'published_at' => now()->subMinutes(2),
+        ]);
+        ArticleDistribution::query()->create([
+            'article_id' => (int) $existingArticle->id,
+            'distribution_channel_id' => (int) $channel->id,
+            'action' => 'publish',
+            'status' => 'queued',
+            'idempotency_key' => 'article-'.$existingArticle->id.'-channel-'.$channel->id.'-publish-v1',
+        ]);
+        $localOnlyTask = Task::query()->create([
+            'name' => '仅本地发布任务',
+            'title_library_id' => $fixtures['title_library']->id,
+            'prompt_id' => $fixtures['prompt']->id,
+            'ai_model_id' => $fixtures['ai_model']->id,
+            'status' => 'active',
+            'publish_scope' => 'local_only',
+            'schedule_enabled' => 0,
+            'publish_interval' => 3600,
+            'draft_limit' => 5,
+            'article_limit' => 10,
+        ]);
+        $localOnlyArticle = Article::query()->create([
+            'title' => '仅允许本地发布文章',
+            'slug' => 'local-only-manual-enqueue',
+            'excerpt' => '摘要',
+            'content' => '仅本地发布正文。',
+            'category_id' => $fixtures['category']->id,
+            'author_id' => $fixtures['author']->id,
+            'task_id' => (int) $localOnlyTask->id,
+            'status' => 'published',
+            'review_status' => 'approved',
+            'published_at' => now()->subMinutes(3),
+        ]);
+
+        $this->actingAs($this->admin(), 'admin')
+            ->get(route('admin.distribution.show', ['channelId' => (int) $channel->id]))
+            ->assertOk()
+            ->assertSee('补发已有文章')
+            ->assertSee('唯一可补发文章')
+            ->assertDontSee('尚未审核文章')
+            ->assertSee('data-manual-enqueue-article-id="'.$eligibleArticle->id.'"', false)
+            ->assertDontSee('data-manual-enqueue-article-id="'.$pendingArticle->id.'"', false)
+            ->assertDontSee('data-manual-enqueue-article-id="'.$existingArticle->id.'"', false)
+            ->assertDontSee('data-manual-enqueue-article-id="'.$localOnlyArticle->id.'"', false)
+            ->assertSee(route('admin.distribution.article.enqueue', ['channelId' => (int) $channel->id]), false);
     }
 
     private function frontendCapabilityChannel(string $domain): DistributionChannel

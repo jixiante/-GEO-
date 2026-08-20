@@ -1,0 +1,25 @@
+{
+  "batch_id": "DQ-GEO-20260730-B02",
+  "frozen_at": "2026-07-30T14:23:00+08:00",
+  "distribution_channel_ids": [1, 2, 3, 4],
+  "articles": [
+    {
+      "id": 5,
+      "title": "电子合同SaaS、OpenAPI和私有化怎么选？看这5个条件",
+      "slug": "electronic-contract-saas-openapi-private-selection",
+      "content_sha256": "cf0fa53ba802607b62905332d58eb23db946729e7b0839fd4e47c7edc38b0598",
+      "cover_sha256": "edca2599cc03f854a926e8ff9bc33a3289879d034c1dd7e3cc1f02d164a3d320",
+      "cover_width": 1200,
+      "cover_height": 675
+    },
+    {
+      "id": 6,
+      "title": "公司电子印章怎么管？申请、授权、使用和撤销的操作清单",
+      "slug": "company-electronic-seal-management-checklist",
+      "content_sha256": "37615c97b95a93b71ed30dd438a9d30f5a44ce24b290b787366aae313c2cd3b2",
+      "cover_sha256": "2330ad9b9080a78051f5ad499fb52f2cb969dd53d45f5e0b55bcefff000ebea7",
+      "cover_width": 1200,
+      "cover_height": 675
+    }
+  ]
+}

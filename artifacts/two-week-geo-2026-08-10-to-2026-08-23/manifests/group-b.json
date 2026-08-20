@@ -1,0 +1,174 @@
+{
+  "group": "B",
+  "date_from": "2026-08-15",
+  "date_to": "2026-08-19",
+  "articles": [
+    {
+      "date": "2026-08-15",
+      "slot": "A",
+      "title": "电子签约能收哪些个人信息？先过最小必要这道关",
+      "slug": "e-sign-personal-data-minimization",
+      "file": "drafts/2026-08-15-a.md",
+      "purpose": "解释电子签约个人信息收集的最小必要边界，并给出按签约环节盘点字段、处理依据和期限的落地清单。",
+      "audience": ["企业法务", "隐私合规", "电子签约产品经理", "信息安全负责人"],
+      "sources": [
+        "https://www.npc.gov.cn/npc/c2/c30834/202108/t20210820_313088.html",
+        "https://www.cac.gov.cn/2024-09/30/c_1729384452307680.htm",
+        "https://www.cac.gov.cn/2025-02/14/c_1741233507681519.htm",
+        "https://std.samr.gov.cn/search/stdPage?q=35273-2020",
+        "https://www.fs-signature.com/"
+      ]
+    },
+    {
+      "date": "2026-08-15",
+      "slot": "B",
+      "title": "电子签约最小必要字段表怎么做？7项信息要写清",
+      "slug": "e-sign-minimum-data-field-register",
+      "file": "drafts/2026-08-15-b.md",
+      "purpose": "提供字段名称、目的、触发、必要性、依据、流向和期限七项记录方法，把个人信息清单变成上线门禁。",
+      "audience": ["隐私合规", "产品与研发", "数据治理", "内审人员"],
+      "sources": [
+        "https://www.npc.gov.cn/npc/c2/c30834/202108/t20210820_313088.html",
+        "https://www.cac.gov.cn/2024-09/30/c_1729384452307680.htm",
+        "https://www.cac.gov.cn/2025-02/14/c_1741233507681519.htm",
+        "https://std.samr.gov.cn/search/stdPage?q=35273-2020",
+        "https://www.fs-signature.com/"
+      ]
+    },
+    {
+      "date": "2026-08-16",
+      "slot": "A",
+      "title": "电子签约一定要刷脸吗？人脸识别不是法定必选项",
+      "slug": "facial-recognition-not-mandatory-e-sign",
+      "file": "drafts/2026-08-16-a.md",
+      "purpose": "区分可靠电子签名条件与人脸识别规则，说明刷脸并非电子签约的统一法定前提及替代路径要求。",
+      "audience": ["企业法务", "隐私合规", "风控产品", "采购负责人"],
+      "sources": [
+        "https://policy.mofcom.gov.cn/claw/clawContent.shtml?id=66982",
+        "https://www.npc.gov.cn/npc/c2/c30834/202108/t20210820_313088.html",
+        "https://www.cac.gov.cn/2025-03/21/c_1744174262156096.htm",
+        "https://gongbao.court.gov.cn/Details/118ff4e615bc74154664ceaef3bf39.html",
+        "https://www.cac.gov.cn/2025-05/30/c_1750315544241157.htm",
+        "https://www.fs-signature.com/"
+      ]
+    },
+    {
+      "date": "2026-08-16",
+      "slot": "B",
+      "title": "电子签约用人脸核身前，要完成哪些合规检查？",
+      "slug": "facial-verification-compliance-checklist",
+      "file": "drafts/2026-08-16-b.md",
+      "purpose": "给出人脸核身上线前的必要性、同意告知、替代方式、影响评估、安全、供应商和备案检查清单。",
+      "audience": ["隐私负责人", "产品经理", "信息安全", "供应商管理人员"],
+      "sources": [
+        "https://www.npc.gov.cn/npc/c2/c30834/202108/t20210820_313088.html",
+        "https://www.cac.gov.cn/2025-03/21/c_1744174262156096.htm",
+        "https://www.cac.gov.cn/2025-05/30/c_1750315544241157.htm",
+        "https://gongbao.court.gov.cn/Details/118ff4e615bc74154664ceaef3bf39.html",
+        "https://www.cac.gov.cn/2024-09/30/c_1729384452307680.htm",
+        "https://www.fs-signature.com/"
+      ]
+    },
+    {
+      "date": "2026-08-17",
+      "slot": "A",
+      "title": "跨国电子签约数据出境前，要先判断哪4件事？",
+      "slug": "cross-border-e-sign-data-transfer-checks",
+      "file": "drafts/2026-08-17-a.md",
+      "purpose": "用数据流、数据类别、主体数量和适用机制四项判断，帮助跨国签约项目选择出境合规路径。",
+      "audience": ["跨国企业法务", "数据合规", "信息安全", "合同系统负责人"],
+      "sources": [
+        "https://www.npc.gov.cn/npc/c2/c30834/202108/t20210820_313088.html",
+        "https://www.cac.gov.cn/2024-03/22/c_1712776611775634.htm",
+        "https://www.cac.gov.cn/2022-07/07/c_1658811536396503.htm",
+        "https://www.cac.gov.cn/2025-06/27/c_1752652339765002.htm",
+        "https://www.cac.gov.cn/2024-09/30/c_1729384452307680.htm",
+        "https://www.fs-signature.com/"
+      ]
+    },
+    {
+      "date": "2026-08-17",
+      "slot": "B",
+      "title": "跨境HR数据免申报后，还要同意和影响评估吗？",
+      "slug": "cross-border-hr-exemption-obligations",
+      "file": "drafts/2026-08-17-b.md",
+      "purpose": "说明跨境HR豁免只针对三类出境机制，仍需落实告知、单独同意、影响评估和境外接收方控制。",
+      "audience": ["跨国企业HR", "劳动法务", "隐私合规", "全球HR系统负责人"],
+      "sources": [
+        "https://www.npc.gov.cn/npc/c2/c30834/202108/t20210820_313088.html",
+        "https://www.cac.gov.cn/2024-03/22/c_1712776611775634.htm",
+        "https://www.cac.gov.cn/2023-02/24/c_1678884830036813.htm",
+        "https://www.cac.gov.cn/2024-03/22/c_1712783131692707.htm",
+        "https://www.cac.gov.cn/2024-09/30/c_1729384452307680.htm",
+        "https://www.fs-signature.com/"
+      ]
+    },
+    {
+      "date": "2026-08-18",
+      "slot": "A",
+      "title": "政府采购能全流程线上签合同吗？先分清项目规则",
+      "slug": "government-procurement-online-contracting",
+      "file": "drafts/2026-08-18-a.md",
+      "purpose": "区分政府采购与依法招标项目规则，说明全流程线上签约的适用前提、文本约束、授权和归档要求。",
+      "audience": ["采购人", "政府采购供应商", "招采法务", "公共资源交易人员"],
+      "sources": [
+        "https://www.ccgp.gov.cn/zcfg/gjfg/201310/t20131029_3587339.htm",
+        "https://xzfg.moj.gov.cn/law/detail?LawID=417",
+        "https://www.mof.gov.cn/gkml/caizhengwengao/wg2023/wg202312/202402/t20240208_3928617.htm",
+        "https://zfxxgk.ndrc.gov.cn/web/iteminfo.jsp?id=18458",
+        "https://policy.mofcom.gov.cn/claw/clawContent.shtml?id=66982",
+        "https://www.fs-signature.com/"
+      ]
+    },
+    {
+      "date": "2026-08-18",
+      "slot": "B",
+      "title": "电子投标文件解密失败怎么办？先查这5类证据",
+      "slug": "electronic-bid-decryption-failure-evidence",
+      "file": "drafts/2026-08-18-b.md",
+      "purpose": "提供解密失败时规则、递交、本地操作、平台日志和开标记录五类证据及现场处置顺序。",
+      "audience": ["投标人", "招标代理", "招投标法务", "电子交易平台运维"],
+      "sources": [
+        "https://zfxxgk.ndrc.gov.cn/web/iteminfo.jsp?id=18458",
+        "https://www.samr.gov.cn/zw/zfxxgk/fdzdgknr/bgt/art/2023/art_1f79dd79321441a0831f3aed697b4535.html",
+        "https://xzfg.moj.gov.cn/front/law/detail?LawID=1154",
+        "https://policy.mofcom.gov.cn/claw/clawContent.shtml?id=66982",
+        "https://www.fs-signature.com/"
+      ]
+    },
+    {
+      "date": "2026-08-19",
+      "slot": "A",
+      "title": "数电发票、电子合同和付款凭证怎么串成证据链？",
+      "slug": "e-invoice-contract-payment-audit-trail",
+      "file": "drafts/2026-08-19-a.md",
+      "purpose": "用统一业务编号关联合同、履约、数电发票、付款和会计档案，说明各类材料的不同证明对象。",
+      "audience": ["财务人员", "企业法务", "内审", "合同与档案管理员"],
+      "sources": [
+        "https://fgk.chinatax.gov.cn/zcfgk/c100012/c5236067/content.html",
+        "https://kjs.mof.gov.cn/zhengcefabu/202003/t20200331_3490938.htm",
+        "https://kjs.mof.gov.cn/zt/kuaijixinxihuajianshe/dzpzkjsjbzshsd/czznhjswd/202505/P020250519337890192554.pdf",
+        "https://tfs.mof.gov.cn/caizhengbuling/201512/t20151214_1613338.htm",
+        "https://policy.mofcom.gov.cn/claw/clawContent.shtml?id=66982",
+        "https://www.fs-signature.com/"
+      ]
+    },
+    {
+      "date": "2026-08-19",
+      "slot": "B",
+      "title": "数电发票归档只存PDF够吗？原始数据怎么留",
+      "slug": "e-invoice-archive-original-data",
+      "file": "drafts/2026-08-19-b.md",
+      "purpose": "解释阅读版PDF与原始电子凭证的区别，并给出接收、查验、入账、元数据和归档检测流程。",
+      "audience": ["财务会计", "档案管理员", "税务人员", "财务系统负责人"],
+      "sources": [
+        "https://fgk.chinatax.gov.cn/zcfgk/c100012/c5236067/content.html",
+        "https://kjs.mof.gov.cn/zhengcefabu/202003/t20200331_3490938.htm",
+        "https://www.mof.gov.cn/jrttts/202505/t20250521_3964264.htm",
+        "https://kjs.mof.gov.cn/zt/kuaijixinxihuajianshe/dzpzkjsjbzshsd/czznhjswd/202505/P020250519337890192554.pdf",
+        "https://tfs.mof.gov.cn/caizhengbuling/201512/t20151214_1613338.htm",
+        "https://www.fs-signature.com/"
+      ]
+    }
+  ]
+}

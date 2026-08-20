@@ -104,14 +104,23 @@ class ConfirmArticleDistributionRemoteUrlAction
             $this->fail('admin.distribution.remote_url_confirmation.validation.url');
         }
 
-        $channelHost = $this->channelHost($channel);
-        if ($channelHost === '' || ($host !== $channelHost && ! Str::endsWith($host, '.'.$channelHost))) {
-            $this->fail('admin.distribution.remote_url_confirmation.validation.host');
-        }
-
         $path = rawurldecode((string) ($parts['path'] ?? '/'));
         if ($path === '' || $path === '/') {
             $this->fail('admin.distribution.remote_url_confirmation.validation.article_path');
+        }
+
+        if ($this->isSohuChannel($channel)) {
+            if ($host !== 'www.sohu.com'
+                || preg_match('#^/a/([0-9]+_[0-9]+)/?$#', $path, $matches) !== 1) {
+                $this->fail('admin.distribution.remote_url_confirmation.validation.host');
+            }
+
+            return $matches[1];
+        }
+
+        $channelHost = $this->channelHost($channel);
+        if ($channelHost === '' || ($host !== $channelHost && ! Str::endsWith($host, '.'.$channelHost))) {
+            $this->fail('admin.distribution.remote_url_confirmation.validation.host');
         }
 
         if ($this->isToutiaoChannel($channel, $host)) {
@@ -123,6 +132,12 @@ class ConfirmArticleDistributionRemoteUrlAction
         }
 
         return preg_match('#/([0-9]+)/?$#', $path, $matches) === 1 ? $matches[1] : null;
+    }
+
+    private function isSohuChannel(DistributionChannel $channel): bool
+    {
+        return $channel->isBrowserRunner()
+            && ($channel->resolvedBrowserRunnerConfig()['browser_platform'] ?? null) === 'sohu';
     }
 
     private function channelHost(DistributionChannel $channel): string

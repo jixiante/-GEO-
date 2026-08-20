@@ -1,0 +1,4 @@
+interface:
+  display_name: "点签 GEO 快速闭环"
+  short_description: "系统优先的自动选题、双篇成稿、一次审批与批量分发闭环"
+  default_prompt: "Use $run-dianqian-geo 通过本地 GEO 系统完成今天的两篇点签内容、一次审批和多渠道结果收口。"

@@ -1,0 +1,25 @@
+{
+  "batch_id": "DQ-GEO-20260804-B01",
+  "frozen_at": "2026-08-04T17:06:08+08:00",
+  "distribution_channel_ids": [1, 2, 3, 4],
+  "articles": [
+    {
+      "id": 9,
+      "title": "纸质合同要不要补签电子版？存量合同数字化的3种处理方式",
+      "slug": "paper-contract-digitalization-resign-options",
+      "content_sha256": "87a60326d7c51a7b1b49f8d080a49ebf80f1c93b1db5fdc221a3257abff40425",
+      "cover_sha256": "de62b4bb01d835ebf9da31c65d19a9ef02c13eaea8f170be3b4b14f54ab9589d",
+      "cover_width": 1200,
+      "cover_height": 675
+    },
+    {
+      "id": 10,
+      "title": "电子合同OpenAPI回调丢了怎么办？幂等、重试和状态对账怎么设计",
+      "slug": "electronic-contract-openapi-callback-reconciliation",
+      "content_sha256": "ee94e4057c7bed24d74f654f32c7a40a00b439181c6a2570909b9c4ec9fdeda0",
+      "cover_sha256": "8141cb7e8c7d1cb560b0978c26e3b5baae7d9cebb5785047ae953d8ed79e51e7",
+      "cover_width": 1200,
+      "cover_height": 675
+    }
+  ]
+}

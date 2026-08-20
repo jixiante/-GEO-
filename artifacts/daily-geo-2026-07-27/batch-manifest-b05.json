@@ -1,0 +1,85 @@
+{
+  "batch_id": "DQ-GEO-20260727-B05",
+  "source_batch_id": "DQ-GEO-20260727-B04",
+  "approval_status": "pending",
+  "change_scope": "article_1_title_only",
+  "automatic_channel_ids": [
+    1
+  ],
+  "targets": [
+    {
+      "id": 1,
+      "name": "今日头条",
+      "platform": "toutiao",
+      "mode": "automatic_retry_failed_only",
+      "required_evidence": [
+        "content_verification",
+        "cover_verification",
+        "ai_disclosure_verification"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "百家号",
+      "platform": "baijiahao",
+      "mode": "assisted_manual"
+    },
+    {
+      "id": 3,
+      "name": "知乎",
+      "platform": "zhihu",
+      "mode": "assisted_manual"
+    },
+    {
+      "id": 4,
+      "name": "搜狐号",
+      "platform": "sohu",
+      "mode": "assisted_manual"
+    }
+  ],
+  "title_limits": {
+    "toutiao": {
+      "source": "live_editor_counter",
+      "hard_limit": 30,
+      "article_1_count": 25,
+      "article_2_count": 28,
+      "passed": true
+    }
+  },
+  "articles": [
+    {
+      "id": 1,
+      "title": "电子合同和纸质合同效力一样吗？可靠电子签名4个条件",
+      "slug": "electronic-contract-legal-effect-reliable-signature",
+      "content_sha256": "74c01da459e285b50f54b7658a2d6fa1ad71b5675193396ad0c4f3383ef93783",
+      "cover_sha256": "6f5684bb3405fb43a8bcda47cbd5d810c56bf4fd062044156fb4e5bf30bc61ad",
+      "previous_distribution": {
+        "status": "failed",
+        "attempt_count": 2,
+        "remote_id": null,
+        "remote_url": null
+      }
+    },
+    {
+      "id": 2,
+      "title": "员工异地入职怎么签电子劳动合同？HR建议归档的6类关键证据",
+      "slug": "remote-onboarding-electronic-labor-contract-evidence",
+      "content_sha256": "ffe4215b1aece3226cae4bb0556ac4f461f83a69b3e278f1f4c1d38be195fbb0",
+      "cover_sha256": "979a478259b044cca042c9fdccda9537988e57971c75a2172089dae161910856",
+      "previous_distribution": {
+        "status": "failed",
+        "attempt_count": 2,
+        "remote_id": null,
+        "remote_url": null
+      }
+    }
+  ],
+  "xiaohongshu": {
+    "mode": "manual_pending",
+    "package_sha256": "6e911b269b191220bb3c4171e89b7c30e6e4edfa9e68be80006d0cfe172256b9",
+    "cover_sha256": [
+      "fc7763a2f1100f161cd480516e5805ac0d8ee4dd327ee68b730ed3f7f5fa5eca",
+      "2ea411502e026e75eb4fc03da7045531da7c5272c1f319fc9272256bf82517d0"
+    ]
+  }
+}

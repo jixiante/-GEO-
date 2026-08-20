@@ -45,6 +45,7 @@ class DistributionPayloadBuilder
                 'keywords' => (string) ($article->keywords ?? ''),
                 'meta_description' => (string) ($article->meta_description ?? ''),
                 'status' => (string) $article->status,
+                'is_ai_generated' => (bool) $article->is_ai_generated,
                 'is_featured' => (bool) $article->is_featured,
                 'is_hot' => (bool) $article->is_hot,
                 'published_at' => $article->published_at?->toISOString(),

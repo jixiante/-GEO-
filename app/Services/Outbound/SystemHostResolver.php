@@ -13,7 +13,17 @@ final class SystemHostResolver implements HostResolver
     /** @param (Closure(string): array<int, array<string, mixed>>)|null $lookup */
     public function __construct(?Closure $lookup = null)
     {
-        $this->lookup = $lookup ?? static fn (string $host): array => dns_get_record($host, DNS_A | DNS_AAAA | DNS_CNAME) ?: [];
+        $this->lookup = $lookup ?? static function (string $host): array {
+            $systemIpv4Addresses = gethostbynamel($host);
+            if (is_array($systemIpv4Addresses) && $systemIpv4Addresses !== []) {
+                return array_map(
+                    static fn (string $address): array => ['type' => 'A', 'ip' => $address],
+                    $systemIpv4Addresses,
+                );
+            }
+
+            return dns_get_record($host, DNS_A | DNS_AAAA | DNS_CNAME) ?: [];
+        };
     }
 
     public function resolve(string $host): array

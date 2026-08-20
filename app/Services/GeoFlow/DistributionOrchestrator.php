@@ -2,6 +2,7 @@
 
 namespace App\Services\GeoFlow;
 
+use App\Exceptions\ApiException;
 use App\Exceptions\ArticleDuplicateGateException;
 use App\Exceptions\ArticleRiskGateException;
 use App\Jobs\ProcessArticleDistributionJob;
@@ -104,59 +105,82 @@ class DistributionOrchestrator
                 return 0;
             }
 
-            $payload = $action === 'delete'
-                ? $this->payloadBuilder->build($articleModel)
-                : $this->buildVerifiedPayload($articleModel, 'distribution_enqueue');
-            $payloadHash = hash('sha256', json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '');
-
-            $queuedCount = 0;
-            foreach ($channels as $channel) {
-                $existingDistribution = ArticleDistribution::query()
-                    ->where('article_id', (int) $articleModel->id)
-                    ->where('distribution_channel_id', (int) $channel->id)
-                    ->where('action', $action)
-                    ->first();
-
-                if ($skipSynced && in_array((string) $existingDistribution?->status, ['queued', 'sending', 'synced'], true)) {
-                    $this->log('info', '渠道已有待处理或成功发布记录，本次一键分发已跳过', $channel->id, $existingDistribution?->id, $articleModel->id, [
-                        'event' => 'distribution.skipped_already_handled',
-                        'existing_status' => (string) $existingDistribution?->status,
-                    ]);
-
-                    continue;
-                }
-
-                $distribution = ArticleDistribution::query()->updateOrCreate(
-                    [
-                        'article_id' => (int) $articleModel->id,
-                        'distribution_channel_id' => (int) $channel->id,
-                        'action' => $action,
-                    ],
-                    [
-                        'status' => 'queued',
-                        'next_retry_at' => now(),
-                        'payload_hash' => $payloadHash,
-                        'idempotency_key' => $this->idempotencyKey((int) $articleModel->id, (int) $channel->id, $action),
-                    ]
-                );
-
-                $this->log('info', '文章已进入分发队列', $channel->id, $distribution->id, $articleModel->id, [
-                    'event' => 'distribution.queued',
-                    'strategy' => (string) ($articleModel->task?->distribution_strategy ?? TaskDistributionChannelSelector::STRATEGY_BROADCAST),
-                ]);
-                ProcessArticleDistributionJob::dispatch((int) $distribution->id)
-                    ->onQueue('distribution')
-                    ->afterCommit();
-                $queuedCount++;
-            }
-
-            return $queuedCount;
+            return $this->enqueueChannels($articleModel, $channels, $action, $skipSynced);
         } catch (Throwable $e) {
             $this->log('error', '文章分发入队失败：'.$e->getMessage(), null, null, $article instanceof Article ? (int) $article->id : $article, [
                 'event' => 'distribution.enqueue_failed',
             ]);
 
             return 0;
+        }
+    }
+
+    /**
+     * Enqueue an explicit ordered channel list without requiring a task relation.
+     *
+     * @param  list<int>  $channelIds
+     */
+    public function enqueueForArticleChannels(
+        int|Article $article,
+        array $channelIds,
+    ): int {
+        try {
+            $articleModel = $article instanceof Article
+                ? $article
+                : Article::query()->whereKey($article)->first();
+
+            if (! $articleModel || ! in_array((string) $articleModel->status, ['published', 'private'], true)) {
+                throw new ApiException(
+                    'distribution_enqueue_failed',
+                    '文章状态不允许进入指定渠道分发队列',
+                    409,
+                );
+            }
+
+            $orderedIds = collect($channelIds)
+                ->map(static fn ($id): int => (int) $id)
+                ->filter(static fn (int $id): bool => $id > 0)
+                ->unique()
+                ->values();
+            if ($orderedIds->isEmpty()) {
+                return 0;
+            }
+
+            $activeChannels = DistributionChannel::query()
+                ->whereIn('id', $orderedIds->all())
+                ->where('status', 'active')
+                ->lockForUpdate()
+                ->get()
+                ->keyBy(static fn (DistributionChannel $channel): int => (int) $channel->id);
+
+            if ($activeChannels->count() !== $orderedIds->count()) {
+                throw new ApiException(
+                    'distribution_channels_changed',
+                    '指定分发渠道的启用状态已变化，文章发布已回滚',
+                    409,
+                    ['distribution_channel_ids' => $orderedIds->all()],
+                );
+            }
+
+            $channels = $orderedIds
+                ->map(static fn (int $id): DistributionChannel => $activeChannels->get($id));
+            $payload = $this->buildVerifiedPayload($articleModel, 'distribution_enqueue');
+            $payloadHash = $this->explicitPayloadHash($payload);
+
+            return $this->enqueueExplicitChannels($articleModel, $channels, $payloadHash);
+        } catch (ApiException $e) {
+            throw $e;
+        } catch (Throwable $e) {
+            $this->log('error', '文章分发入队失败：'.$e->getMessage(), null, null, $article instanceof Article ? (int) $article->id : $article, [
+                'event' => 'distribution.enqueue_failed',
+            ]);
+
+            throw new ApiException(
+                'distribution_enqueue_failed',
+                '指定渠道未能全部进入分发队列，文章发布已回滚',
+                503,
+                ['distribution_channel_ids' => array_values($channelIds)],
+            );
         }
     }
 
@@ -306,6 +330,175 @@ class DistributionOrchestrator
     private function idempotencyKey(int $articleId, int $channelId, string $action): string
     {
         return 'article-'.$articleId.'-channel-'.$channelId.'-'.$action.'-v1';
+    }
+
+    /**
+     * @param  Collection<int, DistributionChannel>  $channels
+     */
+    private function enqueueChannels(
+        Article $article,
+        Collection $channels,
+        string $action,
+        bool $skipSynced,
+    ): int {
+        $payload = $action === 'delete'
+            ? $this->payloadBuilder->build($article)
+            : $this->buildVerifiedPayload($article, 'distribution_enqueue');
+        $payloadHash = hash('sha256', json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '');
+
+        $queuedCount = 0;
+        foreach ($channels as $channel) {
+            $existingDistribution = ArticleDistribution::query()
+                ->where('article_id', (int) $article->id)
+                ->where('distribution_channel_id', (int) $channel->id)
+                ->where('action', $action)
+                ->first();
+
+            if ($skipSynced && in_array((string) $existingDistribution?->status, ['queued', 'sending', 'synced'], true)) {
+                $this->log('info', '渠道已有待处理或成功发布记录，本次一键分发已跳过', $channel->id, $existingDistribution?->id, $article->id, [
+                    'event' => 'distribution.skipped_already_handled',
+                    'existing_status' => (string) $existingDistribution?->status,
+                ]);
+
+                continue;
+            }
+
+            $distribution = ArticleDistribution::query()->updateOrCreate(
+                [
+                    'article_id' => (int) $article->id,
+                    'distribution_channel_id' => (int) $channel->id,
+                    'action' => $action,
+                ],
+                [
+                    'status' => 'queued',
+                    'next_retry_at' => now(),
+                    'payload_hash' => $payloadHash,
+                    'idempotency_key' => $this->idempotencyKey((int) $article->id, (int) $channel->id, $action),
+                ]
+            );
+
+            $this->log('info', '文章已进入分发队列', $channel->id, $distribution->id, $article->id, [
+                'event' => 'distribution.queued',
+                'strategy' => (string) ($article->task?->distribution_strategy ?? TaskDistributionChannelSelector::STRATEGY_BROADCAST),
+            ]);
+            ProcessArticleDistributionJob::dispatch((int) $distribution->id)
+                ->onQueue('distribution')
+                ->afterCommit();
+            $queuedCount++;
+        }
+
+        return $queuedCount;
+    }
+
+    /**
+     * @param  Collection<int, DistributionChannel>  $channels
+     */
+    private function enqueueExplicitChannels(
+        Article $article,
+        Collection $channels,
+        string $payloadHash,
+    ): int {
+        $handledCount = 0;
+        foreach ($channels as $channel) {
+            $existingDistribution = ArticleDistribution::query()
+                ->where('article_id', (int) $article->id)
+                ->where('distribution_channel_id', (int) $channel->id)
+                ->whereIn('action', ['publish', 'update'])
+                ->orderByDesc('id')
+                ->lockForUpdate()
+                ->first();
+
+            if ($existingDistribution !== null) {
+                $existingStatus = (string) $existingDistribution->status;
+                $samePayload = hash_equals((string) ($existingDistribution->payload_hash ?? ''), $payloadHash);
+
+                if ($samePayload && in_array($existingStatus, ['queued', 'sending', 'synced'], true)) {
+                    $this->log('info', '渠道已有相同内容的待处理或成功发布记录，本次显式分发已跳过', $channel->id, $existingDistribution->id, $article->id, [
+                        'event' => 'distribution.skipped_same_payload',
+                        'existing_status' => $existingStatus,
+                    ]);
+                    $handledCount++;
+
+                    continue;
+                }
+
+                if ($existingStatus === 'sending') {
+                    throw new ApiException(
+                        'distribution_payload_change_in_progress',
+                        '渠道正在发送旧版本内容，请等待完成后重试',
+                        409,
+                        ['distribution_channel_id' => (int) $channel->id],
+                    );
+                }
+
+                if ($existingStatus === 'queued') {
+                    $existingDistribution->forceFill([
+                        'payload_hash' => $payloadHash,
+                        'next_retry_at' => now(),
+                        'last_error_message' => null,
+                    ])->save();
+                    $handledCount++;
+
+                    continue;
+                }
+
+                $action = $existingStatus === 'synced' || $existingDistribution->remote_id !== null
+                    ? 'update'
+                    : 'publish';
+                $existingDistribution->forceFill([
+                    'action' => $action,
+                    'status' => 'queued',
+                    'next_retry_at' => now(),
+                    'last_error_message' => null,
+                    'payload_hash' => $payloadHash,
+                    'idempotency_key' => $this->idempotencyKey((int) $article->id, (int) $channel->id, $action),
+                ])->save();
+                $distribution = $existingDistribution;
+            } else {
+                $distribution = ArticleDistribution::query()->create([
+                    'article_id' => (int) $article->id,
+                    'distribution_channel_id' => (int) $channel->id,
+                    'action' => 'publish',
+                    'status' => 'queued',
+                    'next_retry_at' => now(),
+                    'payload_hash' => $payloadHash,
+                    'idempotency_key' => $this->idempotencyKey((int) $article->id, (int) $channel->id, 'publish'),
+                ]);
+            }
+
+            $this->log('info', '文章已进入显式分发队列', $channel->id, $distribution->id, $article->id, [
+                'event' => 'distribution.explicit_queued',
+                'action' => (string) $distribution->action,
+            ]);
+            ProcessArticleDistributionJob::dispatch((int) $distribution->id)
+                ->onQueue('distribution')
+                ->afterCommit();
+            $handledCount++;
+        }
+
+        if ($handledCount !== $channels->count()) {
+            throw new ApiException(
+                'distribution_enqueue_failed',
+                '指定渠道未能全部进入分发队列，文章发布已回滚',
+                503,
+            );
+        }
+
+        return $handledCount;
+    }
+
+    /**
+     * Ignore the local row timestamp so an unchanged explicit republish remains idempotent.
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    private function explicitPayloadHash(array $payload): string
+    {
+        if (is_array($payload['article'] ?? null)) {
+            unset($payload['article']['updated_at']);
+        }
+
+        return hash('sha256', json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '');
     }
 
     private function sendImmediateAction(ArticleDistribution $distribution, string $action): void

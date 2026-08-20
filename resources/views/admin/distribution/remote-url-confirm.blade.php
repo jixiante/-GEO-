@@ -37,7 +37,7 @@
                 <div>
                     <label for="remote_url" class="block text-sm font-medium text-gray-700">{{ __('admin.distribution.remote_url_confirmation.url_label') }}</label>
                     <input id="remote_url" name="remote_url" type="url" required maxlength="500" value="{{ old('remote_url') }}" placeholder="https://www.toutiao.com/article/1234567890/" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                    <p class="mt-2 text-sm text-gray-500">{{ __('admin.distribution.remote_url_confirmation.url_help', ['domain' => $channel->domain]) }}</p>
+                    <p class="mt-2 text-sm text-gray-500">{{ __('admin.distribution.remote_url_confirmation.url_help', ['domain' => $channel->domain === 'mp.sohu.com' ? 'www.sohu.com' : $channel->domain]) }}</p>
                     @error('remote_url')
                         <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                     @enderror

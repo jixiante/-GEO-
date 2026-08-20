@@ -4,15 +4,19 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ConfirmArticleDistributionRemoteUrlRequest;
+use App\Http\Requests\Admin\ConfirmArticleDistributionSubmissionRequest;
 use App\Jobs\ProcessArticleDistributionJob;
 use App\Models\Admin;
+use App\Models\Article;
 use App\Models\ArticleDistribution;
 use App\Models\DistributionChannel;
 use App\Models\DistributionChannelSecret;
 use App\Models\DistributionLog;
 use App\Services\GeoFlow\BrowserRunnerClient;
 use App\Services\GeoFlow\ConfirmArticleDistributionRemoteUrlAction;
+use App\Services\GeoFlow\ConfirmArticleDistributionSubmissionAction;
 use App\Services\GeoFlow\DistributionOrchestrator;
+use App\Services\GeoFlow\DistributionPayloadBuilder;
 use App\Services\GeoFlow\DistributionPublisherManager;
 use App\Services\GeoFlow\DistributionTargetSitePackageBuilder;
 use App\Services\GeoFlow\FrontendExperienceInspector;
@@ -24,6 +28,7 @@ use App\Support\Site\SiteThemeCatalog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -42,6 +47,8 @@ class DistributionController extends Controller
         private readonly FrontendExperienceInspector $frontendExperienceInspector,
         private readonly BrowserRunnerClient $browserRunnerClient,
         private readonly ConfirmArticleDistributionRemoteUrlAction $confirmRemoteUrl,
+        private readonly ConfirmArticleDistributionSubmissionAction $confirmSubmission,
+        private readonly DistributionPayloadBuilder $distributionPayloadBuilder,
     ) {}
 
     public function index(Request $request): View
@@ -295,7 +302,7 @@ class DistributionController extends Controller
         }
 
         $jobs = ArticleDistribution::query()
-            ->with(['article:id,title,slug,status', 'channel:id,name,domain'])
+            ->with(['article:id,title,slug,status', 'channel:id,name,domain,channel_type,channel_config'])
             ->where('distribution_channel_id', $channelId)
             ->orderByDesc('id')
             ->limit(20)
@@ -308,6 +315,28 @@ class DistributionController extends Controller
             ->limit(20)
             ->get();
 
+        $manualEnqueueArticles = Article::query()
+            ->select(['id', 'title', 'published_at'])
+            ->where('status', 'published')
+            ->whereIn('review_status', ['approved', 'auto_approved'])
+            ->where(function ($query): void {
+                $query->whereNull('task_id')
+                    ->orWhereHas('task', function ($taskQuery): void {
+                        $taskQuery->where(function ($publishScopeQuery): void {
+                            $publishScopeQuery
+                                ->whereNull('publish_scope')
+                                ->orWhere('publish_scope', '!=', 'local_only');
+                        });
+                    });
+            })
+            ->whereDoesntHave('distributions', function ($query) use ($channelId): void {
+                $query->where('distribution_channel_id', $channelId);
+            })
+            ->orderByDesc('published_at')
+            ->orderByDesc('id')
+            ->limit(50)
+            ->get();
+
         return view('admin.distribution.show', [
             'pageTitle' => __('admin.distribution.detail_title'),
             'activeMenu' => 'distribution',
@@ -315,11 +344,75 @@ class DistributionController extends Controller
             'channel' => $channel,
             'jobs' => $jobs,
             'logs' => $logs,
+            'manualEnqueueArticles' => $manualEnqueueArticles,
             'remoteSiteSettings' => $channel->resolvedSiteSettings(),
             'articleTextAdPolicy' => $channel->resolvedArticleTextAdPolicy(),
             'effectiveArticleTextAds' => $channel->effectiveArticleTextAds(),
             'frontendExperienceReport' => $this->frontendExperienceInspector->inspect($channel, true),
         ]);
+    }
+
+    public function enqueueArticle(Request $request, int $channelId): RedirectResponse
+    {
+        $validated = $request->validate([
+            'article_id' => ['required', 'integer', 'min:1'],
+        ]);
+
+        try {
+            DB::transaction(function () use ($channelId, $validated): void {
+                $channel = DistributionChannel::query()
+                    ->whereKey($channelId)
+                    ->lockForUpdate()
+                    ->first();
+                if (! $channel || (string) $channel->status !== 'active') {
+                    throw ValidationException::withMessages([
+                        'article_id' => __('admin.distribution.message.manual_enqueue_channel_inactive'),
+                    ]);
+                }
+
+                $article = Article::query()
+                    ->whereKey((int) $validated['article_id'])
+                    ->lockForUpdate()
+                    ->first();
+                if (! $article
+                    || (string) $article->status !== 'published'
+                    || ! in_array((string) $article->review_status, ['approved', 'auto_approved'], true)) {
+                    throw ValidationException::withMessages([
+                        'article_id' => __('admin.distribution.message.manual_enqueue_article_not_ready'),
+                    ]);
+                }
+
+                $alreadyExists = ArticleDistribution::query()
+                    ->where('article_id', (int) $article->id)
+                    ->where('distribution_channel_id', (int) $channel->id)
+                    ->exists();
+                if ($alreadyExists) {
+                    throw ValidationException::withMessages([
+                        'article_id' => __('admin.distribution.message.manual_enqueue_already_exists'),
+                    ]);
+                }
+
+                $queuedCount = $this->distributionOrchestrator->enqueueForArticleChannels(
+                    $article,
+                    [(int) $channel->id],
+                );
+                if ($queuedCount !== 1) {
+                    throw new \RuntimeException('The article was not queued for the selected channel.');
+                }
+            }, 3);
+        } catch (ValidationException $e) {
+            throw $e;
+        } catch (Throwable $e) {
+            report($e);
+
+            return redirect()
+                ->route('admin.distribution.show', ['channelId' => $channelId])
+                ->withErrors(__('admin.distribution.message.manual_enqueue_failed'));
+        }
+
+        return redirect()
+            ->route('admin.distribution.show', ['channelId' => $channelId])
+            ->with('message', __('admin.distribution.message.manual_enqueue_queued'));
     }
 
     public function jobs(Request $request): View
@@ -333,7 +426,7 @@ class DistributionController extends Controller
         }
 
         $query = ArticleDistribution::query()
-            ->with(['article:id,title,slug,status', 'channel:id,name,domain']);
+            ->with(['article:id,title,slug,status', 'channel:id,name,domain,channel_type,channel_config']);
 
         if ($filters['status'] !== '') {
             $query->where('status', $filters['status']);
@@ -505,18 +598,168 @@ class DistributionController extends Controller
         ]);
     }
 
-    public function retry(int $distributionId): RedirectResponse
+    public function retry(Request $request, int $distributionId): RedirectResponse
     {
-        $distribution = ArticleDistribution::query()->whereKey($distributionId)->first();
+        $approvePlainSourceNames = $request->boolean('approve_plain_source_names');
+        $approvePlatformTitle = $request->has('approved_platform_title');
+        $approvedPlatformTitle = $request->input('approved_platform_title');
+        $approvalContext = null;
+        $titleApprovalContext = null;
+        $distribution = DB::transaction(function () use (
+            $request,
+            $distributionId,
+            $approvePlainSourceNames,
+            $approvePlatformTitle,
+            $approvedPlatformTitle,
+            &$approvalContext,
+            &$titleApprovalContext,
+        ): ?ArticleDistribution {
+            $distribution = ArticleDistribution::query()
+                ->with(['article', 'channel'])
+                ->whereKey($distributionId)
+                ->lockForUpdate()
+                ->first();
+            if (! $distribution) {
+                return null;
+            }
+
+            if ($approvePlainSourceNames) {
+                $channel = $distribution->channel;
+                $platform = $channel instanceof DistributionChannel && $channel->isBrowserRunner()
+                    ? $channel->resolvedBrowserRunnerConfig()['browser_platform']
+                    : '';
+                if ((string) $distribution->status !== 'failed'
+                    || (string) $distribution->action !== 'publish'
+                    || $platform !== 'sohu'
+                    || ! $distribution->article) {
+                    throw ValidationException::withMessages([
+                        'approve_plain_source_names' => '仅允许对内容版本已冻结的失败搜狐发布任务批准保留纯文本来源名。',
+                    ]);
+                }
+
+                $currentPayload = $this->distributionPayloadBuilder->build($distribution->article);
+                $payloadHash = hash(
+                    'sha256',
+                    json_encode($currentPayload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '',
+                );
+                $previousPayloadHash = trim((string) $distribution->payload_hash);
+                $adminId = (int) ($request->user('admin')?->id ?? 0);
+                if ($adminId <= 0) {
+                    throw ValidationException::withMessages([
+                        'approve_plain_source_names' => '无法确认当前批准人，请重新登录后再试。',
+                    ]);
+                }
+
+                $remoteMeta = is_array($distribution->remote_meta) ? $distribution->remote_meta : [];
+                $remoteMeta['plain_source_names_approval'] = [
+                    'approved' => true,
+                    'platform' => 'sohu',
+                    'article_distribution_id' => (int) $distribution->id,
+                    'approved_by' => 'admin:'.$adminId,
+                    'approved_at' => now()->toIso8601String(),
+                    'payload_hash' => $payloadHash,
+                ];
+                $distribution->remote_meta = $remoteMeta;
+                $distribution->payload_hash = $payloadHash;
+                $approvalContext = [
+                    'event' => 'distribution.plain_source_names_approved',
+                    'approved_by_admin_id' => $adminId,
+                    'payload_hash' => $payloadHash,
+                    'previous_payload_hash' => $previousPayloadHash,
+                ];
+            }
+
+            if ($approvePlatformTitle) {
+                $channel = $distribution->channel;
+                $platform = $channel instanceof DistributionChannel && $channel->isBrowserRunner()
+                    ? $channel->resolvedBrowserRunnerConfig()['browser_platform']
+                    : '';
+                if ((string) $distribution->status !== 'failed'
+                    || (string) $distribution->action !== 'publish'
+                    || $platform !== 'toutiao'
+                    || ! $distribution->article) {
+                    throw ValidationException::withMessages([
+                        'approved_platform_title' => '仅允许为内容版本已冻结的失败头条发布任务批准平台标题。',
+                    ]);
+                }
+                if (! is_string($approvedPlatformTitle)
+                    || $approvedPlatformTitle === ''
+                    || $approvedPlatformTitle !== trim($approvedPlatformTitle)
+                    || mb_strlen($approvedPlatformTitle, 'UTF-8') > 30) {
+                    throw ValidationException::withMessages([
+                        'approved_platform_title' => '头条平台标题必须为 1 至 30 个字符，且首尾不能有空格。',
+                    ]);
+                }
+
+                $currentPayload = $this->distributionPayloadBuilder->build($distribution->article);
+                $payloadHash = hash(
+                    'sha256',
+                    json_encode($currentPayload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '',
+                );
+                $previousPayloadHash = trim((string) $distribution->payload_hash);
+                $adminId = (int) ($request->user('admin')?->id ?? 0);
+                if ($adminId <= 0) {
+                    throw ValidationException::withMessages([
+                        'approved_platform_title' => '无法确认当前批准人，请重新登录后再试。',
+                    ]);
+                }
+
+                $remoteMeta = is_array($distribution->remote_meta) ? $distribution->remote_meta : [];
+                $remoteMeta['platform_title_approval'] = [
+                    'approved' => true,
+                    'platform' => 'toutiao',
+                    'article_distribution_id' => (int) $distribution->id,
+                    'approved_title' => $approvedPlatformTitle,
+                    'approved_by' => 'admin:'.$adminId,
+                    'approved_at' => now()->toIso8601String(),
+                    'payload_hash' => $payloadHash,
+                ];
+                $distribution->remote_meta = $remoteMeta;
+                $distribution->payload_hash = $payloadHash;
+                $titleApprovalContext = [
+                    'event' => 'distribution.platform_title_approved',
+                    'approved_by_admin_id' => $adminId,
+                    'canonical_title' => (string) $distribution->article->title,
+                    'approved_title' => $approvedPlatformTitle,
+                    'payload_hash' => $payloadHash,
+                    'previous_payload_hash' => $previousPayloadHash,
+                ];
+            }
+
+            $distribution->forceFill([
+                'status' => 'queued',
+                'last_error_message' => null,
+                'next_retry_at' => now(),
+            ])->save();
+
+            return $distribution;
+        }, 3);
+
         if (! $distribution) {
             return back()->withErrors(__('admin.distribution.message.job_not_found'));
         }
 
-        $distribution->forceFill([
-            'status' => 'queued',
-            'last_error_message' => null,
-            'next_retry_at' => now(),
-        ])->save();
+        if (is_array($approvalContext)) {
+            $this->distributionOrchestrator->log(
+                'info',
+                '搜狐纯文本来源名例外已获人工批准',
+                $distribution->distribution_channel_id,
+                $distribution->id,
+                $distribution->article_id,
+                $approvalContext,
+            );
+        }
+
+        if (is_array($titleApprovalContext)) {
+            $this->distributionOrchestrator->log(
+                'info',
+                '头条平台标题已获人工批准',
+                $distribution->distribution_channel_id,
+                $distribution->id,
+                $distribution->article_id,
+                $titleApprovalContext,
+            );
+        }
 
         $this->distributionOrchestrator->log(
             'info',
@@ -591,6 +834,53 @@ class DistributionController extends Controller
         return redirect()
             ->route('admin.distribution.show', ['channelId' => (int) $distribution->distribution_channel_id])
             ->with('message', __('admin.distribution.message.remote_url_confirmed'));
+    }
+
+    public function editSubmission(int $distributionId): View|RedirectResponse
+    {
+        $distribution = ArticleDistribution::query()
+            ->with(['article', 'channel'])
+            ->whereKey($distributionId)
+            ->first();
+
+        if (! $distribution || ! $distribution->article || ! $distribution->channel) {
+            return back()->withErrors(__('admin.distribution.message.job_not_found'));
+        }
+        if (! $this->confirmSubmission->canConfirm($distribution)) {
+            return back()->withErrors(__('admin.distribution.submission_confirmation.validation.not_confirmable'));
+        }
+        $platform = $distribution->channel->resolvedBrowserRunnerConfig()['browser_platform'];
+
+        return view('admin.distribution.submission-confirm', [
+            'pageTitle' => __('admin.distribution.submission_confirmation.title'),
+            'activeMenu' => 'distribution',
+            'adminSiteName' => AdminWeb::siteName(),
+            'distribution' => $distribution,
+            'article' => $distribution->article,
+            'channel' => $distribution->channel,
+            'platform' => $platform,
+        ]);
+    }
+
+    public function updateSubmission(
+        ConfirmArticleDistributionSubmissionRequest $request,
+        int $distributionId,
+    ): RedirectResponse {
+        $admin = $request->user('admin');
+        if (! $admin instanceof Admin) {
+            abort(403);
+        }
+        $payload = $request->validated();
+        $distribution = $this->confirmSubmission->execute(
+            $distributionId,
+            $admin,
+            is_string($payload['remote_id'] ?? null) ? $payload['remote_id'] : null,
+            is_string($payload['management_url'] ?? null) ? $payload['management_url'] : null,
+        );
+
+        return redirect()
+            ->route('admin.distribution.show', ['channelId' => (int) $distribution->distribution_channel_id])
+            ->with('message', __('admin.distribution.message.submission_confirmed'));
     }
 
     public function updateArticle(Request $request, int $distributionId): RedirectResponse

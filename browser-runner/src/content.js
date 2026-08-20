@@ -13,7 +13,15 @@ export function articleFromRequest(request, platform) {
     throw new RunnerError('文章标题和正文不能为空。', { code: 'invalid_payload', status: 422 });
   }
 
-  const titleLimit = platform.maxTitleLength ?? 120;
+  const configuredTitleLimit = platform.maxTitleLength;
+  const titleLimit = configuredTitleLimit ?? 120;
+  const titleLength = Array.from(title).length;
+  if (configuredTitleLimit != null && titleLength > titleLimit) {
+    throw new ManualActionError(
+      `${platform.label ?? '当前平台'}标题最多 ${titleLimit} 个字符，当前为 ${titleLength} 个字符，请修改标题后重试。`,
+      { title_limit: titleLimit, title_length: titleLength },
+    );
+  }
   const bodyLimit = platform.maxBodyLength ?? null;
   const plain = htmlToPlainText(html || markdown);
 

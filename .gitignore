@@ -25,6 +25,7 @@ __pycache__/
 /browser-runner/.env
 /browser-runner/data/
 /browser-runner/node_modules/
+/docker-compose.override.yml
 /public/build
 /public/hot
 /.understand-anything/

@@ -1,0 +1,175 @@
+{
+  "group": "A",
+  "date_from": "2026-08-10",
+  "date_to": "2026-08-14",
+  "articles": [
+    {
+      "date": "2026-08-10",
+      "slot": "A",
+      "title": "电子合同附件要单独签吗？关键看3个绑定证据",
+      "slug": "electronic-contract-attachment-signature-binding",
+      "file": "drafts/2026-08-10-a.md",
+      "purpose": "说明附件并非一律需要单独签署，并给出正文指向、文件版本和签署过程三层绑定判断。",
+      "audience": ["企业法务", "采购与销售", "合同管理员", "信息化负责人"],
+      "sources": [
+        "https://www.court.gov.cn/zixun/xiangqing/233181.html",
+        "https://policy.mofcom.gov.cn/claw/clawContent.shtml?id=66982",
+        "https://www.court.gov.cn/zixun/xiangqing/212721.html",
+        "https://www.court.gov.cn/zixun/xiangqing/116981.html",
+        "https://www.fs-signature.com/"
+      ]
+    },
+    {
+      "date": "2026-08-10",
+      "slot": "B",
+      "title": "电子合同正文和附件怎么绑定？版本、哈希与签署包清单",
+      "slug": "electronic-contract-attachment-version-hash-package",
+      "file": "drafts/2026-08-10-b.md",
+      "purpose": "提供正文与附件的编号、版本、哈希、签署包清单及导出流程，避免多个最终版混淆。",
+      "audience": ["法务运营", "合同系统产品经理", "IT与安全", "档案管理员"],
+      "sources": [
+        "https://www.court.gov.cn/zixun/xiangqing/233181.html",
+        "https://policy.mofcom.gov.cn/claw/clawContent.shtml?id=66982",
+        "https://www.court.gov.cn/zixun/xiangqing/212721.html",
+        "https://openstd.samr.gov.cn/bzgk/std/newGbInfo?hcno=DBD0B925C417DE09B1028AB080647BA1",
+        "https://www.fs-signature.com/"
+      ]
+    },
+    {
+      "date": "2026-08-11",
+      "slot": "A",
+      "title": "短信验证码签电子合同有效吗？别把验证码当可靠签名",
+      "slug": "sms-code-electronic-contract-validity",
+      "file": "drafts/2026-08-11-a.md",
+      "purpose": "区分验证码证据、可靠电子签名条件和合同效力，避免把一次短信验证当作完整结论。",
+      "audience": ["企业法务", "产品与风控", "HR", "电子签约采购负责人"],
+      "sources": [
+        "https://www.court.gov.cn/zixun/xiangqing/233181.html",
+        "https://policy.mofcom.gov.cn/claw/clawContent.shtml?id=66982",
+        "https://www.court.gov.cn/zixun/xiangqing/212721.html",
+        "https://www.npc.gov.cn/npc/c2/c30834/202108/t20210820_313088.html",
+        "https://chinajob.mohrss.gov.cn/h5/c/2021-07-16/315319.shtml",
+        "https://www.fs-signature.com/"
+      ]
+    },
+    {
+      "date": "2026-08-11",
+      "slot": "B",
+      "title": "验证码签约怎样留证？身份、意愿、设备与日志清单",
+      "slug": "sms-code-signing-evidence-checklist",
+      "file": "drafts/2026-08-11-b.md",
+      "purpose": "给出验证码签约在身份、授权、意愿、文件版本、设备和日志方面的最小留证清单。",
+      "audience": ["法务", "产品经理", "研发与安全", "证据管理员"],
+      "sources": [
+        "https://www.court.gov.cn/zixun/xiangqing/233181.html",
+        "https://policy.mofcom.gov.cn/claw/clawContent.shtml?id=66982",
+        "https://www.court.gov.cn/zixun/xiangqing/212721.html",
+        "https://www.npc.gov.cn/npc/c2/c30834/202108/t20210820_313088.html",
+        "https://chinajob.mohrss.gov.cn/h5/c/2021-07-16/315319.shtml",
+        "https://www.fs-signature.com/"
+      ]
+    },
+    {
+      "date": "2026-08-12",
+      "slot": "A",
+      "title": "电子合同纠纷中，法院怎样审查电子数据真实性？",
+      "slug": "court-electronic-data-authenticity-review",
+      "file": "drafts/2026-08-12-a.md",
+      "purpose": "解释法院如何从系统环境、完整性、形成过程、保管主体及其他证据综合审查真实性。",
+      "audience": ["企业法务", "争议解决律师", "内审风控", "IT负责人"],
+      "sources": [
+        "https://www.court.gov.cn/zixun/xiangqing/212721.html",
+        "https://www.court.gov.cn/fabu/xiangqing/309551.html",
+        "https://www.court.gov.cn/zixun/xiangqing/116981.html",
+        "https://policy.mofcom.gov.cn/claw/clawContent.shtml?id=66982",
+        "https://openstd.samr.gov.cn/bzgk/std/newGbInfo?hcno=DBD0B925C417DE09B1028AB080647BA1",
+        "https://www.fs-signature.com/"
+      ]
+    },
+    {
+      "date": "2026-08-12",
+      "slot": "B",
+      "title": "电子合同诉讼证据包怎么导出？原文件、证书与日志清单",
+      "slug": "electronic-contract-litigation-evidence-export",
+      "file": "drafts/2026-08-12-b.md",
+      "purpose": "提供按待证事实组织原文件、签名证书、身份授权、过程日志和履行材料的导出目录。",
+      "audience": ["诉讼法务", "外聘律师", "IT运维", "证据与档案人员"],
+      "sources": [
+        "https://www.court.gov.cn/zixun/xiangqing/212721.html",
+        "https://www.court.gov.cn/fabu/xiangqing/309551.html",
+        "https://www.court.gov.cn/zixun/xiangqing/116981.html",
+        "https://policy.mofcom.gov.cn/claw/clawContent.shtml?id=66982",
+        "https://openstd.samr.gov.cn/bzgk/std/newGbInfo?hcno=DBD0B925C417DE09B1028AB080647BA1",
+        "https://www.fs-signature.com/"
+      ]
+    },
+    {
+      "date": "2026-08-13",
+      "slot": "A",
+      "title": "电子合同要保存多久？不同合同不能共用一个年限",
+      "slug": "electronic-contract-retention-period-matrix",
+      "file": "drafts/2026-08-13-a.md",
+      "purpose": "建立按专门规定、履行周期、争议审计、档案价值和个人信息必要性确定期限的方法。",
+      "audience": ["档案管理", "企业法务", "财务与HR", "数据合规人员"],
+      "sources": [
+        "https://www.saac.gov.cn/daj/xzfgk/202309/12176c4c839b4d8cb972724d67f10b37.shtml",
+        "https://tfs.mof.gov.cn/caizhengbuling/201512/t20151214_1613338.htm",
+        "https://www.samr.gov.cn/zw/zfxxgk/fdzdgknr/bgt/art/2023/art_0abfdd261c03417b949df19d869add8d.html",
+        "https://www.cac.gov.cn/2018-09/01/c_1123362506.htm?isappinstalled=0",
+        "https://www.npc.gov.cn/npc/c2/c30834/202108/t20210820_313088.html",
+        "https://www.fs-signature.com/"
+      ]
+    },
+    {
+      "date": "2026-08-13",
+      "slot": "B",
+      "title": "归档电子合同只存PDF够吗？最小归档包清单",
+      "slug": "electronic-contract-minimum-archive-package",
+      "file": "drafts/2026-08-13-b.md",
+      "purpose": "说明阅读版PDF不能替代原文件和验证数据，并提供六部分最小电子归档包。",
+      "audience": ["档案管理员", "法务", "IT与安全", "内审人员"],
+      "sources": [
+        "https://www.saac.gov.cn/daj/xzfgk/202309/12176c4c839b4d8cb972724d67f10b37.shtml",
+        "https://xzfg.moj.gov.cn/front/law/detail?LawID=1704",
+        "https://openstd.samr.gov.cn/bzgk/std/newGbInfo?hcno=EB1CC0500D91490B5D219823AC1F3D16",
+        "https://policy.mofcom.gov.cn/claw/clawContent.shtml?id=66982",
+        "https://www.court.gov.cn/zixun/xiangqing/212721.html",
+        "https://www.fs-signature.com/"
+      ]
+    },
+    {
+      "date": "2026-08-14",
+      "slot": "A",
+      "title": "勾选“我已同意”，就代表接受全部合同条款吗？",
+      "slug": "clickwrap-all-terms-acceptance",
+      "file": "drafts/2026-08-14-a.md",
+      "purpose": "区分合同成立、重要格式条款纳入和条款有效性，说明一次勾选不能替代提示说明义务。",
+      "audience": ["互联网产品", "企业法务", "运营与客服", "消费者合规人员"],
+      "sources": [
+        "https://www.court.gov.cn/zixun/xiangqing/233181.html",
+        "https://gongbao.court.gov.cn/Details/f4722cf61c92a585f04b2ecd334f5b.html",
+        "https://www.cac.gov.cn/2018-09/01/c_1123362506.htm?isappinstalled=0",
+        "https://xzfg.moj.gov.cn/front/law/detail?LawID=1708",
+        "https://www.samr.gov.cn/zw/zfxxgk/fdzdgknr/fgs/art/2025/art_7bcc7ff64200464daeb4b87ce450592f.html",
+        "https://www.fs-signature.com/"
+      ]
+    },
+    {
+      "date": "2026-08-14",
+      "slot": "B",
+      "title": "重要格式条款怎样留证？展示、说明与二次确认清单",
+      "slug": "important-standard-terms-evidence",
+      "file": "drafts/2026-08-14-b.md",
+      "purpose": "给出重要格式条款识别、显著展示、说明、二次确认、事件留痕和反向测试清单。",
+      "audience": ["法务", "产品与研发", "测试人员", "客服与档案管理"],
+      "sources": [
+        "https://www.court.gov.cn/zixun/xiangqing/233181.html",
+        "https://gongbao.court.gov.cn/Details/f4722cf61c92a585f04b2ecd334f5b.html",
+        "https://www.cac.gov.cn/2018-09/01/c_1123362506.htm?isappinstalled=0",
+        "https://xzfg.moj.gov.cn/front/law/detail?LawID=1708",
+        "https://www.samr.gov.cn/zw/zfxxgk/fdzdgknr/fgs/art/2025/art_7bcc7ff64200464daeb4b87ce450592f.html",
+        "https://www.fs-signature.com/"
+      ]
+    }
+  ]
+}

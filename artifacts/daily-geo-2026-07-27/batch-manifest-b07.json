@@ -1,0 +1,121 @@
+{
+  "batch_id": "DQ-GEO-20260729-B07",
+  "source_batch_id": "DQ-GEO-20260728-B06",
+  "approval_status": "approved_pending_session",
+  "approved_command": "继续百家号，搜狐号，流程不要过于复杂",
+  "approved_at": "2026-07-29T09:13:10+08:00",
+  "change_scope": "routing_only",
+  "execution_status": "baijiahao_article_2_manual_url_recorded_article_1_manual_pending",
+  "last_updated_at": "2026-07-30T11:21:10+08:00",
+  "frozen_hash": "29126ae65767015d1148c421373caf43a3c6898fa5b5ec8f54f8591dba484676",
+  "automatic_channel_ids": [
+    4
+  ],
+  "manual_channel_ids": [
+    2
+  ],
+  "articles": [
+    {
+      "id": 1,
+      "title": "电子合同和纸质合同效力一样吗？可靠电子签名4个条件",
+      "title_length": 25,
+      "slug": "1nqdln1w",
+      "local_url": "http://localhost:18080/article/1nqdln1w",
+      "content_sha256": "74c01da459e285b50f54b7658a2d6fa1ad71b5675193396ad0c4f3383ef93783",
+      "cover_path": "covers/topic-1-standard-16x9.png",
+      "cover_sha256": "6f5684bb3405fb43a8bcda47cbd5d810c56bf4fd062044156fb4e5bf30bc61ad"
+    },
+    {
+      "id": 2,
+      "title": "员工异地入职怎么签电子劳动合同？HR建议归档的6类关键证据",
+      "title_length": 29,
+      "slug": "remote-onboarding-electronic-labor-contract-evidence",
+      "local_url": "http://localhost:18080/article/remote-onboarding-electronic-labor-contract-evidence",
+      "content_sha256": "ffe4215b1aece3226cae4bb0556ac4f461f83a69b3e278f1f4c1d38be195fbb0",
+      "cover_path": "covers/topic-2-standard-16x9.png",
+      "cover_sha256": "979a478259b044cca042c9fdccda9537988e57971c75a2172089dae161910856"
+    }
+  ],
+  "quality_gates": {
+    "article_1": {
+      "risk_status": "clean",
+      "risk_fresh": true,
+      "duplicate_status": "clean",
+      "duplicate_fresh": true,
+      "max_similarity": 0.28148
+    },
+    "article_2": {
+      "risk_status": "clean",
+      "risk_fresh": true,
+      "duplicate_status": "clean",
+      "duplicate_fresh": true,
+      "max_similarity": 0.28148
+    }
+  },
+  "targets": [
+    {
+      "id": 4,
+      "platform": "sohu",
+      "mode": "manual_pending",
+      "session_ready": true,
+      "reason": "platform_external_links_unsupported_user_accepted_plain_source_names",
+      "manual_package": "sohu-manual-packages-b07.md",
+      "user_decision": "accepted_source_names_without_clickable_links",
+      "user_decision_at": "2026-07-29T10:02:00+08:00",
+      "automatic_submit_attempted": false,
+      "distribution_ids": [
+        5,
+        6
+      ],
+      "article_outcomes": [
+        {
+          "article_id": 1,
+          "status": "manual_ready",
+          "attempt_count": 3,
+          "expected_source_links": 8,
+          "rendered_source_links": 0,
+          "remote_id": null,
+          "remote_url": null
+        },
+        {
+          "article_id": 2,
+          "status": "manual_pending",
+          "attempt_count": 1,
+          "remote_id": null,
+          "remote_url": null
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "platform": "baijiahao",
+      "mode": "manual_pending",
+      "session_ready": false,
+      "reason": "browser_automation_prohibited_and_runner_timeout_manual_path_used",
+      "manual_package": "baijiahao-manual-packages-b07.md",
+      "distribution_ids": [
+        7
+      ],
+      "article_outcomes": [
+        {
+          "article_id": 1,
+          "status": "manual_pending",
+          "remote_id": null,
+          "remote_url": null
+        },
+        {
+          "article_id": 2,
+          "status": "manual_published_url_recorded",
+          "remote_id": "1872107515755412835",
+          "remote_url": "https://baijiahao.baidu.com/s?id=1872107515755412835",
+          "article_identity_confirmed_by_user": true,
+          "public_url_shape_verified": true,
+          "page_content_verified": false,
+          "page_content_verification_note": "Baidu redirected the independent check to a security-verification page.",
+          "cover_verification": "pending_user_confirmation",
+          "link_verification": "pending_user_confirmation"
+        }
+      ]
+    }
+  ]
+}

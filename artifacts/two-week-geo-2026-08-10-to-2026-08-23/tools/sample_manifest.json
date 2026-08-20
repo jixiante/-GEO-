@@ -1,0 +1,22 @@
+{
+  "defaults": {
+    "series": "点签 · GEO 实务专栏",
+    "footer": "点签 · 可信电子签名与合同管理"
+  },
+  "articles": [
+    {
+      "key": "sample-contract-guide",
+      "title": "企业合同数字化，如何平稳落地？",
+      "theme": "teal",
+      "label": "合同数字化指南",
+      "subtitle": "制度、流程与系统协同"
+    },
+    {
+      "key": "sample-risk-control",
+      "title": "电子合同风险防控\n关键点有哪些？",
+      "theme": "red",
+      "label": "合规与风险",
+      "subtitle": "身份、意愿、签署与存证"
+    }
+  ]
+}

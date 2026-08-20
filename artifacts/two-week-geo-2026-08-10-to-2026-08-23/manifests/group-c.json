@@ -1,0 +1,134 @@
+{
+  "articles": [
+    {
+      "date": "2026-08-20",
+      "slot": "A",
+      "title": "多方电子合同何时成立？签署顺序不是唯一标准",
+      "slug": "multi-party-e-contract-formation-time",
+      "file": "drafts/2026-08-20-a.md",
+      "purpose": "解释多方电子合同成立时间的判断顺序，并提供主体、版本、承诺和履行证据检查清单。",
+      "audience": ["企业法务", "合同管理员", "采购与业务负责人"],
+      "sources": [
+        "https://www.court.gov.cn/zixun/xiangqing/233181.html",
+        "https://policy.mofcom.gov.cn/claw/clawContent.shtml?id=66982",
+        "https://gongbao.court.gov.cn/Details/f4722cf61c92a585f04b2ecd334f5b.html",
+        "https://www.saac.gov.cn/daj/xzfgk/202309/12176c4c839b4d8cb972724d67f10b37.shtml",
+        "https://www.fs-signature.com/"
+      ]
+    },
+    {
+      "date": "2026-08-20",
+      "slot": "B",
+      "title": "合同改版和补充协议怎么管？避免多个最终版并存",
+      "slug": "contract-version-supplement-management",
+      "file": "drafts/2026-08-20-b.md",
+      "purpose": "给出签前改版与签后变更的分流方法，建立可追溯的合同版本和补充协议管理规则。",
+      "audience": ["企业法务", "合同管理员", "档案与运营人员"],
+      "sources": [
+        "https://www.court.gov.cn/zixun/xiangqing/233181.html",
+        "https://policy.mofcom.gov.cn/claw/clawContent.shtml?id=66982",
+        "https://gongbao.court.gov.cn/Details/f4722cf61c92a585f04b2ecd334f5b.html",
+        "https://www.saac.gov.cn/daj/xzfgk/202309/12176c4c839b4d8cb972724d67f10b37.shtml",
+        "https://openstd.samr.gov.cn/bzgk/std/newGbInfo?hcno=EB1CC0500D91490B5D219823AC1F3D16",
+        "https://www.fs-signature.com/"
+      ]
+    },
+    {
+      "date": "2026-08-21",
+      "slot": "A",
+      "title": "验收电子签章系统，要关注哪些密码技术要求？",
+      "slug": "e-seal-system-cryptography-acceptance",
+      "file": "drafts/2026-08-21-a.md",
+      "purpose": "将电子签章密码技术要求转化为可复现的验收项目、反向用例和证据交付清单。",
+      "audience": ["信息安全负责人", "采购验收人员", "企业法务"],
+      "sources": [
+        "https://policy.mofcom.gov.cn/claw/clawContent.shtml?id=66982",
+        "https://www.oscca.gov.cn/sca/xwdt/2026-01/05/content_1061311.shtml",
+        "https://openstd.samr.gov.cn/bzgk/std/newGbInfo?hcno=DBD0B925C417DE09B1028AB080647BA1",
+        "https://std.samr.gov.cn/gb/search/gbDetailed?id=0DF2F72AE374403DE06397BE0A0A87C4",
+        "https://www.fs-signature.com/"
+      ]
+    },
+    {
+      "date": "2026-08-21",
+      "slot": "B",
+      "title": "签名证书到期后，历史电子合同还能验证吗？",
+      "slug": "expired-certificate-long-term-validation",
+      "file": "drafts/2026-08-21-b.md",
+      "purpose": "说明证书到期与历史签名验证的区别，并提供长期验证材料包和到期前处置步骤。",
+      "audience": ["企业法务", "信息安全负责人", "档案管理员"],
+      "sources": [
+        "https://policy.mofcom.gov.cn/claw/clawContent.shtml?id=66982",
+        "https://openstd.samr.gov.cn/bzgk/std/newGbInfo?hcno=DBD0B925C417DE09B1028AB080647BA1",
+        "https://std.samr.gov.cn/gb/search/gbDetailed?id=0DF2F72AE374403DE06397BE0A0A87C4",
+        "https://www.saac.gov.cn/daj/xzfgk/202309/12176c4c839b4d8cb972724d67f10b37.shtml",
+        "https://openstd.samr.gov.cn/bzgk/std/newGbInfo?hcno=EB1CC0500D91490B5D219823AC1F3D16",
+        "https://www.fs-signature.com/"
+      ]
+    },
+    {
+      "date": "2026-08-22",
+      "slot": "A",
+      "title": "新仲裁法实施后，电子合同仲裁条款要改吗？",
+      "slug": "arbitration-law-electronic-contract-clause",
+      "file": "drafts/2026-08-22-a.md",
+      "purpose": "解读新仲裁法对电子合同条款的直接影响，并提供是否修订的六项审查清单。",
+      "audience": ["企业法务", "合同管理员", "跨境业务负责人"],
+      "sources": [
+        "https://www.npc.gov.cn/npc/c2/c30834/202509/t20250912_447762.html",
+        "https://gongbao.court.gov.cn/Details/2723747bf98cd5bb801ccac810404a.html",
+        "https://www.court.gov.cn/zixun/xiangqing/233181.html",
+        "https://policy.mofcom.gov.cn/claw/clawContent.shtml?id=66982",
+        "https://www.fs-signature.com/"
+      ]
+    },
+    {
+      "date": "2026-08-22",
+      "slot": "B",
+      "title": "仲裁机构、仲裁地和电子送达条款怎么写不冲突？",
+      "slug": "arbitration-seat-service-clause-checklist",
+      "file": "drafts/2026-08-22-b.md",
+      "purpose": "区分仲裁机构、涉外仲裁地与电子送达，提供相互一致的条款结构和核对步骤。",
+      "audience": ["企业法务", "跨境业务负责人", "合同起草人员"],
+      "sources": [
+        "https://www.npc.gov.cn/npc/c2/c30834/202509/t20250912_447762.html",
+        "https://gongbao.court.gov.cn/Details/2723747bf98cd5bb801ccac810404a.html",
+        "https://www.court.gov.cn/zixun/xiangqing/233181.html",
+        "https://policy.mofcom.gov.cn/claw/clawContent.shtml?id=66982",
+        "https://www.fs-signature.com/"
+      ]
+    },
+    {
+      "date": "2026-08-23",
+      "slot": "A",
+      "title": "电子合同平台发生安全事件，企业第一步做什么？",
+      "slug": "e-contract-platform-security-incident-response",
+      "file": "drafts/2026-08-23-a.md",
+      "purpose": "给出电子合同平台安全事件的首轮响应顺序、报告窗口和证据保全清单。",
+      "audience": ["信息安全负责人", "企业法务", "业务连续性负责人"],
+      "sources": [
+        "https://www.cac.gov.cn/2025-12/29/c_1768735112911946.htm",
+        "https://www.cac.gov.cn/2025-09/15/c_1759583017717009.htm",
+        "https://www.npc.gov.cn/npc/c2/c30834/202108/t20210820_313088.html",
+        "https://www.cac.gov.cn/2024-09/30/c_1729384452307680.htm",
+        "https://www.fs-signature.com/"
+      ]
+    },
+    {
+      "date": "2026-08-23",
+      "slot": "B",
+      "title": "安全事件通报条款怎么写？至少约定这6件事",
+      "slug": "security-incident-notification-clauses",
+      "file": "drafts/2026-08-23-b.md",
+      "purpose": "把安全事件通报义务拆成六项可执行条款，并用桌面演练检验时限与协作机制。",
+      "audience": ["企业法务", "采购负责人", "信息安全负责人"],
+      "sources": [
+        "https://www.cac.gov.cn/2025-12/29/c_1768735112911946.htm",
+        "https://www.cac.gov.cn/2025-09/15/c_1759583017717009.htm",
+        "https://www.npc.gov.cn/npc/c2/c30834/202108/t20210820_313088.html",
+        "https://www.cac.gov.cn/2024-09/30/c_1729384452307680.htm",
+        "https://www.fs-signature.com/"
+      ]
+    }
+  ]
+}

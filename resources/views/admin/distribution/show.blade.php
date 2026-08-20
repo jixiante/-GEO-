@@ -544,6 +544,45 @@
             </div>
         @endif
 
+        <div class="rounded-lg bg-white p-6 shadow">
+            <div class="max-w-3xl">
+                <h2 class="text-lg font-medium text-gray-900">{{ __('admin.distribution.manual_enqueue.title') }}</h2>
+                <p class="mt-2 text-sm leading-6 text-gray-600">{{ __('admin.distribution.manual_enqueue.desc') }}</p>
+            </div>
+            @if ((string) $channel->status !== 'active')
+                <p class="mt-4 text-sm text-amber-700">{{ __('admin.distribution.message.manual_enqueue_channel_inactive') }}</p>
+            @elseif ($manualEnqueueArticles->isEmpty())
+                <p class="mt-4 text-sm text-gray-500">{{ __('admin.distribution.manual_enqueue.empty') }}</p>
+            @else
+                <form method="POST" action="{{ route('admin.distribution.article.enqueue', ['channelId' => (int) $channel->id]) }}" class="mt-5 flex flex-col gap-3 lg:flex-row lg:items-end">
+                    @csrf
+                    <div class="min-w-0 flex-1">
+                        @if ($manualEnqueueArticles->count() === 1)
+                            @php($manualEnqueueArticle = $manualEnqueueArticles->first())
+                            <input type="hidden" name="article_id" value="{{ (int) $manualEnqueueArticle->id }}" data-manual-enqueue-article-id="{{ (int) $manualEnqueueArticle->id }}">
+                            <div class="text-sm font-medium text-gray-700">{{ __('admin.distribution.manual_enqueue.article_label') }}</div>
+                            <div class="mt-2 rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900">{{ $manualEnqueueArticle->title }}</div>
+                        @else
+                            <label for="manual-enqueue-article" class="block text-sm font-medium text-gray-700">{{ __('admin.distribution.manual_enqueue.article_label') }}</label>
+                            <select id="manual-enqueue-article" name="article_id" required class="mt-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <option value="">{{ __('admin.distribution.manual_enqueue.select_placeholder') }}</option>
+                                @foreach ($manualEnqueueArticles as $manualEnqueueArticle)
+                                    <option value="{{ (int) $manualEnqueueArticle->id }}" data-manual-enqueue-article-id="{{ (int) $manualEnqueueArticle->id }}" @selected((int) old('article_id') === (int) $manualEnqueueArticle->id)>{{ $manualEnqueueArticle->title }}</option>
+                                @endforeach
+                            </select>
+                        @endif
+                        @error('article_id')
+                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    <button type="submit" class="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+                        <i data-lucide="send" class="mr-2 h-4 w-4"></i>
+                        {{ __('admin.distribution.manual_enqueue.submit') }}
+                    </button>
+                </form>
+            @endif
+        </div>
+
         <div class="rounded-lg bg-white shadow">
             <div class="border-b border-gray-200 px-6 py-4">
                 <h2 class="text-lg font-medium text-gray-900">{{ __('admin.distribution.jobs_title') }}</h2>

@@ -12,9 +12,15 @@ export const platforms = Object.freeze({
     loginUrl: 'https://mp.toutiao.com/profile_v4/index',
     publishUrl: 'https://mp.toutiao.com/profile_v4/graphic/publish',
     titleSelectors: ['textarea[placeholder*="标题"]', 'input[placeholder*="标题"]'],
+    maxTitleLength: 30,
     editorSelectors: commonEditorSelectors,
-    publishTexts: ['发布'],
-    confirmTexts: ['确认发布', '确定发布', '发布'],
+    richInsertMode: 'dom',
+    editorOverlaySelectors: ['.byte-drawer-wrapper.ai-assistant-drawer .byte-drawer-mask'],
+    editorOverlayCloseSelectors: ['.byte-drawer-wrapper.ai-assistant-drawer .ai-assistant-panel-in-drawer > .header > svg.close-btn'],
+    publishTexts: ['预览并发布'],
+    publishControlMode: 'exact_text',
+    confirmTexts: ['确认发布'],
+    confirmControlMode: 'exact_text',
     successTexts: ['发布成功', '提交成功'],
     reviewingTexts: ['文章已进入审核', '作品已进入审核', '提交审核成功'],
     requiresCover: true,
@@ -24,6 +30,9 @@ export const platforms = Object.freeze({
       fileInputSelectors: ['.upload-btn input[type="file"]'],
       confirmTexts: ['确定', '完成'],
     },
+    aiDisclosure: {
+      optionTexts: ['引用AI'],
+    },
     publicUrlPatterns: [/toutiao\.com\/article\/(\d+)/],
   },
   baijiahao: {
@@ -31,18 +40,49 @@ export const platforms = Object.freeze({
     loginUrl: 'https://baijiahao.baidu.com/',
     publishUrl: 'https://baijiahao.baidu.com/builder/rc/edit?type=news',
     titleSelectors: ['[data-testid="news-title-input"] [contenteditable="true"]', 'textarea[placeholder*="标题"]', 'input[placeholder*="标题"]'],
+    maxTitleLength: 64,
     editorSelectors: ['body[contenteditable="true"]'],
+    richInsertMode: 'dom',
     publishTexts: ['发布'],
+    publishControlMode: 'exact_text',
     confirmTexts: ['确认发布', '确定'],
     successTexts: ['发布成功', '提交成功'],
     reviewingTexts: ['文章已进入审核', '内容已进入审核', '提交审核成功'],
     requiresCover: true,
     coverFlow: {
-      triggerTexts: ['选择封面'],
+      triggerTexts: ['选择封面', '更换'],
       dialogSelectors: ['[role="dialog"]', '.ant-modal', '.semi-modal', '.el-dialog'],
       fileInputSelectors: ['input[type="file"][accept*="image"]'],
       confirmTexts: ['确定', '完成'],
+      retryableConfirmTexts: ['封面裁剪处理中，请稍后再点击“确定”'],
+      maxConfirmAttempts: 3,
     },
+    aiDisclosure: {
+      optionTexts: ['采用AI生成内容'],
+      selectedEvidenceSelectors: [
+        '.one-checkbox-wrapper:has-text("采用AI生成内容") .one-checkbox.one-checkbox-checked',
+      ],
+    },
+    requiredUncheckedOptions: [
+      {
+        text: '自动生成视频',
+        checkedEvidenceSelectors: [
+          '.one-checkbox-wrapper:has-text("自动生成视频") .one-checkbox.one-checkbox-checked',
+        ],
+        uncheckedEvidenceSelectors: [
+          '.one-checkbox-wrapper:has-text("自动生成视频") .one-checkbox:not(.one-checkbox-checked)',
+        ],
+      },
+      {
+        text: '自动生成播客',
+        checkedEvidenceSelectors: [
+          '.one-checkbox-wrapper:has-text("自动生成播客") .one-checkbox.one-checkbox-checked',
+        ],
+        uncheckedEvidenceSelectors: [
+          '.one-checkbox-wrapper:has-text("自动生成播客") .one-checkbox:not(.one-checkbox-checked)',
+        ],
+      },
+    ],
     publicUrlPatterns: [/baijiahao\.baidu\.com\/s\?id=(\d+)/],
   },
   zhihu: {
@@ -54,6 +94,17 @@ export const platforms = Object.freeze({
     publishTexts: ['发布'],
     confirmTexts: ['确认发布', '发布'],
     successTexts: ['发布成功'],
+    aiDisclosure: {
+      mode: 'select_value',
+      triggerTexts: ['无声明'],
+      optionTexts: ['包含 AI 辅助创作 作者对内容负责'],
+      selectedValueTexts: ['包含 AI 辅助创作 作者对内容负责'],
+      selectedValueSelectors: [
+        'button[aria-haspopup]:has-text("包含 AI 辅助创作 作者对内容负责")',
+        '[role="combobox"]:has-text("包含 AI 辅助创作 作者对内容负责")',
+      ],
+      unselectedValueTexts: ['无声明'],
+    },
     publicUrlPatterns: [/zhuanlan\.zhihu\.com\/p\/(\d+)/],
   },
   sohu: {
@@ -63,10 +114,16 @@ export const platforms = Object.freeze({
     titleSelectors: ['textarea[placeholder*="标题"]', 'input[placeholder*="标题"]'],
     editorSelectors: commonEditorSelectors,
     publishTexts: ['发布'],
+    publishControlMode: 'exact_text',
     confirmTexts: ['确认发布', '确定'],
     successTexts: ['发布成功', '提交成功'],
     reviewingTexts: ['文章已进入审核', '内容已进入审核', '提交审核成功'],
+    outcomeNoticeSelectors: ['.ant-message-notice-content'],
+    reviewingNoticeTexts: ['已发布'],
     successUrlPatterns: [/\/contentManagement\/news\/addarticle\?(?:[^#]*&)?contentStatus=1(?:&[^#]*)?(?:#.*)?$/i],
+    aiDisclosure: {
+      optionTexts: ['包含AI创作内容'],
+    },
     publicUrlPatterns: [/sohu\.com\/a\/(\d+)/],
   },
   netease: {

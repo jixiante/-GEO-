@@ -3,12 +3,17 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Exceptions\ApiException;
+use App\Models\DistributionChannel;
 use App\Services\Api\ApiTokenService;
 use App\Services\Api\IdempotencyService;
 use App\Services\GeoFlow\ArticleGeoFlowService;
+use App\Services\GeoFlow\DistributionOrchestrator;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use Throwable;
 
 /**
  * API v1 文章（articles）管理：列表、创建、详情、更新、审核、发布、软删除。
@@ -133,14 +138,93 @@ class ArticleController extends BaseApiController
     /**
      * 在审核已通过的前提下将文章置为发布状态。幂等键：POST /articles/{id}/publish。
      */
-    public function publish(Request $request, int $article, ArticleGeoFlowService $articles): JsonResponse
-    {
-        return IdempotencyService::executeJson($request, 'POST /articles/{id}/publish', function () use ($request, $article, $articles): JsonResponse {
+    public function publish(
+        Request $request,
+        int $article,
+        ArticleGeoFlowService $articles,
+        DistributionOrchestrator $distribution,
+    ): JsonResponse {
+        $channelIds = null;
+        if ($request->exists('distribution_channel_ids')) {
+            $validator = Validator::make($request->all(), [
+                'distribution_channel_ids' => ['required', 'array', 'max:20'],
+                'distribution_channel_ids.*' => [
+                    'required',
+                    'integer',
+                    'min:1',
+                    'distinct',
+                ],
+            ]);
+            if ($validator->fails()) {
+                $fieldErrors = collect($validator->errors()->messages())
+                    ->map(static fn (array $messages): string => (string) ($messages[0] ?? 'Invalid value.'))
+                    ->all();
+
+                throw new ApiException('validation_failed', '参数校验失败', 422, [
+                    'field_errors' => $fieldErrors,
+                ]);
+            }
+            $validated = $validator->validated();
+            $channelIds = array_map(
+                static fn ($id): int => (int) $id,
+                array_values($validated['distribution_channel_ids'])
+            );
+        }
+
+        return IdempotencyService::executeJson($request, 'POST /articles/{id}/publish', function () use ($request, $article, $articles, $distribution, $channelIds): JsonResponse {
             try {
-                return $this->success($request, $articles->publishArticle(
-                    $article,
-                    $this->auth($request)->auditAdminId
-                ));
+                if ($channelIds === null) {
+                    return $this->success($request, $articles->publishArticle(
+                        $article,
+                        $this->auth($request)->auditAdminId
+                    ));
+                }
+
+                $result = DB::transaction(function () use ($request, $article, $articles, $distribution, $channelIds): array|ApiException {
+                    $this->assertActiveDistributionChannels($channelIds);
+
+                    try {
+                        $published = $articles->publishArticle(
+                            $article,
+                            $this->auth($request)->auditAdminId
+                        );
+                    } catch (ApiException $exception) {
+                        if (in_array($exception->getErrorCode(), ['article_risk_blocked', 'article_duplicate_blocked'], true)) {
+                            return $exception;
+                        }
+
+                        throw $exception;
+                    }
+
+                    try {
+                        $handledCount = $distribution->enqueueForArticleChannels($article, $channelIds);
+                    } catch (ApiException $exception) {
+                        throw $exception;
+                    } catch (Throwable) {
+                        throw new ApiException(
+                            'distribution_enqueue_failed',
+                            '指定渠道未能全部进入分发队列，文章发布已回滚',
+                            503,
+                            ['distribution_channel_ids' => $channelIds],
+                        );
+                    }
+
+                    if ($handledCount !== count($channelIds)) {
+                        throw new ApiException(
+                            'distribution_enqueue_failed',
+                            '指定渠道未能全部进入分发队列，文章发布已回滚',
+                            503,
+                            ['distribution_channel_ids' => $channelIds],
+                        );
+                    }
+
+                    return $published;
+                });
+                if ($result instanceof ApiException) {
+                    throw $result;
+                }
+
+                return $this->success($request, $result);
             } catch (ApiException $exception) {
                 return $this->riskBlockedResponse($request, $exception);
             }
@@ -157,6 +241,32 @@ class ArticleController extends BaseApiController
             'POST /articles/{id}/trash',
             fn (): JsonResponse => $this->success($request, $articles->trashArticle($article)),
         );
+    }
+
+    /**
+     * @param  list<int>  $channelIds
+     */
+    private function assertActiveDistributionChannels(array $channelIds): void
+    {
+        if ($channelIds === []) {
+            return;
+        }
+
+        $activeIds = DistributionChannel::query()
+            ->whereIn('id', $channelIds)
+            ->where('status', 'active')
+            ->lockForUpdate()
+            ->pluck('id')
+            ->map(static fn ($id): int => (int) $id)
+            ->all();
+
+        if (count($activeIds) !== count($channelIds)) {
+            throw new ApiException('validation_failed', '参数校验失败', 422, [
+                'field_errors' => [
+                    'distribution_channel_ids' => '分发渠道不存在或未启用',
+                ],
+            ]);
+        }
     }
 
     private function riskBlockedResponse(Request $request, ApiException $exception): JsonResponse

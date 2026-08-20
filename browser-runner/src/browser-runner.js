@@ -1,9 +1,17 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { chromium } from 'playwright';
-import { publishWithBrowser, readinessControlsAreUsable, waitForReadinessState } from './automation.js';
+import {
+  editorLocationMatches,
+  plainSourceNamesApprovalFromRequest,
+  publishWithBrowser,
+  readinessControlsAreUsable,
+  waitForReadinessState,
+} from './automation.js';
 import { ManualActionError, RunnerError } from './errors.js';
 import { getPlatform, platformKeys } from './platforms.js';
+
+export const VERIFICATION_CONTRACT_VERSION = 2;
 
 export class BrowserRunner {
   constructor(config, stateStore, logger) {
@@ -22,6 +30,7 @@ export class BrowserRunner {
       enabled: this.isEnabled(),
       stopped: fs.existsSync(this.config.stopPath),
       platforms: platformKeys(),
+      verification_contract_version: VERIFICATION_CONTRACT_VERSION,
       account,
       active_sessions: this.contexts.size,
     };
@@ -65,10 +74,27 @@ export class BrowserRunner {
     try {
       const context = await this.context(normalizedPlatformKey, normalizedAccountId);
       const page = await this.page(context);
-      await page.goto(platform.publishUrl, { waitUntil: 'domcontentloaded', timeout: this.config.operationTimeoutMs });
+      let navigationIssue = null;
+      try {
+        await page.goto(platform.publishUrl, { waitUntil: 'domcontentloaded', timeout: this.config.operationTimeoutMs });
+      } catch (error) {
+        navigationIssue = error?.name === 'TimeoutError' ? 'timeout' : 'failed';
+        this.logger.write('warning', navigationIssue === 'timeout'
+          ? 'account.readiness_navigation_timed_out'
+          : 'account.readiness_navigation_failed', {
+          platform: normalizedPlatformKey,
+          account_id: normalizedAccountId,
+          timeout_ms: this.config.operationTimeoutMs,
+          current_url: page.url(),
+        });
+      }
       const { pageState, controls } = await waitForReadinessState(page, platform, 15000);
+      const editorLocationReady = editorLocationMatches(pageState.url, platform.publishUrl);
       const reason = pageState.blockingText
         || (pageState.looksLikeLogin ? 'login_required' : '')
+        || (!editorLocationReady
+          ? (navigationIssue === 'timeout' ? 'navigation_timeout' : (navigationIssue ? 'navigation_failed' : 'unexpected_editor_url'))
+          : '')
         || (!readinessControlsAreUsable(platform, controls)
           ? (!controls.title_editor_visible ? 'title_editor_not_visible' : 'body_editor_not_visible')
           : '')
@@ -81,6 +107,8 @@ export class BrowserRunner {
         platform_label: platform.label,
         account_id: normalizedAccountId,
         current_url: pageState.url,
+        ...(navigationIssue === 'timeout' ? { navigation_timed_out: true } : {}),
+        ...(navigationIssue === 'failed' ? { navigation_failed: true } : {}),
         ...controls,
       };
       if (!result.ready) {
@@ -96,6 +124,7 @@ export class BrowserRunner {
         body_editor_visible: result.body_editor_visible,
         file_input_count: result.file_input_count,
         cover_setting_visible: result.cover_setting_visible,
+        navigation_issue: navigationIssue,
         screenshot: result.screenshot ?? null,
       });
       return result;
@@ -112,10 +141,100 @@ export class BrowserRunner {
     if (idempotencyKey === '' || idempotencyKey.length > 255) {
       throw new RunnerError('idempotency_key 不能为空且不能超过 255 个字符。', { code: 'invalid_payload', status: 422 });
     }
+    const publishMode = request.publish_mode;
+    if (!['publish', 'draft', 'simulate'].includes(publishMode)) {
+      throw new RunnerError('publish_mode 必须明确为 publish、draft 或 simulate。', { code: 'invalid_payload', status: 422 });
+    }
+    const verificationContractVersion = request.verification_contract_version;
+    const requiresVerificationContract = platformKey === 'baijiahao';
+    if (requiresVerificationContract && verificationContractVersion !== VERIFICATION_CONTRACT_VERSION) {
+      throw new RunnerError('百家号发布请求的安全校验合同版本无效，请更新点签队列服务和本机 Runner。', {
+        code: 'invalid_payload',
+        status: 422,
+      });
+    }
+    const plainSourceNamesApproval = plainSourceNamesApprovalFromRequest(request, platformKey);
 
     const existing = this.stateStore.get(idempotencyKey);
+    const pending = this.stateStore.getPending(idempotencyKey);
+    if (existing && pending) {
+      throw new ManualActionError('该幂等键同时存在已完成结果和未知结果记录，状态文件需要人工核对，系统已中止自动操作。', {
+        idempotency_key: idempotencyKey,
+        outcome: 'state_conflict',
+      });
+    }
     if (existing) {
-      return { ...existing, idempotent_replay: true };
+      const existingRemoteMeta = existing?.remote_meta && typeof existing.remote_meta === 'object'
+        ? existing.remote_meta
+        : {};
+      const existingPublishMode = existingRemoteMeta.publish_mode;
+      const existingContractVersion = existingRemoteMeta.verification_contract_version;
+      const canRefreshLegacySimulation = requiresVerificationContract
+        && publishMode === 'simulate'
+        && existing.status === 'simulated'
+        && existingContractVersion !== VERIFICATION_CONTRACT_VERSION
+        && (existingPublishMode === undefined || existingPublishMode === 'simulate');
+
+      if (requiresVerificationContract && existingPublishMode !== publishMode && !canRefreshLegacySimulation) {
+        throw new ManualActionError('此前幂等结果来自不同的提交方式，为避免误发布，系统已中止自动重试，请人工核对。', {
+          idempotency_key: idempotencyKey,
+          outcome: 'publish_mode_mismatch',
+          previous_publish_mode: existingPublishMode ?? null,
+          requested_publish_mode: publishMode,
+        });
+      }
+      if (requiresVerificationContract
+        && existingContractVersion !== VERIFICATION_CONTRACT_VERSION
+        && !canRefreshLegacySimulation) {
+        throw new ManualActionError('此前发布结果缺少当前安全校验证据，为避免重复发布，系统已中止自动重试，请人工核对平台后台。', {
+          idempotency_key: idempotencyKey,
+          outcome: 'legacy_verification_contract',
+          verification_contract_version: existingContractVersion ?? null,
+        });
+      }
+      if (requiresVerificationContract
+        && !canRefreshLegacySimulation
+        && (existingRemoteMeta.platform !== platformKey || existingRemoteMeta.account_id !== accountId)) {
+        throw new ManualActionError('此前幂等结果属于不同的平台或账号，为避免误发布，系统已中止自动重试，请人工核对。', {
+          idempotency_key: idempotencyKey,
+          outcome: 'cached_identity_mismatch',
+          previous_platform: existingRemoteMeta.platform ?? null,
+          previous_account_id: existingRemoteMeta.account_id ?? null,
+          requested_platform: platformKey,
+          requested_account_id: accountId,
+        });
+      }
+      const allowedCachedStatuses = {
+        publish: ['published', 'reviewing'],
+        draft: ['draft'],
+        simulate: ['simulated'],
+      };
+      if (requiresVerificationContract
+        && !canRefreshLegacySimulation
+        && ((existing.ok ?? null) !== true
+          || !allowedCachedStatuses[publishMode].includes(existing.status))) {
+        throw new ManualActionError('此前幂等结果的状态与提交方式不一致，状态文件需要人工核对，系统已中止自动操作。', {
+          idempotency_key: idempotencyKey,
+          outcome: 'cached_status_invalid',
+          cached_status: existing.status ?? null,
+          requested_publish_mode: publishMode,
+        });
+      }
+      if (!canRefreshLegacySimulation) {
+        return { ...existing, idempotent_replay: true };
+      }
+      this.logger.write('info', 'publish.legacy_simulation_invalidated', {
+        platform: platformKey,
+        account_id: accountId,
+        idempotency_key: idempotencyKey,
+      });
+    }
+    if (pending) {
+      throw new ManualActionError('此前发布尝试的远端结果未知，为避免重复发布，系统已中止自动重试，请人工核对平台后台。', {
+        ...pending,
+        idempotency_key: idempotencyKey,
+        outcome: 'unknown',
+      });
     }
 
     const accountKey = `${platformKey}:${accountId}`;
@@ -125,32 +244,92 @@ export class BrowserRunner {
 
     const platform = this.assertPlatform(platformKey);
     this.activeAccounts.add(accountKey);
-    this.logger.write('info', 'publish.started', { platform: platformKey, account_id: accountId, idempotency_key: idempotencyKey });
+    this.logger.write('info', 'publish.started', {
+      platform: platformKey,
+      account_id: accountId,
+      idempotency_key: idempotencyKey,
+      plain_source_names_approved: plainSourceNamesApproval !== null,
+      article_distribution_id: plainSourceNamesApproval?.articleDistributionId ?? null,
+    });
     let page;
     try {
       const context = await this.context(platformKey, accountId);
       page = await this.page(context);
       await page.bringToFront();
-      const result = await publishWithBrowser(page, platformKey, platform, request, this.config.operationTimeoutMs);
-      this.stateStore.put(idempotencyKey, result);
+      const result = await publishWithBrowser(
+        page,
+        platformKey,
+        platform,
+        request,
+        this.config.operationTimeoutMs,
+        {
+          onSubmitAttempt: () => {
+            const marked = this.stateStore.markPending(idempotencyKey, {
+              platform: platformKey,
+              account_id: accountId,
+              publish_mode: publishMode,
+              ...(requiresVerificationContract
+                ? { verification_contract_version: VERIFICATION_CONTRACT_VERSION }
+                : {}),
+            });
+            if (!marked) {
+              throw new ManualActionError('该幂等键已有发布结果或结果未知的提交记录，系统已中止重复提交，请人工核对平台后台。', {
+                idempotency_key: idempotencyKey,
+                outcome: this.stateStore.getPending(idempotencyKey)?.outcome ?? 'completed',
+              });
+            }
+            this.logger.write('warning', 'publish.submit_attempted', {
+              platform: platformKey,
+              account_id: accountId,
+              idempotency_key: idempotencyKey,
+            });
+          },
+        },
+      );
+      const completedResult = requiresVerificationContract
+        ? {
+            ...result,
+            remote_meta: {
+              ...(result?.remote_meta && typeof result.remote_meta === 'object' ? result.remote_meta : {}),
+              verification_contract_version: VERIFICATION_CONTRACT_VERSION,
+              platform: platformKey,
+              account_id: accountId,
+            },
+          }
+        : result;
+      this.stateStore.put(idempotencyKey, completedResult);
       this.logger.write('info', 'publish.completed', {
         platform: platformKey,
         account_id: accountId,
         idempotency_key: idempotencyKey,
-        status: result.status,
-        remote_id: result.remote_id,
+        status: completedResult.status,
+        remote_id: completedResult.remote_id,
       });
-      return result;
+      return completedResult;
     } catch (error) {
       const screenshot = page ? await this.captureFailure(page, platformKey, accountId) : '';
+      const pending = this.stateStore.getPending(idempotencyKey);
       this.logger.write('error', 'publish.failed', {
         platform: platformKey,
         account_id: accountId,
         idempotency_key: idempotencyKey,
-        code: error?.code ?? 'runner_error',
+        code: pending ? 'manual_action_required' : error?.code ?? 'runner_error',
         message: error instanceof Error ? error.message : String(error),
+        plain_source_names_checked: Boolean(
+          error?.details?.content_verification?.links?.plain_source_names,
+        ),
+        plain_source_names_missing_count:
+          error?.details?.content_verification?.links?.plain_source_names?.missingCount ?? null,
         screenshot,
       });
+      if (pending) {
+        throw new ManualActionError('发布提交已经触发，但无法确认远端结果。为避免重复发布，请人工核对平台后台。', {
+          ...pending,
+          idempotency_key: idempotencyKey,
+          outcome: 'unknown',
+          screenshot,
+        });
+      }
       if (error instanceof RunnerError) {
         error.details = { ...error.details, screenshot };
         throw error;

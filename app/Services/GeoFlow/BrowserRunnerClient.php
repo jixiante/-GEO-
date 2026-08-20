@@ -13,6 +13,8 @@ use RuntimeException;
 
 class BrowserRunnerClient
 {
+    private const VERIFICATION_CONTRACT_VERSION = 2;
+
     public function __construct(
         private readonly SafeOutboundHttpClient $safeHttp,
         private readonly Factory $http,
@@ -97,7 +99,7 @@ class BrowserRunnerClient
             $idempotencyKey .= ':simulate';
         }
 
-        return $this->request($channel, 'POST', '/v1/'.$action, [
+        $requestData = [
             'platform' => $config['browser_platform'],
             'account_id' => $config['browser_account_id'],
             'publish_mode' => $config['browser_publish_mode'],
@@ -105,7 +107,102 @@ class BrowserRunnerClient
             'remote_id' => (string) ($distribution->remote_id ?? ''),
             'remote_url' => (string) ($distribution->remote_url ?? ''),
             'payload' => $payload,
-        ], $config['browser_timeout_seconds']);
+        ];
+        $usesBaijiahaoPublishContract = $action === 'publish'
+            && $config['browser_platform'] === 'baijiahao';
+        if ($usesBaijiahaoPublishContract) {
+            $requestData['contract'] = self::VERIFICATION_CONTRACT_VERSION;
+            $requestData['verification_contract_version'] = self::VERIFICATION_CONTRACT_VERSION;
+        }
+        $plainSourceNamesApproval = $action === 'publish'
+            ? $this->plainSourceNamesApproval(
+                $distribution,
+                $config['browser_platform'],
+                $this->payloadHash($payload),
+            )
+            : null;
+        if ($plainSourceNamesApproval !== null) {
+            $requestData['plain_source_names_approval'] = $plainSourceNamesApproval;
+        }
+
+        return $this->request(
+            $channel,
+            'POST',
+            $usesBaijiahaoPublishContract ? '/v2/publish' : '/v1/'.$action,
+            $requestData,
+            $config['browser_timeout_seconds'],
+        );
+    }
+
+    /**
+     * @return array{
+     *   approved:true,
+     *   platform:string,
+     *   article_distribution_id:int,
+     *   payload_hash:string,
+     *   approved_by:string,
+     *   approved_at:string
+     * }|null
+     */
+    private function plainSourceNamesApproval(
+        ArticleDistribution $distribution,
+        string $platform,
+        string $outgoingPayloadHash,
+    ): ?array {
+        if ($platform !== 'sohu') {
+            return null;
+        }
+
+        $meta = is_array($distribution->remote_meta) ? $distribution->remote_meta : [];
+        $approval = is_array($meta['plain_source_names_approval'] ?? null)
+            ? $meta['plain_source_names_approval']
+            : [];
+        $distributionId = $approval['article_distribution_id'] ?? null;
+        $payloadHash = is_string($approval['payload_hash'] ?? null)
+            ? $approval['payload_hash']
+            : '';
+        $currentPayloadHash = is_string($distribution->payload_hash)
+            ? $distribution->payload_hash
+            : '';
+        $approvedBy = is_string($approval['approved_by'] ?? null)
+            ? trim($approval['approved_by'])
+            : '';
+        $approvedAt = is_string($approval['approved_at'] ?? null)
+            ? trim($approval['approved_at'])
+            : '';
+
+        if (($approval['approved'] ?? false) !== true
+            || ($approval['platform'] ?? null) !== 'sohu'
+            || ! is_int($distributionId)
+            || $distributionId !== (int) $distribution->getKey()
+            || preg_match('/\A[a-f0-9]{64}\z/', $payloadHash) !== 1
+            || preg_match('/\A[a-f0-9]{64}\z/', $currentPayloadHash) !== 1
+            || ! hash_equals($currentPayloadHash, $payloadHash)
+            || ! hash_equals($payloadHash, $outgoingPayloadHash)
+            || $approvedBy === ''
+            || $approvedAt === '') {
+            return null;
+        }
+
+        return [
+            'approved' => true,
+            'platform' => 'sohu',
+            'article_distribution_id' => $distributionId,
+            'payload_hash' => $payloadHash,
+            'approved_by' => $approvedBy,
+            'approved_at' => $approvedAt,
+        ];
+    }
+
+    /**
+     * @param  array<string,mixed>  $payload
+     */
+    private function payloadHash(array $payload): string
+    {
+        return hash(
+            'sha256',
+            json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '',
+        );
     }
 
     /**

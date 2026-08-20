@@ -268,6 +268,14 @@ class SafeOutboundHttpClientTest extends TestCase
     }
 
     #[Test]
+    public function the_system_resolver_honors_operating_system_host_entries(): void
+    {
+        $addresses = (new SystemHostResolver)->resolve('localhost');
+
+        $this->assertContains('127.0.0.1', $addresses);
+    }
+
+    #[Test]
     public function the_production_transport_disables_redirects_and_proxies_and_pins_the_validated_ip(): void
     {
         $captured = [];

@@ -1,0 +1,88 @@
+{
+  "batch_id": "DQ-GEO-20260803-B01",
+  "recorded_at": "2026-08-03T15:34:04+08:00",
+  "articles": [
+    {
+      "article_id": 7,
+      "title": "经办人代表公司签电子合同有效吗？重点看职权、授权和相对人审查",
+      "channels": {
+        "toutiao": {
+          "status": "submitted_reviewing",
+          "distribution_id": 17,
+          "remote_id": "7669646768556818996",
+          "management_url": "https://mp.toutiao.com/profile_v4/graphic/preview?pgc_id=7669646768556818996",
+          "public_url": null,
+          "system_reconciliation": "local_admin_confirmed_reviewing",
+          "note": "平台已接收并处于审核中；已补记回本地GEO系统，不会重复发布。"
+        },
+        "zhihu": {
+          "status": "published_verified",
+          "remote_id": "2067552325925918617",
+          "public_url": "https://zhuanlan.zhihu.com/p/2067552325925918617"
+        },
+        "sohu": {
+          "status": "submitted_reviewing",
+          "distribution_id": 21,
+          "automatic_attempts": 2,
+          "public_url": null,
+          "system_reconciliation": "local_admin_confirmed_reviewing",
+          "note": "已按批准的平台版本提交，平台显示唯一可见的“已发布”提示；结果已补记回本地GEO系统，暂未取得公开URL，不会重复发布。"
+        },
+        "baijiahao": {
+          "status": "submitted_reviewing",
+          "public_url": null,
+          "automation_maintenance": "verified_ready",
+          "verification_contract_version": 2,
+          "publish_endpoint": "/v2/publish",
+          "runner_state_policy": "fail_closed",
+          "live_submission": "user_manual_confirmed",
+          "manual_submission_confirmed_at": "2026-08-03T15:20:13+08:00",
+          "reason_code": "manual_submitted_no_public_url",
+          "handoff_package": "baijiahao-assisted-package.md",
+          "note": "用户确认已在百家号手工提交；尚未取得公开URL，按 submitted_reviewing 记录，不会重复发布。"
+        }
+      }
+    },
+    {
+      "article_id": 8,
+      "title": "电子合同签错了怎么办？撤回、变更和解除要分清",
+      "channels": {
+        "toutiao": {
+          "status": "submitted_reviewing",
+          "distribution_id": 19,
+          "remote_id": "7669648480356319779",
+          "management_url": "https://mp.toutiao.com/profile_v4/graphic/preview?pgc_id=7669648480356319779",
+          "public_url": null,
+          "system_reconciliation": "local_admin_confirmed_reviewing",
+          "note": "平台已接收并处于审核中；已补记回本地GEO系统，不会重复发布。"
+        },
+        "zhihu": {
+          "status": "published_verified",
+          "remote_id": "2067552373388604595",
+          "public_url": "https://zhuanlan.zhihu.com/p/2067552373388604595"
+        },
+        "sohu": {
+          "status": "submitted_reviewing",
+          "distribution_id": 22,
+          "automatic_attempts": 2,
+          "public_url": null,
+          "system_reconciliation": "local_admin_confirmed_reviewing",
+          "note": "已按批准的平台版本提交，平台显示唯一可见的“已发布”提示；结果已补记回本地GEO系统，暂未取得公开URL，不会重复发布。"
+        },
+          "baijiahao": {
+            "status": "submitted_reviewing",
+            "public_url": null,
+            "automation_maintenance": "verified_ready",
+            "verification_contract_version": 2,
+            "publish_endpoint": "/v2/publish",
+            "runner_state_policy": "fail_closed",
+            "live_submission": "user_manual_confirmed",
+            "manual_submission_confirmed_at": "2026-08-03T15:34:04+08:00",
+            "reason_code": "manual_submitted_no_public_url",
+            "handoff_package": "baijiahao-assisted-package.md",
+            "note": "用户确认已在百家号手工提交；尚未取得公开URL，按 submitted_reviewing 记录，不会重复发布。"
+          }
+      }
+    }
+  ]
+}

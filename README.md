@@ -60,7 +60,7 @@ Docker Compose 运行服务包括 `app`、`postgres`、`redis`、`queue`、`sche
 ### 启动
 
 ```bash
-git clone https://github.com/jian-ux/-GEO-.git dianqian-geo
+git clone https://github.com/jixiante/-GEO-.git dianqian-geo
 cd dianqian-geo
 cp .env.example .env
 docker compose up -d --build
@@ -109,6 +109,10 @@ docker compose up -d --build
 ## 版本
 
 当前点签交付版本为 `v1.0.0`。默认关闭远程自动更新检查；发布自有版本和 Tag 后，可再启用更新中心。
+
+## 点签 GEO 运营 Skill
+
+仓库内包含完整的 [`run-dianqian-geo`](.agents/skills/run-dianqian-geo/SKILL.md) Skill，覆盖选题、研究、写作、审核、冻结批次、系统内分发、失败恢复、人工兜底和发布结果核验。相关平台约束与恢复规则位于同目录的 `references/`。
 
 ## 开源基础与许可
 

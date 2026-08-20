@@ -1,0 +1,109 @@
+{
+  "batch_id": "DQ-GEO-20260803-B01",
+  "status": "frozen_pending_approval",
+  "frozen_at": "2026-08-03T09:50:57+08:00",
+  "approval_payload": "approval-payload.json",
+  "approval_payload_sha256": "674a8e6b71c2a428f53679f1f30789d41a0a12640452ac5e453626ad22579e09",
+  "canonical_content_hash_rule": "UTF-8 article body after PHP trim, matching the API-persisted content",
+  "local_article_state": {
+    "status": "draft",
+    "review_status": "pending",
+    "task_id": null,
+    "author_id": 1,
+    "author_name": "点签内容团队",
+    "category_id": 1,
+    "category_name": "电子合同指南"
+  },
+  "channels": [
+    {
+      "id": 1,
+      "name": "今日头条（浏览器发布）",
+      "platform": "toutiao",
+      "account_id": "dianqian_main",
+      "publish_mode": "publish",
+      "status": "active"
+    },
+    {
+      "id": 2,
+      "name": "百家号（浏览器发布）",
+      "platform": "baijiahao",
+      "account_id": "dianqian_main",
+      "publish_mode": "publish",
+      "status": "active"
+    },
+    {
+      "id": 3,
+      "name": "知乎（浏览器发布）",
+      "platform": "zhihu",
+      "account_id": "dianqian_main",
+      "publish_mode": "publish",
+      "status": "active"
+    },
+    {
+      "id": 4,
+      "name": "搜狐号（浏览器发布）",
+      "platform": "sohu",
+      "account_id": "dianqian_main",
+      "publish_mode": "publish",
+      "status": "active"
+    }
+  ],
+  "articles": [
+    {
+      "id": 7,
+      "title": "经办人代表公司签电子合同有效吗？重点看职权、授权和相对人审查",
+      "slug": "employee-rep-sign-electronic-contract-authority",
+      "body_file": "article-1-body.md",
+      "cover_file": "covers/article-1-standard-16x9.png",
+      "image_id": 5,
+      "article_image_id": 5,
+      "content_characters": 2406,
+      "source_link_count": 4,
+      "brand_mention_count": 3,
+      "markdown_table_count": 0,
+      "risk_status": "clean",
+      "risk_match_count": 0,
+      "duplicate_status": "clean",
+      "max_similarity": 0.2924,
+      "matched_article_id": 1,
+      "is_ai_generated": 1,
+      "content_sha256": "ed8f65eaef97a795285b8338b5779b0872cf8c7625e188b04ea8eb552526deef",
+      "cover_sha256": "413d70bc2eb6276245f9c903e00972ff711a0431a137479d314b77f85b69c630",
+      "cover_width": 1200,
+      "cover_height": 675
+    },
+    {
+      "id": 8,
+      "title": "电子合同签错了怎么办？撤回、变更和解除要分清",
+      "slug": "electronic-contract-mistake-withdraw-amend-rescind",
+      "body_file": "article-2-body.md",
+      "cover_file": "covers/article-2-standard-16x9.png",
+      "image_id": 6,
+      "article_image_id": 6,
+      "content_characters": 2768,
+      "source_link_count": 4,
+      "brand_mention_count": 3,
+      "markdown_table_count": 0,
+      "risk_status": "clean",
+      "risk_match_count": 0,
+      "duplicate_status": "clean",
+      "max_similarity": 0.20146,
+      "matched_article_id": 1,
+      "is_ai_generated": 1,
+      "content_sha256": "ef358a2625dfaeba4edc1b4106bb4012f6a033e96925a23256762fbccd46740e",
+      "cover_sha256": "a815712c4b719fc7d525d534bd03c967adeda3dd192ab9a5a1edfbab227d6227",
+      "cover_width": 1200,
+      "cover_height": 675
+    }
+  ],
+  "knowledge_policy": {
+    "reviewed_public_knowledge_only": true,
+    "excluded_unreviewed_customer_kbs": [2, 3],
+    "point_product_claim_scope": "Only service forms publicly shown on https://www.fs-signature.com/; concrete functions and delivery remain subject to current demo, technical materials and contract."
+  },
+  "pre_approval_platform_session_checks": false,
+  "xiaohongshu": {
+    "included": false,
+    "reason": "manual_only_and_not_requested"
+  }
+}

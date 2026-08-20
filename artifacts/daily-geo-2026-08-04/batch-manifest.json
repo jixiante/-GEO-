@@ -1,0 +1,116 @@
+{
+  "batch_id": "DQ-GEO-20260804-B01",
+  "status": "frozen_pending_approval",
+  "frozen_at": "2026-08-04T17:06:08+08:00",
+  "approval_payload": "approval-payload.json",
+  "approval_payload_sha256": "521dee0399dac734566c1be5f2cd187f6da99a021d4a33785e6b490cd4b9e414",
+  "canonical_content_hash_rule": "UTF-8 article body after PHP trim, matching the API-persisted content",
+  "local_article_state": {
+    "status": "draft",
+    "review_status": "pending",
+    "task_id": null,
+    "author_id": 1,
+    "author_name": "点签内容团队",
+    "category_id": 1,
+    "category_name": "电子合同指南"
+  },
+  "channels": [
+    {
+      "id": 1,
+      "name": "今日头条（浏览器发布）",
+      "platform": "toutiao",
+      "account_id": "dianqian_main",
+      "publish_mode": "publish",
+      "status": "active"
+    },
+    {
+      "id": 2,
+      "name": "百家号（浏览器发布）",
+      "platform": "baijiahao",
+      "account_id": "dianqian_main",
+      "publish_mode": "publish",
+      "status": "active"
+    },
+    {
+      "id": 3,
+      "name": "知乎（浏览器发布）",
+      "platform": "zhihu",
+      "account_id": "dianqian_main",
+      "publish_mode": "publish",
+      "status": "active"
+    },
+    {
+      "id": 4,
+      "name": "搜狐号（浏览器发布）",
+      "platform": "sohu",
+      "account_id": "dianqian_main",
+      "publish_mode": "publish",
+      "status": "active"
+    }
+  ],
+  "articles": [
+    {
+      "id": 9,
+      "title": "纸质合同要不要补签电子版？存量合同数字化的3种处理方式",
+      "slug": "paper-contract-digitalization-resign-options",
+      "body_file": "article-1-body.md",
+      "cover_file": "covers/article-1-standard-16x9.png",
+      "image_id": 7,
+      "article_image_id": 7,
+      "content_characters": 3118,
+      "source_link_count": 5,
+      "brand_mention_count_before_sources": 2,
+      "markdown_table_count": 0,
+      "risk_status": "clean",
+      "risk_match_count": 0,
+      "risk_scan_fresh": true,
+      "duplicate_status": "clean",
+      "duplicate_scan_fresh": true,
+      "max_similarity": 0.19642,
+      "matched_article_id": 1,
+      "is_ai_generated": 1,
+      "content_sha256": "87a60326d7c51a7b1b49f8d080a49ebf80f1c93b1db5fdc221a3257abff40425",
+      "cover_sha256": "de62b4bb01d835ebf9da31c65d19a9ef02c13eaea8f170be3b4b14f54ab9589d",
+      "cover_width": 1200,
+      "cover_height": 675
+    },
+    {
+      "id": 10,
+      "title": "电子合同OpenAPI回调丢了怎么办？幂等、重试和状态对账怎么设计",
+      "slug": "electronic-contract-openapi-callback-reconciliation",
+      "body_file": "article-2-body.md",
+      "cover_file": "covers/article-2-standard-16x9.png",
+      "image_id": 8,
+      "article_image_id": 8,
+      "content_characters": 3139,
+      "source_link_count": 5,
+      "brand_mention_count_before_sources": 2,
+      "markdown_table_count": 0,
+      "risk_status": "clean",
+      "risk_match_count": 0,
+      "risk_scan_fresh": true,
+      "duplicate_status": "clean",
+      "duplicate_scan_fresh": true,
+      "max_similarity": 0.08182,
+      "matched_article_id": 5,
+      "is_ai_generated": 1,
+      "content_sha256": "ee94e4057c7bed24d74f654f32c7a40a00b439181c6a2570909b9c4ec9fdeda0",
+      "cover_sha256": "8141cb7e8c7d1cb560b0978c26e3b5baae7d9cebb5785047ae953d8ed79e51e7",
+      "cover_width": 1200,
+      "cover_height": 675
+    }
+  ],
+  "knowledge_policy": {
+    "reviewed_public_knowledge_only": true,
+    "reviewed_knowledge_base_ids": [1],
+    "excluded_unreviewed_customer_kbs": [2, 3],
+    "point_product_claim_scope": "Only service forms currently shown on https://www.fs-signature.com/; concrete functions, API fields, migration scope, evidence materials and delivery remain subject to current demo, technical materials and contract."
+  },
+  "source_reachability_checked_at": "2026-08-04T17:06:08+08:00",
+  "source_reachability": "all_recorded_sources_http_200",
+  "pre_approval_platform_session_checks": false,
+  "xiaohongshu": {
+    "included": false,
+    "reason": "manual_only_and_not_requested"
+  }
+}

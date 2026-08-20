@@ -1,0 +1,75 @@
+{
+  "batch_id": "DQ-GEO-20260730-B02",
+  "status": "partially_published_pending_reconciliation",
+  "approval_payload": "approval-payload.json",
+  "approval_payload_sha256": "9e57bee5ccb0a4b352155eb17083f678d7ca3172ce6ee99f7208bc22b9ed9c9d",
+  "local_article_state": {
+    "status": "draft",
+    "review_status": "pending",
+    "task_id": null,
+    "author_id": 1,
+    "category_id": 1
+  },
+  "channels": [
+    {
+      "id": 1,
+      "name": "今日头条（浏览器发布）",
+      "platform": "toutiao",
+      "account_id": "dianqian_main",
+      "status": "active"
+    },
+    {
+      "id": 2,
+      "name": "百家号（浏览器发布）",
+      "platform": "baijiahao",
+      "account_id": "dianqian_main",
+      "status": "active"
+    },
+    {
+      "id": 3,
+      "name": "知乎（浏览器发布）",
+      "platform": "zhihu",
+      "account_id": "dianqian_main",
+      "status": "active"
+    },
+    {
+      "id": 4,
+      "name": "搜狐号（浏览器发布）",
+      "platform": "sohu",
+      "account_id": "dianqian_main",
+      "status": "active"
+    }
+  ],
+  "articles": [
+    {
+      "id": 5,
+      "body_file": "article-1-body.md",
+      "cover_file": "covers/article-1-standard-16x9.png",
+      "article_image_id": 3,
+      "risk_status": "clean",
+      "risk_match_count": 0,
+      "duplicate_status": "clean",
+      "max_similarity": 0.20156,
+      "is_ai_generated": 1,
+      "content_sha256": "cf0fa53ba802607b62905332d58eb23db946729e7b0839fd4e47c7edc38b0598",
+      "cover_sha256": "edca2599cc03f854a926e8ff9bc33a3289879d034c1dd7e3cc1f02d164a3d320"
+    },
+    {
+      "id": 6,
+      "body_file": "article-2-body.md",
+      "cover_file": "covers/article-2-standard-16x9.png",
+      "article_image_id": 4,
+      "risk_status": "clean",
+      "risk_match_count": 0,
+      "duplicate_status": "clean",
+      "max_similarity": 0.33123,
+      "is_ai_generated": 1,
+      "content_sha256": "37615c97b95a93b71ed30dd438a9d30f5a44ce24b290b787366aae313c2cd3b2",
+      "cover_sha256": "2330ad9b9080a78051f5ad499fb52f2cb969dd53d45f5e0b55bcefff000ebea7"
+    }
+  ],
+  "xiaohongshu": {
+    "included": false,
+    "reason": "manual_only_and_not_requested"
+  }
+}
